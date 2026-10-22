@@ -1,97 +1,113 @@
--- =============================================================
--- Vehicle Maintenance Log - Dữ liệu mẫu
--- Chạy sau schema.sql
--- =============================================================
-
-USE vehicle_maintenance;
-
--- -------------------------------------------------------------
--- Tài khoản
--- password_hash dưới đây chỉ là chuỗi giữ chỗ, KHÔNG đăng nhập được.
--- Khi có backend: đăng ký tài khoản qua ứng dụng (mật khẩu sẽ được băm bcrypt),
--- rồi cấp quyền quản trị bằng: UPDATE users SET role = 'ADMIN' WHERE email = '...';
--- -------------------------------------------------------------
-INSERT INTO users (user_id, full_name, email, password_hash, phone, role, email_reminder_enabled) VALUES
-(1, 'Quản trị viên', 'admin@vml.local', '$2b$10$PLACEHOLDER.HASH.REPLACE.BY.APP.000000000000000000', NULL,         'ADMIN', FALSE),
-(2, 'Nguyễn Văn An', 'an@vml.local',    '$2b$10$PLACEHOLDER.HASH.REPLACE.BY.APP.000000000000000000', '0901234567', 'USER',  TRUE),
-(3, 'Trần Thị Bình', 'binh@vml.local',  '$2b$10$PLACEHOLDER.HASH.REPLACE.BY.APP.000000000000000000', NULL,         'USER',  FALSE);
+-- db/seed.sql -- demo rows for Vehicle Maintenance Log. Run after schema.sql.
+-- Safe to run more than once: every insert skips rows that already exist (natural keys),
+-- so ids are never hard-coded and nothing is duplicated.
 
 -- -------------------------------------------------------------
 -- Danh mục loại dịch vụ (chu kỳ tham khảo phổ biến)
 -- -------------------------------------------------------------
-INSERT INTO service_types (service_type_id, name, description, applies_to, default_interval_km, default_interval_months) VALUES
-(1,  'Thay nhớt máy (xe máy)',    'Thay dầu động cơ xe máy',                  'MOTORBIKE', 1500,  2),
-(2,  'Thay nhớt hộp số (xe tay ga)', 'Thay dầu láp/hộp số cho xe tay ga',     'MOTORBIKE', 6000,  6),
-(3,  'Thay dầu động cơ (ô tô)',   'Thay dầu máy và lọc dầu',                  'CAR',       5000,  6),
-(4,  'Thay lọc gió',              'Vệ sinh hoặc thay lọc gió động cơ',        'ALL',       10000, 12),
-(5,  'Thay bugi',                 'Thay bugi đánh lửa',                       'ALL',       8000,  12),
-(6,  'Bảo dưỡng phanh',           'Kiểm tra, thay má phanh/dầu phanh',        'ALL',       10000, 12),
-(7,  'Thay lốp',                  'Thay lốp xe',                              'ALL',       30000, 36),
-(8,  'Thay nước làm mát',         'Xả và thay nước làm mát',                  'CAR',       40000, 24),
-(9,  'Thay ắc quy',               'Thay bình ắc quy',                         'ALL',       NULL,  24),
-(10, 'Bảo dưỡng định kỳ tổng quát', 'Gói bảo dưỡng định kỳ theo khuyến nghị hãng', 'ALL',  10000, 6),
-(11, 'Vệ sinh nồi / dây curoa',   'Vệ sinh bộ nồi, kiểm tra dây curoa xe tay ga', 'MOTORBIKE', 8000, 12),
-(12, 'Sửa chữa khác',             'Các công việc sửa chữa không nằm trong danh mục', 'ALL', NULL, NULL);
+INSERT INTO service_types (name, description, applies_to, default_interval_km, default_interval_months)
+VALUES
+  ('Thay nhớt máy (xe máy)',       'Thay dầu động cơ xe máy',                       'MOTORBIKE', 1500,  2),
+  ('Thay nhớt hộp số (xe tay ga)', 'Thay dầu láp/hộp số cho xe tay ga',             'MOTORBIKE', 6000,  6),
+  ('Thay dầu động cơ (ô tô)',      'Thay dầu máy và lọc dầu',                       'CAR',       5000,  6),
+  ('Thay lọc gió',                 'Vệ sinh hoặc thay lọc gió động cơ',             'ALL',       10000, 12),
+  ('Thay bugi',                    'Thay bugi đánh lửa',                            'ALL',       8000,  12),
+  ('Bảo dưỡng phanh',              'Kiểm tra, thay má phanh/dầu phanh',             'ALL',       10000, 12),
+  ('Thay lốp',                     'Thay lốp xe',                                   'ALL',       30000, 36),
+  ('Thay nước làm mát',            'Xả và thay nước làm mát',                       'CAR',       40000, 24),
+  ('Thay ắc quy',                  'Thay bình ắc quy',                              'ALL',       NULL,  24),
+  ('Bảo dưỡng định kỳ tổng quát',  'Gói bảo dưỡng định kỳ theo khuyến nghị hãng',   'ALL',       10000, 6),
+  ('Vệ sinh nồi / dây curoa',      'Vệ sinh bộ nồi, kiểm tra dây curoa xe tay ga',  'MOTORBIKE', 8000,  12),
+  ('Sửa chữa khác',                'Công việc không nằm trong danh mục',            'ALL',       NULL,  NULL)
+ON CONFLICT (name) DO NOTHING;
 
 -- -------------------------------------------------------------
 -- Xe
 -- -------------------------------------------------------------
-INSERT INTO vehicles (vehicle_id, user_id, name, vehicle_type, brand, model, manufacture_year, license_plate, vin, current_odometer, purchase_date) VALUES
-(1, 2, 'Vision đi làm',    'MOTORBIKE', 'Honda',  'Vision', 2022, '59X1-123.45', NULL,                 12850, '2022-03-15'),
-(2, 2, 'Vios gia đình',    'CAR',       'Toyota', 'Vios',   2020, '51H-678.90',  'MR2B29F30L1234567', 45200, '2020-08-01'),
-(3, 3, 'Air Blade',        'MOTORBIKE', 'Honda',  'Air Blade 125', 2021, '59P2-456.78', NULL,          20300, '2021-05-20');
+INSERT INTO vehicles (name, vehicle_type, brand, model, manufacture_year, license_plate, current_odometer, purchase_date)
+VALUES
+  ('Vision đi làm', 'MOTORBIKE', 'Honda',  'Vision',        2022, '59X1-123.45', 12850, '2022-03-15'),
+  ('Vios gia đình', 'CAR',       'Toyota', 'Vios',          2020, '51H-678.90',  45200, '2020-08-01'),
+  ('Air Blade',     'MOTORBIKE', 'Honda',  'Air Blade 125', 2021, '59P2-456.78', 20300, '2021-05-20')
+ON CONFLICT (license_plate) DO NOTHING;
 
 -- -------------------------------------------------------------
--- Garage
+-- Lần bảo dưỡng
 -- -------------------------------------------------------------
-INSERT INTO garages (garage_id, user_id, name, address, phone) VALUES
-(1, 2, 'Honda Head Phát Tiến', '123 Nguyễn Văn Linh, Q.7, TP.HCM', '02838123456'),
-(2, 2, 'Toyota Lý Thường Kiệt', '151 Lý Thường Kiệt, Q.Tân Bình, TP.HCM', '02838654321'),
-(3, 3, 'Tiệm sửa xe Minh',      '45 Phan Văn Trị, Q.Gò Vấp, TP.HCM', NULL);
+INSERT INTO maintenance_records (vehicle_id, service_date, odometer, garage_name, note)
+SELECT v.id, x.service_date::date, x.odometer, x.garage_name, x.note
+FROM (VALUES
+  ('59X1-123.45', '2026-03-10',  9800, 'Honda Head Phát Tiến',  'Bảo dưỡng định kỳ'),
+  ('59X1-123.45', '2026-06-05', 11300, 'Honda Head Phát Tiến',  NULL),
+  ('59X1-123.45', '2026-08-20', 12500, 'Honda Head Phát Tiến',  'Thay nhớt, kiểm tra phanh'),
+  ('51H-678.90',  '2026-02-18', 40100, 'Toyota Lý Thường Kiệt', 'Bảo dưỡng cấp 40.000 km'),
+  ('51H-678.90',  '2026-08-02', 44800, 'Toyota Lý Thường Kiệt', NULL),
+  ('59P2-456.78', '2026-07-12', 19800, 'Tiệm sửa xe Minh',      NULL)
+) AS x(plate, service_date, odometer, garage_name, note)
+JOIN vehicles v ON v.license_plate = x.plate
+ON CONFLICT (vehicle_id, service_date, odometer) DO NOTHING;
 
 -- -------------------------------------------------------------
--- Lần bảo dưỡng + hạng mục
+-- Hạng mục (tìm lần bảo dưỡng theo biển số + ngày + ODO)
 -- -------------------------------------------------------------
-INSERT INTO maintenance_records (record_id, vehicle_id, garage_id, service_date, odometer, note) VALUES
-(1, 1, 1, '2026-03-10', 9800,  'Bảo dưỡng định kỳ'),
-(2, 1, 1, '2026-06-05', 11300, NULL),
-(3, 1, 1, '2026-08-20', 12500, 'Thay nhớt, kiểm tra phanh'),
-(4, 2, 2, '2026-02-18', 40100, 'Bảo dưỡng cấp 40.000 km'),
-(5, 2, 2, '2026-08-02', 44800, NULL),
-(6, 3, 3, '2026-07-12', 19800, NULL);
-
-INSERT INTO maintenance_items (record_id, service_type_id, description, quantity, unit_price) VALUES
-(1, 1,  'Nhớt Honda 0.8L',             1, 120000),
-(1, 2,  'Nhớt hộp số 120ml',           1, 40000),
-(1, 4,  'Lọc gió Honda chính hãng',    1, 95000),
-(2, 1,  'Nhớt Castrol Power1 0.8L',    1, 135000),
-(3, 1,  'Nhớt Castrol Power1 0.8L',    1, 135000),
-(3, 6,  'Má phanh trước',              1, 180000),
-(4, 3,  'Dầu Toyota 0W-20',            4, 210000),
-(4, 3,  'Lọc dầu',                     1, 150000),
-(4, 4,  'Lọc gió động cơ',             1, 320000),
-(4, 10, 'Công bảo dưỡng cấp 40.000 km', 1, 650000),
-(5, 3,  'Dầu Toyota 0W-20',            4, 210000),
-(5, 3,  'Lọc dầu',                     1, 150000),
-(6, 1,  'Nhớt Motul 0.8L',             1, 125000),
-(6, 11, 'Vệ sinh nồi',                 1, 100000);
-
--- -------------------------------------------------------------
--- Nhắc lịch (next_due_* = last_service_* + chu kỳ, BR-08)
--- -------------------------------------------------------------
-INSERT INTO reminders (reminder_id, vehicle_id, service_type_id, interval_km, interval_months,
-                       last_service_date, last_service_odometer, next_due_date, next_due_odometer, last_notified_level) VALUES
-(1, 1, 1,  1500,  2,  '2026-08-20', 12500, '2026-10-20', 14000, 'OVERDUE'),  -- quá hạn theo ngày
-(2, 1, 4,  10000, 12, '2026-03-10', 9800,  '2027-03-10', 19800, 'NONE'),
-(3, 2, 3,  5000,  6,  '2026-08-02', 44800, '2027-02-02', 49800, 'NONE'),
-(4, 2, 10, 10000, 6,  '2026-02-18', 40100, '2026-08-18', 50100, 'OVERDUE'),  -- quá hạn theo ngày
-(5, 3, 1,  1500,  2,  '2026-07-12', 19800, '2026-09-12', 21300, 'OVERDUE');
+INSERT INTO maintenance_items (record_id, service_type_id, description, quantity, unit_price)
+SELECT r.id, st.id, x.description, x.quantity, x.unit_price
+FROM (VALUES
+  ('59X1-123.45', '2026-03-10',  9800, 'Thay nhớt máy (xe máy)',       'Nhớt Honda 0.8L',              1, 120000),
+  ('59X1-123.45', '2026-03-10',  9800, 'Thay nhớt hộp số (xe tay ga)', 'Nhớt hộp số 120ml',            1, 40000),
+  ('59X1-123.45', '2026-03-10',  9800, 'Thay lọc gió',                 'Lọc gió Honda chính hãng',     1, 95000),
+  ('59X1-123.45', '2026-06-05', 11300, 'Thay nhớt máy (xe máy)',       'Nhớt Castrol Power1 0.8L',     1, 135000),
+  ('59X1-123.45', '2026-08-20', 12500, 'Thay nhớt máy (xe máy)',       'Nhớt Castrol Power1 0.8L',     1, 135000),
+  ('59X1-123.45', '2026-08-20', 12500, 'Bảo dưỡng phanh',              'Má phanh trước',               1, 180000),
+  ('51H-678.90',  '2026-02-18', 40100, 'Thay dầu động cơ (ô tô)',      'Dầu Toyota 0W-20',             4, 210000),
+  ('51H-678.90',  '2026-02-18', 40100, 'Thay dầu động cơ (ô tô)',      'Lọc dầu',                      1, 150000),
+  ('51H-678.90',  '2026-02-18', 40100, 'Thay lọc gió',                 'Lọc gió động cơ',              1, 320000),
+  ('51H-678.90',  '2026-02-18', 40100, 'Bảo dưỡng định kỳ tổng quát',  'Công bảo dưỡng cấp 40.000 km', 1, 650000),
+  ('51H-678.90',  '2026-08-02', 44800, 'Thay dầu động cơ (ô tô)',      'Dầu Toyota 0W-20',             4, 210000),
+  ('51H-678.90',  '2026-08-02', 44800, 'Thay dầu động cơ (ô tô)',      'Lọc dầu',                      1, 150000),
+  ('59P2-456.78', '2026-07-12', 19800, 'Thay nhớt máy (xe máy)',       'Nhớt Motul 0.8L',              1, 125000),
+  ('59P2-456.78', '2026-07-12', 19800, 'Vệ sinh nồi / dây curoa',      'Vệ sinh nồi',                  1, 100000)
+) AS x(plate, service_date, odometer, service_type, description, quantity, unit_price)
+JOIN vehicles v            ON v.license_plate = x.plate
+JOIN maintenance_records r ON r.vehicle_id = v.id
+                          AND r.service_date = x.service_date::date
+                          AND r.odometer = x.odometer
+JOIN service_types st      ON st.name = x.service_type
+WHERE NOT EXISTS (
+  SELECT 1 FROM maintenance_items i
+  WHERE i.record_id = r.id AND i.description = x.description
+);
 
 -- -------------------------------------------------------------
--- Thông báo
+-- Nhắc lịch (mốc đến hạn được view v_reminder_status tự tính)
 -- -------------------------------------------------------------
-INSERT INTO notifications (user_id, reminder_id, type, title, message, is_read, created_at, read_at) VALUES
-(2, 1, 'DUE_SOON', 'Sắp đến hạn thay nhớt', 'Xe "Vision đi làm" sắp đến hạn Thay nhớt máy (xe máy) vào 20/10/2026.', TRUE,  '2026-10-13 07:00:00', '2026-10-13 08:15:00'),
-(2, 1, 'OVERDUE',  'Quá hạn thay nhớt',     'Xe "Vision đi làm" đã quá hạn Thay nhớt máy (xe máy) từ 20/10/2026.',   FALSE, '2026-10-20 07:00:00', NULL),
-(2, 4, 'OVERDUE',  'Quá hạn bảo dưỡng định kỳ', 'Xe "Vios gia đình" đã quá hạn Bảo dưỡng định kỳ tổng quát từ 18/08/2026.', FALSE, '2026-08-18 07:00:00', NULL),
-(3, 5, 'OVERDUE',  'Quá hạn thay nhớt',     'Xe "Air Blade" đã quá hạn Thay nhớt máy (xe máy) từ 12/09/2026.',       FALSE, '2026-09-12 07:00:00', NULL);
+INSERT INTO reminders (vehicle_id, service_type_id, interval_km, interval_months, start_date, start_odometer)
+SELECT v.id, st.id, x.interval_km, x.interval_months, x.start_date::date, x.start_odometer
+FROM (VALUES
+  ('59X1-123.45', 'Thay nhớt máy (xe máy)',      1500,  2,  '2026-01-01', 8000),
+  ('59X1-123.45', 'Thay lọc gió',                10000, 12, '2026-01-01', 8000),
+  ('51H-678.90',  'Thay dầu động cơ (ô tô)',     5000,  6,  '2026-01-01', 38000),
+  ('51H-678.90',  'Bảo dưỡng định kỳ tổng quát', 10000, 6,  '2026-01-01', 38000),
+  ('59P2-456.78', 'Thay nhớt máy (xe máy)',      1500,  2,  '2026-01-01', 18000)
+) AS x(plate, service_type, interval_km, interval_months, start_date, start_odometer)
+JOIN vehicles v       ON v.license_plate = x.plate
+JOIN service_types st ON st.name = x.service_type
+ON CONFLICT (vehicle_id, service_type_id) DO NOTHING;
+
+-- -------------------------------------------------------------
+-- Lịch sử chẩn đoán AI: 1 lần thành công, 1 lần bị 429
+-- -------------------------------------------------------------
+INSERT INTO diagnoses (vehicle_id, symptom_text, status, ai_suggestion, urgency_level, suggested_service_type_id, error_code, model, created_at)
+SELECT v.id, x.symptom_text, x.status, x.ai_suggestion, x.urgency_level, st.id, x.error_code, x.model, x.created_at::timestamptz
+FROM (VALUES
+  ('59X1-123.45', 'Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu', 'OK',
+   'Má phanh trước có thể đã mòn hoặc bám bẩn. Nên kiểm tra độ dày má phanh và dầu phanh trong tuần này.',
+   'MEDIUM', 'Bảo dưỡng phanh', NULL, 'gemini-flash', '2026-10-15 09:30:00+07'),
+  ('51H-678.90',  'Đèn báo kiểm tra động cơ sáng sau khi đổ xăng', 'FAILED',
+   NULL, NULL, NULL, 'RATE_LIMITED', 'gemini-flash', '2026-10-16 20:05:00+07')
+) AS x(plate, symptom_text, status, ai_suggestion, urgency_level, service_type, error_code, model, created_at)
+JOIN vehicles v ON v.license_plate = x.plate
+LEFT JOIN service_types st ON st.name = x.service_type
+WHERE NOT EXISTS (
+  SELECT 1 FROM diagnoses d WHERE d.symptom_text = x.symptom_text AND d.created_at = x.created_at::timestamptz
+);
