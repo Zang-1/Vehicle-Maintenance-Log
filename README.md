@@ -24,12 +24,12 @@ Chi tiết (report, thuyết trình, lịch theo tuần): [docs/PHAN-CONG.md](do
 | # | Bước | Người làm | Trạng thái |
 |---|---|---|---|
 | 01 | [Requirements](docs/01-requirements/requirements.md) | Giang | ✅ Xong |
-| 02 | [Use Case Diagram](docs/02-use-case/) | Lâm | ⏳ |
-| 03 | [Activity Diagram](docs/03-activity/) | Lâm | ⏳ |
+| 02 | [Use Case Diagram](docs/02-use-case/) | Lâm | ✅ Xong (chờ review) |
+| 03 | [Activity Diagram](docs/03-activity/) | Lâm | ✅ Xong (chờ review) |
 | 04 | [ERD & Database Design](docs/04-database/erd.md) | Giang | ✅ Xong (đã chạy thử trên PostgreSQL 16) |
 | 05 | [Wireframe](docs/05-wireframe/) | Khoa | ⏳ |
 | 06 | [UI Design trên Figma](docs/06-ui-design/) | Khoa | ⏳ |
-| 07 | [Architecture & Class Diagram](docs/07-architecture/) | Lâm | ⏳ |
+| 07 | [Architecture & Class Diagram](docs/07-architecture/) | Lâm | ✅ Xong (chờ review) |
 | 08 | [Implementation Plan](docs/08-implementation-plan/implementation-plan.md) | Giang | ✅ Xong (cập nhật lại sau khi có 07) |
 
 ## Cách đóng góp
