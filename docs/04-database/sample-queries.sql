@@ -81,5 +81,5 @@ LEFT JOIN vehicles v ON v.id = d.vehicle_id
 ORDER BY d.created_at DESC
 LIMIT 20;
 
--- /health/db: chứng minh app với tới database (thay cho bảng notes của starter)
+-- /health/db: chứng minh app với tới database
 SELECT count(*) FROM vehicles;
