@@ -1,5 +1,5 @@
 -- db/schema.sql -- the whole schema of Vehicle Maintenance Log. Safe to run more than once.
--- PostgreSQL 16: chạy bởi Compose ở lần khởi động đầu (Week 4) và trong Supabase SQL Editor (Week 7).
+-- PostgreSQL 16: chạy bởi Compose ở lần khởi động đầu và trong Supabase SQL Editor.
 -- Người phụ trách: Kiều Bảo Giang (bước 04 - ERD & Database Design)
 
 -- -------------------------------------------------------------

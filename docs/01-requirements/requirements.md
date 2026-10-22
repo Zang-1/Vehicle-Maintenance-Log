@@ -1,6 +1,6 @@
 # 01 – Requirements (Đặc tả yêu cầu)
 
-**Người phụ trách:** Kiều Bảo Giang · **Phiên bản:** 2.0 (áp dụng Final Project Brief và Lab 1 → Lab 5)
+**Người phụ trách:** Kiều Bảo Giang · **Phiên bản:** 2.1
 
 > Môn **72ITDS30103 – Software Development Platforms**. Theo Final Project Brief, đồ án là *một ứng dụng web CRUD ba tầng nhỏ, có một tính năng AI*. Thứ được chấm là **pipeline nền tảng** xung quanh ứng dụng (container, Compose, CI/CD, cloud database, AI call), không phải số lượng chức năng. Vì vậy phạm vi chức năng dưới đây được giữ ở mức vừa đủ, còn các yêu cầu nền tảng (mục 5.1) là bắt buộc.
 
@@ -128,16 +128,16 @@ Ghi chú cho use case (02): GitHub Actions, Render, Supabase là **nền tảng 
 
 ### 5.1. Yêu cầu nền tảng (bắt buộc theo Final Project Brief)
 
-| Mã | Yêu cầu | Lab áp dụng | Bằng chứng khi demo |
-|---|---|---|---|
-| PR-01 | Ứng dụng chạy công khai qua **HTTPS** trên nền tảng cloud miễn phí (Render) | Lab 3 | Mở URL trên điện thoại dùng 4G |
-| PR-02 | **Dockerfile** build ứng dụng thành image; có `.dockerignore`; layer được sắp xếp để tận dụng cache | Lab 2 | `podman build` từ clean clone |
-| PR-03 | **Compose** dựng toàn bộ môi trường local (web + PostgreSQL) bằng **1 lệnh** từ clean clone | Week 4 | `podman compose up --build` |
-| PR-04 | **GitHub Actions**: lint (ruff) + test (pytest) trên mỗi Pull Request; merge vào `main` thì tự deploy qua Render deploy hook | Lab 4 | Lịch sử Actions, PR bị chặn khi đỏ |
-| PR-05 | **Managed PostgreSQL** trên cloud (Supabase), gắn vào app chỉ bằng biến môi trường `DATABASE_URL` | Week 7 | `/health/db` trên URL live |
-| PR-06 | **Tính năng AI** gọi API miễn phí (Gemini) **từ server**; key không nằm trong repo | Lab 5 | Gọi `/diagnose` trên URL live; `git grep` không ra key |
-| PR-07 | **Zero credit card:** mọi nền tảng đăng ký miễn phí, không cần thẻ | Tất cả | |
-| PR-08 | Không ai commit thẳng vào `main`; mọi thay đổi qua PR có người khác duyệt; branch protection bật | Lab 1, Week 2 | Cài đặt repo, lịch sử PR |
+| Mã | Yêu cầu | Bằng chứng khi demo |
+|---|---|---|
+| PR-01 | Ứng dụng chạy công khai qua **HTTPS** trên nền tảng cloud miễn phí (Render) | Mở URL trên điện thoại dùng 4G |
+| PR-02 | **Dockerfile** build ứng dụng thành image; có `.dockerignore`; layer được sắp xếp để tận dụng cache | `podman build` từ clean clone |
+| PR-03 | **Compose** dựng toàn bộ môi trường local (web + PostgreSQL) bằng **1 lệnh** từ clean clone | `podman compose up --build` |
+| PR-04 | **GitHub Actions**: lint (ruff) + test (pytest) + build image trên mỗi Pull Request; merge vào `main` thì tự deploy qua Render deploy hook | Lịch sử Actions, PR bị chặn khi đỏ |
+| PR-05 | **Managed PostgreSQL** trên cloud (Supabase), gắn vào app chỉ bằng biến môi trường `DATABASE_URL` | `/health/db` trên URL live |
+| PR-06 | **Tính năng AI** gọi API miễn phí (Gemini) **từ server**; key không nằm trong repo | Gọi `/diagnose` trên URL live; `git grep` không ra key |
+| PR-07 | **Zero credit card:** mọi nền tảng đăng ký miễn phí, không cần thẻ | |
+| PR-08 | Không ai commit thẳng vào `main`; mọi thay đổi qua PR có người khác duyệt; branch protection bật | Cài đặt repo, lịch sử PR |
 
 ### 5.2. Yêu cầu chất lượng
 
@@ -203,5 +203,5 @@ Dùng làm đầu vào cho Wireframe (05) và UI Design (06).
 ## 8. Giả định và ràng buộc
 
 - Đơn vị tiền tệ VNĐ, quãng đường km. Giao diện tiếng Việt.
-- Repo chính thức của nhóm là **noway165/team01** (repo đã dùng cho Lab 1–4). Mọi code nằm ở đó; Brief chỉ tính những gì có trong repo nhóm.
+- Tài liệu và code nằm chung trong repo nhóm **Zang-1/Vehicle-Maintenance-Log**; Brief chỉ tính những gì có trong repo nhóm.
 - Mốc thời gian theo Brief: Week 8 (Session 16) có AI chạy trên URL live, Week 9 (Session 18) audit secret + bản nháp report đủ 8 mục, Session 20 demo.

@@ -1,14 +1,14 @@
 # Phân công công việc – Vehicle Maintenance Log
 
-Môn **72ITDS30103 – Software Development Platforms** · Nhóm `team01`
+Môn **72ITDS30103 – Software Development Platforms**
 
 | Thành viên | GitHub | Vai trò chính |
 |---|---|---|
 | **Kiều Bảo Giang** (nhóm trưởng) | @Zang-1 | Yêu cầu · Database · AI · Kế hoạch |
-| **Tăng Thoại Lâm** (chủ repo `team01`, chủ service Render) | @noway165 | UML · Kiến trúc · CI/CD |
+| **Tăng Thoại Lâm** | @noway165 | UML · Kiến trúc · CI/CD + Render |
 | **Nguyễn Nam Khoa** | @namkhoa306 | Giao diện · Docker/Compose |
 
-Mỗi người có 3 loại việc: **tài liệu thiết kế** (8 bước), **code** trong repo `noway165/team01`, và **report + thuyết trình** theo Final Project Brief. Brief chấm cá nhân dựa trên commit của chính mình (4/10 điểm bảo vệ), nên ai làm phần nào thì commit phần đó.
+Mỗi người có 3 loại việc: **tài liệu thiết kế** (8 bước), **code**, và **report + thuyết trình** theo Final Project Brief. Brief chấm cá nhân dựa trên commit của chính mình (4/10 điểm bảo vệ), nên ai làm phần nào thì commit phần đó.
 
 ## 1. Tài liệu thiết kế (8 bước)
 
@@ -23,15 +23,15 @@ Mỗi người có 3 loại việc: **tài liệu thiết kế** (8 bước), **
 | 07 | Architecture & Class Diagram | Lâm | 02, 04 | `07-architecture/`: **sơ đồ triển khai khớp thực tế** (Render + Supabase + Gemini + GitHub Actions), class diagram |
 | 08 | Implementation Plan | Giang ✅ | 04, 07 | [`08-implementation-plan/implementation-plan.md`](08-implementation-plan/implementation-plan.md) |
 
-## 2. Code (repo `noway165/team01`)
+## 2. Code
 
 | Module | Người làm |
 |---|---|
-| M1 Database (Supabase, schema, pool) · M5 Nhắc lịch · M7 Chẩn đoán AI (Lab 5) | **Giang** |
+| M1 Database (Supabase, schema, pool) · M5 Nhắc lịch · M7 Chẩn đoán AI | **Giang** |
 | M2 Xe · M3 Lần bảo dưỡng · P1 CI/CD + Render | **Lâm** |
-| M4 Loại dịch vụ · M6 Giao diện chung, Dashboard, Thống kê · P2 Dockerfile + Compose | **Khoa** |
+| M0 Khung dự án FastAPI (cùng Giang) · M4 Loại dịch vụ · M6 Giao diện chung, Dashboard, Thống kê · P2 Dockerfile + Compose | **Khoa** |
 
-Chi tiết từng module, API và hợp đồng giữa các module: mục 5 của [Implementation Plan](08-implementation-plan/implementation-plan.md).
+Chi tiết từng module, API và hợp đồng giữa các module: mục 4 của [Implementation Plan](08-implementation-plan/implementation-plan.md).
 
 ## 3. Report và thuyết trình
 
@@ -45,8 +45,8 @@ Chi tiết từng module, API và hợp đồng giữa các module: mục 5 củ
 
 | Tuần | Giang | Lâm | Khoa |
 |---|---|---|---|
-| **W7** (hiện tại) | Merge `week7-*`, Supabase, schema đề tài (M1) | 02 Use Case, 03 Activity; kiểm tra deploy hook | 05 Wireframe; P2 Python 3.12 |
-| **W8** – AI live | M7 Chẩn đoán AI | 07 Architecture; M2 Xe; P1 build image trong CI | 06 Figma; `base.html` + CSS |
+| **W7** (hiện tại) | Khung FastAPI + `/health`, `/health/db`; Supabase + schema (M1) | 02 Use Case, 03 Activity; workflow CI | 05 Wireframe; Dockerfile + Compose (P2) |
+| **W8** – AI live | M7 Chẩn đoán AI | 07 Architecture; M2 Xe; Render + deploy tự động (P1) | 06 Figma; `base.html` + CSS |
 | **W9** – audit + nháp report | M5 Nhắc lịch; audit secret | M3 Lần bảo dưỡng | M4 Loại dịch vụ; Dashboard, Thống kê |
 | **W10** – tập demo, nộp report | Hoàn thiện report | Nhánh "cố tình đỏ" cho demo | Clean clone trên máy khác; slide |
 

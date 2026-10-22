@@ -1,9 +1,9 @@
 # 04 – ERD & Database Design
 
 **Người phụ trách:** Kiều Bảo Giang · **Đầu vào:** [01 Requirements](../01-requirements/requirements.md)
-**Hệ quản trị:** PostgreSQL 16: `postgres:16-alpine` trong Compose (Week 4) và **Supabase** trên cloud (Week 7)
+**Hệ quản trị:** PostgreSQL 16: `postgres:16-alpine` trong Compose (local) và **Supabase** trên cloud
 
-File đi kèm (copy sang `db/` của repo `team01` khi code):
+File đi kèm (chuyển vào thư mục `db/` ở gốc repo khi bắt đầu code):
 
 | File | Nội dung |
 |---|---|
@@ -22,7 +22,7 @@ File đi kèm (copy sang `db/` của repo `team01` khi code):
 | `reminders` | Quy tắc nhắc lịch của một loại dịch vụ cho một xe | FR-13 → FR-15 |
 | `diagnoses` | Lịch sử chẩn đoán AI, gồm cả lần lỗi | FR-18 → FR-21 |
 
-Bảng `notes` của starter không còn dùng nữa. Endpoint `/health/db` đổi sang `SELECT count(*) FROM vehicles` và trả về `{"db":"ok","vehicles":N}`. Đổi trong cùng PR với việc thay `schema.sql`.
+Endpoint `/health/db` kiểm tra database bằng `SELECT count(*) FROM vehicles` và trả về `{"db":"ok","vehicles":N}`.
 
 ## 2. Sơ đồ ERD
 
@@ -116,7 +116,7 @@ erDiagram
 
 ## 4. Từ điển dữ liệu
 
-Quy ước theo starter của môn: khóa chính `id bigint GENERATED ALWAYS AS IDENTITY`, khóa ngoại `<bảng>_id`, thời gian `timestamptz` (Supabase lưu UTC), tiền VNĐ dạng `numeric` (không dùng `float` để tránh sai số). Giá trị liệt kê dùng `text` + `CHECK ... IN (...)` thay vì `CREATE TYPE`, vì `CREATE TYPE` không có `IF NOT EXISTS` nên script sẽ không chạy lại được.
+Quy ước: khóa chính `id bigint GENERATED ALWAYS AS IDENTITY`, khóa ngoại `<bảng>_id`, thời gian `timestamptz` (Supabase lưu UTC), tiền VNĐ dạng `numeric` (không dùng `float` để tránh sai số). Giá trị liệt kê dùng `text` + `CHECK ... IN (...)` thay vì `CREATE TYPE`, vì `CREATE TYPE` không có `IF NOT EXISTS` nên script sẽ không chạy lại được.
 
 ### 4.1. `service_types`
 
@@ -239,7 +239,7 @@ Lược đồ đạt **3NF**:
 
 Chỗ phi chuẩn hóa có chủ đích duy nhất là `vehicles.current_odometer`. Cột này được lưu để hiển thị nhanh và được cập nhật trong cùng transaction khi ghi nhận bảo dưỡng có ODO lớn hơn (BR-02).
 
-## 8. Kết nối từ ứng dụng (áp dụng Week 4 và Week 7)
+## 8. Kết nối từ ứng dụng
 
 | Môi trường | `DATABASE_URL` lấy từ đâu | Host |
 |---|---|---|
@@ -247,11 +247,11 @@ Chỗ phi chuẩn hóa có chủ đích duy nhất là `vehicles.current_odomete
 | Production (Render) | Render → Environment, giá trị là **Transaction pooler** của Supabase (cổng `6543`) | `*.pooler.supabase.com` |
 | CI (GitHub Actions) | Giá trị giả trong `tests/conftest.py`, test không mở kết nối | |
 
-App dùng `psycopg_pool.ConnectionPool` (đã làm ở nhánh `week7-pool`): `max_size=5`, kiểm tra kết nối trước khi cho mượn (pre-ping), thay kết nối sau 5 phút, `prepare_threshold=None` vì pooler cổng 6543 không hỗ trợ prepared statement, `connect_timeout=5`. Khi Supabase pause hoặc mất mạng: `/health/db` trả 503 sau tối đa 5 giây, `/health` vẫn 200, và app tự phục hồi khi DB có lại mà không cần redeploy.
+App dùng `psycopg_pool.ConnectionPool` (trong `app/db.py`): `max_size=5`, kiểm tra kết nối trước khi cho mượn (pre-ping), thay kết nối sau 5 phút, `prepare_threshold=None` vì pooler cổng 6543 không hỗ trợ prepared statement, `connect_timeout=5`. Khi Supabase pause hoặc mất mạng: `/health/db` trả 503 sau tối đa 5 giây, `/health` vẫn 200, và app tự phục hồi khi DB có lại mà không cần redeploy.
 
 ## 9. Cách chạy
 
-**Local bằng Compose:** copy `schema.sql` và `seed.sql` vào `team01/db/`. `compose.yml` đã mount 2 file này vào `/docker-entrypoint-initdb.d/`. Sau đó chạy:
+**Local bằng Compose:** đặt `schema.sql` và `seed.sql` trong `db/`. `compose.yml` mount 2 file này vào `/docker-entrypoint-initdb.d/` của service `db`. Sau đó chạy:
 
 ```bash
 podman compose down -v
