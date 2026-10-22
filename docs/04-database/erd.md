@@ -1,144 +1,105 @@
 # 04 – ERD & Database Design
 
-**Người phụ trách:** Giang · **Đầu vào:** [01 Requirements](../01-requirements/requirements.md) · **Hệ quản trị:** MySQL 8.0 (utf8mb4)
+**Người phụ trách:** Kiều Bảo Giang · **Đầu vào:** [01 Requirements](../01-requirements/requirements.md)
+**Hệ quản trị:** PostgreSQL 16: `postgres:16-alpine` trong Compose (Week 4) và **Supabase** trên cloud (Week 7)
 
-File đi kèm:
-- [`schema.sql`](schema.sql): tạo database, bảng, ràng buộc, view.
-- [`seed.sql`](seed.sql): dữ liệu mẫu để demo và kiểm thử.
-- [`sample-queries.sql`](sample-queries.sql): các truy vấn chính mà ứng dụng sẽ dùng.
+File đi kèm (copy sang `db/` của repo `team01` khi code):
 
-## 1. Danh sách thực thể
+| File | Nội dung |
+|---|---|
+| [`schema.sql`](schema.sql) | Tạo bảng, ràng buộc, index, view, bật RLS. **Chạy lại nhiều lần không lỗi** |
+| [`seed.sql`](seed.sql) | Dữ liệu mẫu, **chạy lại không nhân đôi** (dựa trên khóa tự nhiên, không ghi cứng id) |
+| [`sample-queries.sql`](sample-queries.sql) | Các truy vấn chính, viết theo tham số psycopg `%(ten)s` |
 
-| Bảng | Ý nghĩa | FR liên quan |
+## 1. Danh sách bảng
+
+| Bảng | Ý nghĩa | FR |
 |---|---|---|
-| `users` | Tài khoản người dùng và quản trị viên | FR-01 → FR-04, FR-27 |
-| `vehicles` | Xe của người dùng | FR-05 → FR-10 |
-| `service_types` | Danh mục loại dịch vụ chuẩn, có chu kỳ mặc định | FR-26 |
-| `garages` | Garage hay dùng của từng người dùng | FR-16 |
-| `maintenance_records` | Một lần bảo dưỡng (phiếu) | FR-11 → FR-14 |
-| `maintenance_items` | Các hạng mục trong một lần bảo dưỡng | FR-11, FR-13 |
-| `attachments` | File hóa đơn đính kèm | FR-15 |
-| `reminders` | Quy tắc nhắc lịch của một loại dịch vụ cho một xe | FR-18 → FR-20 |
-| `notifications` | Thông báo gửi cho người dùng | FR-21 → FR-23 |
+| `service_types` | Danh mục loại dịch vụ, có chu kỳ mặc định | FR-11, FR-12 |
+| `vehicles` | Xe | FR-01 → FR-05 |
+| `maintenance_records` | Một lần bảo dưỡng | FR-06 → FR-09 |
+| `maintenance_items` | Hạng mục trong một lần bảo dưỡng | FR-06, FR-08 |
+| `reminders` | Quy tắc nhắc lịch của một loại dịch vụ cho một xe | FR-13 → FR-15 |
+| `diagnoses` | Lịch sử chẩn đoán AI, gồm cả lần lỗi | FR-18 → FR-21 |
+
+Bảng `notes` của starter không còn dùng nữa. Endpoint `/health/db` đổi sang `SELECT count(*) FROM vehicles` và trả về `{"db":"ok","vehicles":N}`. Đổi trong cùng PR với việc thay `schema.sql`.
 
 ## 2. Sơ đồ ERD
 
 ```mermaid
 erDiagram
-    users ||--o{ vehicles : "sở hữu"
-    users ||--o{ garages : "lưu"
-    users ||--o{ notifications : "nhận"
     vehicles ||--o{ maintenance_records : "có"
     vehicles ||--o{ reminders : "có"
-    garages |o--o{ maintenance_records : "thực hiện tại"
+    vehicles |o--o{ diagnoses : "được chẩn đoán"
     maintenance_records ||--|{ maintenance_items : "gồm"
-    maintenance_records ||--o{ attachments : "đính kèm"
     service_types ||--o{ maintenance_items : "phân loại"
     service_types ||--o{ reminders : "áp dụng cho"
-    reminders |o--o{ notifications : "sinh ra"
+    service_types |o--o{ diagnoses : "được gợi ý"
 
-    users {
-        INT user_id PK
-        VARCHAR full_name
-        VARCHAR email UK
-        VARCHAR password_hash
-        VARCHAR phone
-        ENUM role "USER | ADMIN"
-        BOOLEAN is_active
-        BOOLEAN email_reminder_enabled
-        DATETIME created_at
-        DATETIME updated_at
+    service_types {
+        bigint id PK
+        text name UK
+        text description
+        text applies_to "MOTORBIKE | CAR | ALL"
+        integer default_interval_km
+        integer default_interval_months
+        boolean is_active
     }
     vehicles {
-        INT vehicle_id PK
-        INT user_id FK
-        VARCHAR name
-        ENUM vehicle_type "MOTORBIKE | CAR | OTHER"
-        VARCHAR brand
-        VARCHAR model
-        SMALLINT manufacture_year
-        VARCHAR license_plate
-        VARCHAR vin
-        INT current_odometer
-        DATE purchase_date
-        VARCHAR image_url
-        BOOLEAN is_archived
-        DATETIME created_at
-        DATETIME updated_at
-    }
-    service_types {
-        INT service_type_id PK
-        VARCHAR name UK
-        VARCHAR description
-        ENUM applies_to "MOTORBIKE | CAR | ALL"
-        INT default_interval_km
-        INT default_interval_months
-        BOOLEAN is_active
-    }
-    garages {
-        INT garage_id PK
-        INT user_id FK
-        VARCHAR name
-        VARCHAR address
-        VARCHAR phone
-        VARCHAR note
-        DATETIME created_at
+        bigint id PK
+        text name
+        text vehicle_type "MOTORBIKE | CAR | OTHER"
+        text brand
+        text model
+        integer manufacture_year
+        text license_plate UK
+        integer current_odometer
+        date purchase_date
+        boolean is_archived
+        timestamptz created_at
     }
     maintenance_records {
-        INT record_id PK
-        INT vehicle_id FK
-        INT garage_id FK "nullable"
-        DATE service_date
-        INT odometer
-        VARCHAR note
-        DATETIME created_at
-        DATETIME updated_at
+        bigint id PK
+        bigint vehicle_id FK
+        date service_date
+        integer odometer
+        text garage_name
+        text note
+        timestamptz created_at
     }
     maintenance_items {
-        INT item_id PK
-        INT record_id FK
-        INT service_type_id FK
-        VARCHAR description
-        DECIMAL quantity
-        DECIMAL unit_price
-        DECIMAL line_total "= quantity x unit_price"
-    }
-    attachments {
-        INT attachment_id PK
-        INT record_id FK
-        VARCHAR file_name
-        VARCHAR file_path
-        VARCHAR mime_type
-        INT file_size_bytes
-        DATETIME uploaded_at
+        bigint id PK
+        bigint record_id FK
+        bigint service_type_id FK
+        text description
+        numeric quantity
+        numeric unit_price
+        numeric line_total "generated"
     }
     reminders {
-        INT reminder_id PK
-        INT vehicle_id FK
-        INT service_type_id FK
-        INT interval_km
-        INT interval_months
-        DATE last_service_date
-        INT last_service_odometer
-        DATE next_due_date
-        INT next_due_odometer
-        INT notify_before_days
-        INT notify_before_km
-        BOOLEAN is_active
-        ENUM last_notified_level "NONE | DUE_SOON | OVERDUE"
-        DATETIME created_at
-        DATETIME updated_at
+        bigint id PK
+        bigint vehicle_id FK
+        bigint service_type_id FK
+        integer interval_km
+        integer interval_months
+        date start_date
+        integer start_odometer
+        integer notify_before_days
+        integer notify_before_km
+        boolean is_active
+        timestamptz created_at
     }
-    notifications {
-        INT notification_id PK
-        INT user_id FK
-        INT reminder_id FK "nullable"
-        ENUM type "DUE_SOON | OVERDUE | SYSTEM"
-        VARCHAR title
-        VARCHAR message
-        BOOLEAN is_read
-        DATETIME created_at
-        DATETIME read_at
+    diagnoses {
+        bigint id PK
+        bigint vehicle_id FK "nullable"
+        text symptom_text
+        text status "OK | FAILED"
+        text ai_suggestion
+        text urgency_level "LOW | MEDIUM | HIGH"
+        bigint suggested_service_type_id FK "nullable"
+        text error_code "NO_KEY | RATE_LIMITED | TIMEOUT | UPSTREAM_ERROR"
+        text model
+        timestamptz created_at
     }
 ```
 
@@ -146,186 +107,165 @@ erDiagram
 
 | Quan hệ | Bản số | Khi xóa bản ghi cha | Lý do |
 |---|---|---|---|
-| users → vehicles | 1 – n | CASCADE | Xe không tồn tại khi không có chủ. Thực tế tài khoản chỉ bị khóa, không xóa (BR-13) |
-| users → garages | 1 – n | CASCADE | Garage là danh sách riêng của từng người |
-| users → notifications | 1 – n | CASCADE | |
-| vehicles → maintenance_records | 1 – n | **RESTRICT** | Xe đã có lịch sử không được xóa hẳn (BR-12) |
-| vehicles → reminders | 1 – n | CASCADE | |
-| garages → maintenance_records | 0..1 – n | SET NULL | Xóa garage không làm mất lịch sử |
-| maintenance_records → maintenance_items | 1 – 1..n | CASCADE | Một lần bảo dưỡng có ít nhất 1 hạng mục (BR-05, kiểm tra ở tầng ứng dụng) |
-| maintenance_records → attachments | 1 – n | CASCADE | Ứng dụng xóa luôn file vật lý |
-| service_types → maintenance_items | 1 – n | **RESTRICT** | Loại dịch vụ đã dùng chỉ được ngừng dùng (BR-14) |
-| service_types → reminders | 1 – n | **RESTRICT** | Như trên |
-| reminders → notifications | 0..1 – n | SET NULL | Xóa nhắc lịch vẫn giữ thông báo cũ |
+| vehicles → maintenance_records | 1 – n | **RESTRICT** | Xe đã có lịch sử không xóa hẳn được, chỉ lưu trữ (BR-09) |
+| vehicles → reminders | 1 – n | CASCADE | Nhắc lịch không có ý nghĩa khi không còn xe |
+| vehicles → diagnoses | 0..1 – n | SET NULL | Giữ lịch sử chẩn đoán |
+| maintenance_records → maintenance_items | 1 – 1..n | CASCADE | Xóa lần bảo dưỡng thì xóa luôn hạng mục. "Ít nhất 1 hạng mục" kiểm tra ở app (BR-04) |
+| service_types → maintenance_items, reminders | 1 – n | **RESTRICT** | Loại dịch vụ đã dùng chỉ được ngừng dùng (BR-09) |
+| service_types → diagnoses | 0..1 – n | SET NULL | |
 
 ## 4. Từ điển dữ liệu
 
-Quy ước chung: khóa chính `INT AUTO_INCREMENT`; tiền tính bằng VNĐ; `created_at`/`updated_at` do database tự điền.
+Quy ước theo starter của môn: khóa chính `id bigint GENERATED ALWAYS AS IDENTITY`, khóa ngoại `<bảng>_id`, thời gian `timestamptz` (Supabase lưu UTC), tiền VNĐ dạng `numeric` (không dùng `float` để tránh sai số). Giá trị liệt kê dùng `text` + `CHECK ... IN (...)` thay vì `CREATE TYPE`, vì `CREATE TYPE` không có `IF NOT EXISTS` nên script sẽ không chạy lại được.
 
-### 4.1. `users`
+### 4.1. `service_types`
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
-| user_id | INT | PK | |
-| full_name | VARCHAR(100) | NOT NULL | Họ tên |
-| email | VARCHAR(255) | NOT NULL, UNIQUE | Email đăng nhập (BR-01) |
-| password_hash | VARCHAR(255) | NOT NULL | Mật khẩu đã băm bcrypt (NFR-01) |
-| phone | VARCHAR(20) | NULL | |
-| role | ENUM('USER','ADMIN') | NOT NULL, mặc định 'USER' | Phân quyền |
-| is_active | BOOLEAN | NOT NULL, mặc định TRUE | FALSE = bị khóa (BR-13) |
-| email_reminder_enabled | BOOLEAN | NOT NULL, mặc định FALSE | Bật gửi email nhắc lịch (FR-23) |
-| created_at, updated_at | DATETIME | NOT NULL | |
+| id | bigint | PK, identity | |
+| name | text | NOT NULL, UNIQUE, 1–100 ký tự | Ví dụ "Thay nhớt máy (xe máy)" |
+| description | text | | |
+| applies_to | text | NOT NULL, mặc định 'ALL', ∈ {MOTORBIKE, CAR, ALL} | Loại xe áp dụng |
+| default_interval_km | integer | > 0, có thể NULL | Chu kỳ khuyến nghị (km) |
+| default_interval_months | integer | > 0, có thể NULL | Chu kỳ khuyến nghị (tháng) |
+| is_active | boolean | NOT NULL, mặc định true | false = ngừng dùng |
 
 ### 4.2. `vehicles`
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
-| vehicle_id | INT | PK | |
-| user_id | INT | FK → users, NOT NULL | Chủ xe |
-| name | VARCHAR(100) | NOT NULL | Tên gợi nhớ, ví dụ "Vision đi làm" |
-| vehicle_type | ENUM('MOTORBIKE','CAR','OTHER') | NOT NULL | |
-| brand | VARCHAR(50) | NULL | Hãng: Honda, Toyota... |
-| model | VARCHAR(50) | NULL | Dòng xe: Vision, Vios... |
-| manufacture_year | SMALLINT | NULL, CHECK 1950–2100 | |
-| license_plate | VARCHAR(20) | NULL, UNIQUE(user_id, license_plate) | Biển số (BR-02) |
-| vin | VARCHAR(30) | NULL | Số khung |
-| current_odometer | INT | NOT NULL, mặc định 0, CHECK ≥ 0 | ODO hiện tại (BR-03) |
-| purchase_date | DATE | NULL | |
-| image_url | VARCHAR(500) | NULL | Đường dẫn ảnh xe |
-| is_archived | BOOLEAN | NOT NULL, mặc định FALSE | Xe đã bán/lưu trữ (FR-10) |
-| created_at, updated_at | DATETIME | NOT NULL | |
+| id | bigint | PK | |
+| name | text | NOT NULL, 1–100 ký tự | Tên gợi nhớ, ví dụ "Vision đi làm" |
+| vehicle_type | text | NOT NULL, ∈ {MOTORBIKE, CAR, OTHER} | |
+| brand, model | text | | Hãng, dòng xe |
+| manufacture_year | integer | 1950–2100 | |
+| license_plate | text | UNIQUE, có thể NULL | BR-01 |
+| current_odometer | integer | NOT NULL, mặc định 0, ≥ 0 | ODO hiện tại (BR-02) |
+| purchase_date | date | | |
+| is_archived | boolean | NOT NULL, mặc định false | Xe đã bán / lưu trữ |
+| created_at | timestamptz | NOT NULL, mặc định now() | |
 
-### 4.3. `service_types`
+### 4.3. `maintenance_records`
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
-| service_type_id | INT | PK | |
-| name | VARCHAR(100) | NOT NULL, UNIQUE | Ví dụ "Thay nhớt máy (xe máy)" |
-| description | VARCHAR(255) | NULL | |
-| applies_to | ENUM('MOTORBIKE','CAR','ALL') | NOT NULL, mặc định 'ALL' | Loại xe áp dụng |
-| default_interval_km | INT | NULL, CHECK > 0 | Chu kỳ khuyến nghị theo km |
-| default_interval_months | INT | NULL, CHECK > 0 | Chu kỳ khuyến nghị theo tháng |
-| is_active | BOOLEAN | NOT NULL, mặc định TRUE | FALSE = ngừng dùng (BR-14) |
+| id | bigint | PK | |
+| vehicle_id | bigint | FK → vehicles, NOT NULL | |
+| service_date | date | NOT NULL | Không ở tương lai (BR-03, kiểm tra ở app) |
+| odometer | integer | NOT NULL, ≥ 0 | ODO lúc bảo dưỡng |
+| garage_name | text | | Nơi làm (text tự do, không tách bảng cho gọn) |
+| note | text | | |
+| created_at | timestamptz | NOT NULL | |
+| | | UNIQUE (vehicle_id, service_date, odometer) | Chống nhập trùng (BR-04) |
 
-### 4.4. `garages`
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|---|---|---|---|
-| garage_id | INT | PK | |
-| user_id | INT | FK → users, NOT NULL | Người lưu |
-| name | VARCHAR(100) | NOT NULL | |
-| address | VARCHAR(255) | NULL | |
-| phone | VARCHAR(20) | NULL | |
-| note | VARCHAR(255) | NULL | |
-| created_at | DATETIME | NOT NULL | |
-
-### 4.5. `maintenance_records`
+### 4.4. `maintenance_items`
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
-| record_id | INT | PK | |
-| vehicle_id | INT | FK → vehicles, NOT NULL | |
-| garage_id | INT | FK → garages, NULL | Nơi làm |
-| service_date | DATE | NOT NULL | Không ở tương lai (BR-04, kiểm tra ở ứng dụng) |
-| odometer | INT | NOT NULL, CHECK ≥ 0 | ODO lúc bảo dưỡng |
-| note | VARCHAR(500) | NULL | |
-| created_at, updated_at | DATETIME | NOT NULL | |
+| id | bigint | PK | |
+| record_id | bigint | FK → maintenance_records, NOT NULL | |
+| service_type_id | bigint | FK → service_types, NOT NULL | |
+| description | text | | Ví dụ "Nhớt Castrol 0.8L" |
+| quantity | numeric(8,2) | NOT NULL, mặc định 1, > 0 | |
+| unit_price | numeric(12,0) | NOT NULL, mặc định 0, ≥ 0 | Đơn giá VNĐ |
+| line_total | numeric(14,0) | `GENERATED ALWAYS AS (round(quantity * unit_price)) STORED` | Thành tiền, database tự tính (BR-05) |
 
-Tổng chi phí **không lưu** trong bảng này mà tính từ `maintenance_items` qua view `v_record_totals`, để không bao giờ lệch với các hạng mục (BR-06).
-
-### 4.6. `maintenance_items`
+### 4.5. `reminders`
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
-| item_id | INT | PK | |
-| record_id | INT | FK → maintenance_records, NOT NULL | |
-| service_type_id | INT | FK → service_types, NOT NULL | |
-| description | VARCHAR(255) | NULL | Ví dụ "Nhớt Castrol 0.8L" |
-| quantity | DECIMAL(8,2) | NOT NULL, mặc định 1, CHECK > 0 | |
-| unit_price | DECIMAL(12,0) | NOT NULL, mặc định 0, CHECK ≥ 0 | Đơn giá (VNĐ) |
-| line_total | DECIMAL(14,0) | Cột sinh tự động = ROUND(quantity × unit_price) | Thành tiền (BR-06) |
+| id | bigint | PK | |
+| vehicle_id | bigint | FK → vehicles, NOT NULL | |
+| service_type_id | bigint | FK → service_types, NOT NULL | |
+| interval_km | integer | > 0, có thể NULL | |
+| interval_months | integer | > 0, có thể NULL | Phải có ít nhất 1 trong 2 cột (BR-06) |
+| start_date | date | NOT NULL, mặc định hôm nay | Mốc gốc khi chưa có lần làm nào (BR-07) |
+| start_odometer | integer | NOT NULL, mặc định 0 | App điền bằng ODO hiện tại của xe |
+| notify_before_days | integer | NOT NULL, mặc định 7 | Ngưỡng "sắp đến hạn" (BR-08) |
+| notify_before_km | integer | NOT NULL, mặc định 300 | |
+| is_active | boolean | NOT NULL, mặc định true | false = tạm dừng |
+| created_at | timestamptz | NOT NULL | |
+| | | UNIQUE (vehicle_id, service_type_id) | BR-06 |
 
-### 4.7. `attachments`
+**Không lưu mốc đến hạn.** View `v_reminder_status` tự tìm lần bảo dưỡng gần nhất cùng loại dịch vụ rồi tính mốc mỗi khi đọc. Nhờ vậy:
+- ghi nhận, sửa hay xóa lần bảo dưỡng thì nhắc lịch luôn đúng mà app không phải cập nhật gì (FR-15);
+- không cần tác vụ chạy ngầm hằng ngày. Render free sleep sau ~15 phút không dùng nên cron trong container không chạy được.
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|---|---|---|---|
-| attachment_id | INT | PK | |
-| record_id | INT | FK → maintenance_records, NOT NULL | |
-| file_name | VARCHAR(255) | NOT NULL | Tên file gốc |
-| file_path | VARCHAR(500) | NOT NULL | Đường dẫn lưu trên server |
-| mime_type | VARCHAR(50) | NOT NULL | image/jpeg, image/png, application/pdf |
-| file_size_bytes | INT | NOT NULL, CHECK 1 – 5.242.880 | Tối đa 5 MB (NFR-08) |
-| uploaded_at | DATETIME | NOT NULL | |
-
-### 4.8. `reminders`
+### 4.6. `diagnoses`
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
-| reminder_id | INT | PK | |
-| vehicle_id | INT | FK → vehicles, NOT NULL | |
-| service_type_id | INT | FK → service_types, NOT NULL, UNIQUE(vehicle_id, service_type_id) | BR-11 |
-| interval_km | INT | NULL, CHECK > 0 | Chu kỳ km |
-| interval_months | INT | NULL, CHECK > 0 | Chu kỳ tháng. Phải có ít nhất 1 trong 2 cột (BR-07) |
-| last_service_date | DATE | NOT NULL | Mốc gốc để tính hạn (BR-08) |
-| last_service_odometer | INT | NOT NULL | |
-| next_due_date | DATE | NULL | = last_service_date + interval_months |
-| next_due_odometer | INT | NULL | = last_service_odometer + interval_km |
-| notify_before_days | INT | NOT NULL, mặc định 7 | Ngưỡng "sắp đến hạn" (BR-09) |
-| notify_before_km | INT | NOT NULL, mặc định 300 | |
-| is_active | BOOLEAN | NOT NULL, mặc định TRUE | FALSE = tạm dừng |
-| last_notified_level | ENUM('NONE','DUE_SOON','OVERDUE') | NOT NULL, mặc định 'NONE' | Mức đã thông báo, chống lặp (BR-10). Đặt về NONE khi mốc được tính lại |
-| created_at, updated_at | DATETIME | NOT NULL | |
+| id | bigint | PK | |
+| vehicle_id | bigint | FK → vehicles, có thể NULL | Xe được hỏi (không bắt buộc) |
+| symptom_text | text | NOT NULL, 10–1.000 ký tự | Triệu chứng người dùng nhập |
+| status | text | NOT NULL, ∈ {OK, FAILED} | |
+| ai_suggestion | text | Bắt buộc khi OK | Gợi ý từ Gemini |
+| urgency_level | text | ∈ {LOW, MEDIUM, HIGH} | |
+| suggested_service_type_id | bigint | FK → service_types, có thể NULL | Hạng mục nên kiểm tra (dùng cho FR-22) |
+| error_code | text | Bắt buộc khi FAILED, ∈ {NO_KEY, RATE_LIMITED, TIMEOUT, UPSTREAM_ERROR} | Xem bảng BR-10 ở tài liệu 01 |
+| model | text | | Tên model Gemini đã gọi |
+| created_at | timestamptz | NOT NULL | |
 
-`next_due_date` và `next_due_odometer` do tầng ứng dụng tính và lưu lại mỗi khi tạo/sửa nhắc lịch hoặc ghi nhận bảo dưỡng (FR-20), giúp truy vấn tìm nhắc lịch đến hạn chạy nhanh nhờ index.
-
-### 4.9. `notifications`
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|---|---|---|---|
-| notification_id | INT | PK | |
-| user_id | INT | FK → users, NOT NULL | |
-| reminder_id | INT | FK → reminders, NULL | |
-| type | ENUM('DUE_SOON','OVERDUE','SYSTEM') | NOT NULL | |
-| title | VARCHAR(150) | NOT NULL | |
-| message | VARCHAR(500) | NOT NULL | |
-| is_read | BOOLEAN | NOT NULL, mặc định FALSE | |
-| created_at | DATETIME | NOT NULL | |
-| read_at | DATETIME | NULL | |
+Ràng buộc kiểm tra: `OK` thì phải có `ai_suggestion` và không có `error_code`; `FAILED` thì phải có `error_code`. Số lần `RATE_LIMITED` trong bảng này là số liệu thật để đưa vào mục "AI API integration" của report.
 
 ## 5. View
 
 | View | Mục đích |
 |---|---|
-| `v_record_totals` | Mỗi lần bảo dưỡng kèm `total_cost` và `item_count`, dùng cho danh sách lịch sử, dashboard, thống kê |
-| `v_reminder_status` | Mỗi nhắc lịch kèm ODO hiện tại của xe, số ngày/km còn lại và trạng thái `OK` / `DUE_SOON` / `OVERDUE` tính theo BR-09 |
+| `v_record_totals` | Mỗi lần bảo dưỡng kèm `item_count` và `total_cost`. Dùng cho lịch sử, Dashboard, thống kê |
+| `v_reminder_status` | Mỗi nhắc lịch kèm mốc gốc, `next_due_date`, `next_due_odometer`, `days_left`, `km_left` và `status` ∈ {OK, DUE_SOON, OVERDUE} |
+
+Cả hai view tạo với `WITH (security_invoker = true)`. Mặc định, view trong PostgreSQL chạy với quyền của chủ view, nên REST API tự động của Supabase có thể đọc dữ liệu qua view dù bảng đã bật RLS. Với `security_invoker`, người gọi qua REST API (role `anon`) không thấy dòng nào; app kết nối bằng chủ bảng nên vẫn đọc bình thường. Điều này đã được kiểm tra bằng một role không phải chủ bảng: đọc qua view được 0 dòng.
 
 ## 6. Index
 
-Ngoài khóa chính, khóa ngoại (MySQL tự tạo index) và các ràng buộc UNIQUE:
+Ngoài khóa chính và các ràng buộc UNIQUE (PostgreSQL tự tạo index):
 
 | Index | Phục vụ |
 |---|---|
-| `maintenance_records(vehicle_id, service_date)` | Lịch sử bảo dưỡng của xe, sắp xếp theo ngày (FR-12) |
-| `reminders(is_active, next_due_date)` | Tiến trình nhắc lịch quét theo ngày (FR-21) |
-| `notifications(user_id, is_read, created_at)` | Đếm/hiển thị thông báo chưa đọc (FR-22) |
-| `vehicles(user_id, is_archived)` | Danh sách xe đang dùng (FR-06) |
+| `maintenance_records (vehicle_id, service_date DESC)` | Lịch sử bảo dưỡng của xe; tìm lần làm gần nhất trong `v_reminder_status` |
+| `maintenance_items (record_id)` | Lấy hạng mục của một lần bảo dưỡng, tính tổng chi phí |
+| `maintenance_items (service_type_id)` | Thống kê theo loại dịch vụ; tìm lần làm gần nhất cùng loại |
+| `diagnoses (created_at DESC)` | Lịch sử chẩn đoán mới nhất |
+
+PostgreSQL không tự tạo index cho cột khóa ngoại (khác MySQL), nên hai index trên `maintenance_items` phải tạo tay.
 
 ## 7. Chuẩn hóa
 
-Lược đồ đạt **dạng chuẩn 3 (3NF)**:
-- Mọi cột đều nguyên tố (1NF); các hạng mục của một lần bảo dưỡng tách ra bảng `maintenance_items` thay vì lưu chung một cột.
-- Khóa chính đều là khóa đơn nên không có phụ thuộc bộ phận (2NF).
-- Không có phụ thuộc bắc cầu (3NF): chủ xe chỉ lưu ở `vehicles`, không lặp lại ở `maintenance_records`; tổng chi phí không lưu mà tính qua view.
+Lược đồ đạt **3NF**:
+- Cột nguyên tố; các hạng mục tách bảng riêng thay vì gộp trong một cột (1NF).
+- Khóa chính là khóa đơn, không có phụ thuộc bộ phận (2NF).
+- Không có phụ thuộc bắc cầu; tổng chi phí và mốc đến hạn không lưu mà tính qua view (3NF).
 
-Hai chỗ phi chuẩn hóa có chủ đích, đều do ứng dụng tự cập nhật:
-- `vehicles.current_odometer`: lưu để hiển thị nhanh, cập nhật khi người dùng nhập ODO mới hoặc ghi nhận bảo dưỡng (BR-03).
-- `reminders.next_due_date`, `next_due_odometer`: lưu để quét nhắc lịch nhanh (xem 4.8).
+Chỗ phi chuẩn hóa có chủ đích duy nhất là `vehicles.current_odometer`. Cột này được lưu để hiển thị nhanh và được cập nhật trong cùng transaction khi ghi nhận bảo dưỡng có ODO lớn hơn (BR-02).
 
-## 8. Cách chạy
+## 8. Kết nối từ ứng dụng (áp dụng Week 4 và Week 7)
+
+| Môi trường | `DATABASE_URL` lấy từ đâu | Host |
+|---|---|---|
+| Local (Compose) | `compose.yml` ghép từ `DB_PASSWORD` trong `.env` | `db` (tên service, **không phải** `localhost`) |
+| Production (Render) | Render → Environment, giá trị là **Transaction pooler** của Supabase (cổng `6543`) | `*.pooler.supabase.com` |
+| CI (GitHub Actions) | Giá trị giả trong `tests/conftest.py`, test không mở kết nối | |
+
+App dùng `psycopg_pool.ConnectionPool` (đã làm ở nhánh `week7-pool`): `max_size=5`, kiểm tra kết nối trước khi cho mượn (pre-ping), thay kết nối sau 5 phút, `prepare_threshold=None` vì pooler cổng 6543 không hỗ trợ prepared statement, `connect_timeout=5`. Khi Supabase pause hoặc mất mạng: `/health/db` trả 503 sau tối đa 5 giây, `/health` vẫn 200, và app tự phục hồi khi DB có lại mà không cần redeploy.
+
+## 9. Cách chạy
+
+**Local bằng Compose:** copy `schema.sql` và `seed.sql` vào `team01/db/`. `compose.yml` đã mount 2 file này vào `/docker-entrypoint-initdb.d/`. Sau đó chạy:
 
 ```bash
-mysql -u root -p < schema.sql
-mysql -u root -p vehicle_maintenance < seed.sql
+podman compose down -v
+```
+```bash
+podman compose up --build
 ```
 
-Hoặc mở hai file trong MySQL Workbench và chạy lần lượt `schema.sql` rồi `seed.sql`.
+(`down -v` xóa volume cũ để Postgres chạy lại script khởi tạo.)
+
+**Supabase:** vào SQL Editor, dán `schema.sql` rồi Run, dán `seed.sql` rồi Run. Kiểm tra bằng `SELECT count(*) FROM vehicles;` → 3. Chạy lại cả hai lần nữa thì vẫn ra 3. Trong Table Editor, không bảng nào có nhãn đỏ "RLS disabled".
+
+**Đã kiểm tra** trên `postgres:16-alpine`:
+- Chạy `schema.sql` + `seed.sql` hai lần liên tiếp không lỗi; số dòng giữ nguyên (12 / 3 / 6 / 14 / 5 / 2).
+- Ghi nhận thay nhớt mới thì nhắc lịch tự chuyển từ OVERDUE sang OK với mốc mới.
+- Các ràng buộc BR-01, BR-04, BR-06, BR-09 chặn đúng dữ liệu sai.
+- Role không phải chủ bảng đọc qua view được 0 dòng.

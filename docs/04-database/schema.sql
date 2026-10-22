@@ -1,255 +1,197 @@
--- =============================================================
--- Vehicle Maintenance Log - Database schema
--- Hệ quản trị: MySQL 8.0+
--- Người phụ trách: Giang (bước 04 - ERD & Database Design)
--- =============================================================
-
-DROP DATABASE IF EXISTS vehicle_maintenance;
-CREATE DATABASE vehicle_maintenance
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-USE vehicle_maintenance;
+-- db/schema.sql -- the whole schema of Vehicle Maintenance Log. Safe to run more than once.
+-- PostgreSQL 16: chạy bởi Compose ở lần khởi động đầu (Week 4) và trong Supabase SQL Editor (Week 7).
+-- Người phụ trách: Kiều Bảo Giang (bước 04 - ERD & Database Design)
 
 -- -------------------------------------------------------------
--- Tài khoản (FR-01 -> FR-04, FR-27)
+-- Danh mục loại dịch vụ (FR-11, FR-12)
 -- -------------------------------------------------------------
-CREATE TABLE users (
-    user_id                 INT             NOT NULL AUTO_INCREMENT,
-    full_name               VARCHAR(100)    NOT NULL,
-    email                   VARCHAR(255)    NOT NULL,
-    password_hash           VARCHAR(255)    NOT NULL,
-    phone                   VARCHAR(20)     NULL,
-    role                    ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
-    is_active               BOOLEAN         NOT NULL DEFAULT TRUE,
-    email_reminder_enabled  BOOLEAN         NOT NULL DEFAULT FALSE,
-    created_at              DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id),
-    CONSTRAINT uq_users_email UNIQUE (email)                          -- BR-01
-) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS service_types (
+  id                      bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name                    text NOT NULL UNIQUE CHECK (length(name) BETWEEN 1 AND 100),
+  description             text,
+  applies_to              text NOT NULL DEFAULT 'ALL' CHECK (applies_to IN ('MOTORBIKE', 'CAR', 'ALL')),
+  default_interval_km     integer CHECK (default_interval_km > 0),
+  default_interval_months integer CHECK (default_interval_months > 0),
+  is_active               boolean NOT NULL DEFAULT true          -- BR-09: ngừng dùng thay vì xóa
+);
 
 -- -------------------------------------------------------------
--- Xe (FR-05 -> FR-10)
+-- Xe (FR-01 -> FR-05)
 -- -------------------------------------------------------------
-CREATE TABLE vehicles (
-    vehicle_id          INT             NOT NULL AUTO_INCREMENT,
-    user_id             INT             NOT NULL,
-    name                VARCHAR(100)    NOT NULL,
-    vehicle_type        ENUM('MOTORBIKE', 'CAR', 'OTHER') NOT NULL,
-    brand               VARCHAR(50)     NULL,
-    model               VARCHAR(50)     NULL,
-    manufacture_year    SMALLINT        NULL,
-    license_plate       VARCHAR(20)     NULL,
-    vin                 VARCHAR(30)     NULL,
-    current_odometer    INT             NOT NULL DEFAULT 0,
-    purchase_date       DATE            NULL,
-    image_url           VARCHAR(500)    NULL,
-    is_archived         BOOLEAN         NOT NULL DEFAULT FALSE,
-    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (vehicle_id),
-    CONSTRAINT fk_vehicles_user FOREIGN KEY (user_id)
-        REFERENCES users (user_id) ON DELETE CASCADE,
-    CONSTRAINT uq_vehicles_user_plate UNIQUE (user_id, license_plate), -- BR-02 (NULL được phép trùng)
-    CONSTRAINT ck_vehicles_year CHECK (manufacture_year IS NULL OR manufacture_year BETWEEN 1950 AND 2100),
-    CONSTRAINT ck_vehicles_odometer CHECK (current_odometer >= 0),
-    INDEX ix_vehicles_user_archived (user_id, is_archived)
-) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS vehicles (
+  id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name             text NOT NULL CHECK (length(name) BETWEEN 1 AND 100),
+  vehicle_type     text NOT NULL CHECK (vehicle_type IN ('MOTORBIKE', 'CAR', 'OTHER')),
+  brand            text,
+  model            text,
+  manufacture_year integer CHECK (manufacture_year BETWEEN 1950 AND 2100),
+  license_plate    text UNIQUE,                                  -- BR-01 (NULL được phép trùng)
+  current_odometer integer NOT NULL DEFAULT 0 CHECK (current_odometer >= 0),
+  purchase_date    date,
+  is_archived      boolean NOT NULL DEFAULT false,
+  created_at       timestamptz NOT NULL DEFAULT now()
+);
 
 -- -------------------------------------------------------------
--- Danh mục loại dịch vụ (FR-26)
+-- Lần bảo dưỡng (FR-06 -> FR-09)
 -- -------------------------------------------------------------
-CREATE TABLE service_types (
-    service_type_id         INT             NOT NULL AUTO_INCREMENT,
-    name                    VARCHAR(100)    NOT NULL,
-    description             VARCHAR(255)    NULL,
-    applies_to              ENUM('MOTORBIKE', 'CAR', 'ALL') NOT NULL DEFAULT 'ALL',
-    default_interval_km     INT             NULL,
-    default_interval_months INT             NULL,
-    is_active               BOOLEAN         NOT NULL DEFAULT TRUE,    -- BR-14
-    PRIMARY KEY (service_type_id),
-    CONSTRAINT uq_service_types_name UNIQUE (name),
-    CONSTRAINT ck_service_types_km CHECK (default_interval_km IS NULL OR default_interval_km > 0),
-    CONSTRAINT ck_service_types_months CHECK (default_interval_months IS NULL OR default_interval_months > 0)
-) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS maintenance_records (
+  id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  vehicle_id   bigint NOT NULL REFERENCES vehicles (id) ON DELETE RESTRICT, -- BR-09
+  service_date date NOT NULL,                                    -- BR-03 kiểm tra ở app
+  odometer     integer NOT NULL CHECK (odometer >= 0),
+  garage_name  text,
+  note         text,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (vehicle_id, service_date, odometer)                    -- BR-04: chống nhập trùng
+);
+
+CREATE INDEX IF NOT EXISTS maintenance_records_vehicle_date_idx
+  ON maintenance_records (vehicle_id, service_date DESC);
 
 -- -------------------------------------------------------------
--- Garage hay dùng (FR-16)
+-- Hạng mục trong lần bảo dưỡng (FR-06, FR-08)
 -- -------------------------------------------------------------
-CREATE TABLE garages (
-    garage_id   INT             NOT NULL AUTO_INCREMENT,
-    user_id     INT             NOT NULL,
-    name        VARCHAR(100)    NOT NULL,
-    address     VARCHAR(255)    NULL,
-    phone       VARCHAR(20)     NULL,
-    note        VARCHAR(255)    NULL,
-    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (garage_id),
-    CONSTRAINT fk_garages_user FOREIGN KEY (user_id)
-        REFERENCES users (user_id) ON DELETE CASCADE
-) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS maintenance_items (
+  id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  record_id       bigint NOT NULL REFERENCES maintenance_records (id) ON DELETE CASCADE,
+  service_type_id bigint NOT NULL REFERENCES service_types (id) ON DELETE RESTRICT, -- BR-09
+  description     text,
+  quantity        numeric(8, 2) NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  unit_price      numeric(12, 0) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
+  line_total      numeric(14, 0) GENERATED ALWAYS AS (round(quantity * unit_price)) STORED -- BR-05
+);
+
+CREATE INDEX IF NOT EXISTS maintenance_items_record_idx ON maintenance_items (record_id);
+CREATE INDEX IF NOT EXISTS maintenance_items_service_type_idx ON maintenance_items (service_type_id);
 
 -- -------------------------------------------------------------
--- Lần bảo dưỡng (FR-11 -> FR-14)
+-- Nhắc lịch (FR-13 -> FR-15)
+-- start_date / start_odometer: mốc gốc khi xe chưa có lần bảo dưỡng nào cùng loại (BR-07)
 -- -------------------------------------------------------------
-CREATE TABLE maintenance_records (
-    record_id       INT             NOT NULL AUTO_INCREMENT,
-    vehicle_id      INT             NOT NULL,
-    garage_id       INT             NULL,
-    service_date    DATE            NOT NULL,                         -- BR-04 kiểm tra ở tầng ứng dụng
-    odometer        INT             NOT NULL,
-    note            VARCHAR(500)    NULL,
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (record_id),
-    CONSTRAINT fk_records_vehicle FOREIGN KEY (vehicle_id)
-        REFERENCES vehicles (vehicle_id) ON DELETE RESTRICT,          -- BR-12
-    CONSTRAINT fk_records_garage FOREIGN KEY (garage_id)
-        REFERENCES garages (garage_id) ON DELETE SET NULL,
-    CONSTRAINT ck_records_odometer CHECK (odometer >= 0),
-    INDEX ix_records_vehicle_date (vehicle_id, service_date)
-) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS reminders (
+  id                 bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  vehicle_id         bigint NOT NULL REFERENCES vehicles (id) ON DELETE CASCADE,
+  service_type_id    bigint NOT NULL REFERENCES service_types (id) ON DELETE RESTRICT,
+  interval_km        integer CHECK (interval_km > 0),
+  interval_months    integer CHECK (interval_months > 0),
+  start_date         date NOT NULL DEFAULT current_date,
+  start_odometer     integer NOT NULL DEFAULT 0 CHECK (start_odometer >= 0),
+  notify_before_days integer NOT NULL DEFAULT 7 CHECK (notify_before_days >= 0),
+  notify_before_km   integer NOT NULL DEFAULT 300 CHECK (notify_before_km >= 0),
+  is_active          boolean NOT NULL DEFAULT true,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (vehicle_id, service_type_id),                          -- BR-06
+  CHECK (interval_km IS NOT NULL OR interval_months IS NOT NULL) -- BR-06
+);
 
 -- -------------------------------------------------------------
--- Hạng mục trong lần bảo dưỡng (FR-11, FR-13)
+-- Lịch sử chẩn đoán AI (FR-18 -> FR-21)
+-- Lưu cả lần gọi lỗi: bằng chứng cho mục "AI API integration" của report
 -- -------------------------------------------------------------
-CREATE TABLE maintenance_items (
-    item_id         INT             NOT NULL AUTO_INCREMENT,
-    record_id       INT             NOT NULL,
-    service_type_id INT             NOT NULL,
-    description     VARCHAR(255)    NULL,
-    quantity        DECIMAL(8, 2)   NOT NULL DEFAULT 1,
-    unit_price      DECIMAL(12, 0)  NOT NULL DEFAULT 0,
-    line_total      DECIMAL(14, 0)  AS (ROUND(quantity * unit_price)) STORED, -- BR-06
-    PRIMARY KEY (item_id),
-    CONSTRAINT fk_items_record FOREIGN KEY (record_id)
-        REFERENCES maintenance_records (record_id) ON DELETE CASCADE,
-    CONSTRAINT fk_items_service_type FOREIGN KEY (service_type_id)
-        REFERENCES service_types (service_type_id) ON DELETE RESTRICT, -- BR-14
-    CONSTRAINT ck_items_quantity CHECK (quantity > 0),
-    CONSTRAINT ck_items_unit_price CHECK (unit_price >= 0)
-) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS diagnoses (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  vehicle_id    bigint REFERENCES vehicles (id) ON DELETE SET NULL,
+  symptom_text  text NOT NULL CHECK (length(symptom_text) BETWEEN 10 AND 1000),
+  status        text NOT NULL CHECK (status IN ('OK', 'FAILED')),
+  ai_suggestion text,
+  urgency_level text CHECK (urgency_level IN ('LOW', 'MEDIUM', 'HIGH')),
+  suggested_service_type_id bigint REFERENCES service_types (id) ON DELETE SET NULL,
+  error_code    text CHECK (error_code IN ('NO_KEY', 'RATE_LIMITED', 'TIMEOUT', 'UPSTREAM_ERROR')),
+  model         text,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  CHECK ((status = 'OK' AND ai_suggestion IS NOT NULL AND error_code IS NULL)
+      OR (status = 'FAILED' AND error_code IS NOT NULL))
+);
+
+CREATE INDEX IF NOT EXISTS diagnoses_created_at_idx ON diagnoses (created_at DESC);
 
 -- -------------------------------------------------------------
--- Hóa đơn đính kèm (FR-15)
+-- View: tổng chi phí mỗi lần bảo dưỡng (BR-05)
 -- -------------------------------------------------------------
-CREATE TABLE attachments (
-    attachment_id   INT             NOT NULL AUTO_INCREMENT,
-    record_id       INT             NOT NULL,
-    file_name       VARCHAR(255)    NOT NULL,
-    file_path       VARCHAR(500)    NOT NULL,
-    mime_type       VARCHAR(50)     NOT NULL,
-    file_size_bytes INT             NOT NULL,
-    uploaded_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (attachment_id),
-    CONSTRAINT fk_attachments_record FOREIGN KEY (record_id)
-        REFERENCES maintenance_records (record_id) ON DELETE CASCADE,
-    CONSTRAINT ck_attachments_mime CHECK (mime_type IN ('image/jpeg', 'image/png', 'application/pdf')),
-    CONSTRAINT ck_attachments_size CHECK (file_size_bytes BETWEEN 1 AND 5242880) -- NFR-08
-) ENGINE = InnoDB;
-
--- -------------------------------------------------------------
--- Nhắc lịch (FR-18 -> FR-20)
--- -------------------------------------------------------------
-CREATE TABLE reminders (
-    reminder_id             INT         NOT NULL AUTO_INCREMENT,
-    vehicle_id              INT         NOT NULL,
-    service_type_id         INT         NOT NULL,
-    interval_km             INT         NULL,
-    interval_months         INT         NULL,
-    last_service_date       DATE        NOT NULL,
-    last_service_odometer   INT         NOT NULL,
-    next_due_date           DATE        NULL,
-    next_due_odometer       INT         NULL,
-    notify_before_days      INT         NOT NULL DEFAULT 7,
-    notify_before_km        INT         NOT NULL DEFAULT 300,
-    is_active               BOOLEAN     NOT NULL DEFAULT TRUE,
-    last_notified_level     ENUM('NONE', 'DUE_SOON', 'OVERDUE') NOT NULL DEFAULT 'NONE', -- BR-10
-    created_at              DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (reminder_id),
-    CONSTRAINT fk_reminders_vehicle FOREIGN KEY (vehicle_id)
-        REFERENCES vehicles (vehicle_id) ON DELETE CASCADE,
-    CONSTRAINT fk_reminders_service_type FOREIGN KEY (service_type_id)
-        REFERENCES service_types (service_type_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_reminders_vehicle_service UNIQUE (vehicle_id, service_type_id), -- BR-11
-    CONSTRAINT ck_reminders_interval CHECK (interval_km IS NOT NULL OR interval_months IS NOT NULL), -- BR-07
-    CONSTRAINT ck_reminders_km CHECK (interval_km IS NULL OR interval_km > 0),
-    CONSTRAINT ck_reminders_months CHECK (interval_months IS NULL OR interval_months > 0),
-    CONSTRAINT ck_reminders_notify CHECK (notify_before_days >= 0 AND notify_before_km >= 0),
-    INDEX ix_reminders_active_due (is_active, next_due_date)
-) ENGINE = InnoDB;
-
--- -------------------------------------------------------------
--- Thông báo (FR-21 -> FR-23)
--- -------------------------------------------------------------
-CREATE TABLE notifications (
-    notification_id INT             NOT NULL AUTO_INCREMENT,
-    user_id         INT             NOT NULL,
-    reminder_id     INT             NULL,
-    type            ENUM('DUE_SOON', 'OVERDUE', 'SYSTEM') NOT NULL,
-    title           VARCHAR(150)    NOT NULL,
-    message         VARCHAR(500)    NOT NULL,
-    is_read         BOOLEAN         NOT NULL DEFAULT FALSE,
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    read_at         DATETIME        NULL,
-    PRIMARY KEY (notification_id),
-    CONSTRAINT fk_notifications_user FOREIGN KEY (user_id)
-        REFERENCES users (user_id) ON DELETE CASCADE,
-    CONSTRAINT fk_notifications_reminder FOREIGN KEY (reminder_id)
-        REFERENCES reminders (reminder_id) ON DELETE SET NULL,
-    INDEX ix_notifications_user_unread (user_id, is_read, created_at)
-) ENGINE = InnoDB;
-
--- -------------------------------------------------------------
--- View: tổng chi phí mỗi lần bảo dưỡng (BR-06)
--- -------------------------------------------------------------
-CREATE VIEW v_record_totals AS
+CREATE OR REPLACE VIEW v_record_totals WITH (security_invoker = true) AS
 SELECT
-    r.record_id,
-    r.vehicle_id,
-    v.user_id,
-    r.garage_id,
-    r.service_date,
-    r.odometer,
-    r.note,
-    COUNT(i.item_id)                AS item_count,
-    COALESCE(SUM(i.line_total), 0)  AS total_cost
+  r.id                                   AS record_id,
+  r.vehicle_id,
+  r.service_date,
+  r.odometer,
+  r.garage_name,
+  r.note,
+  count(i.id)                            AS item_count,
+  coalesce(sum(i.line_total), 0)         AS total_cost
 FROM maintenance_records r
-JOIN vehicles v               ON v.vehicle_id = r.vehicle_id
-LEFT JOIN maintenance_items i ON i.record_id = r.record_id
-GROUP BY r.record_id, r.vehicle_id, v.user_id, r.garage_id, r.service_date, r.odometer, r.note;
+LEFT JOIN maintenance_items i ON i.record_id = r.id
+GROUP BY r.id;
 
 -- -------------------------------------------------------------
--- View: trạng thái nhắc lịch (BR-07, BR-09)
---   OVERDUE  : đã qua mốc ngày hoặc mốc km
---   DUE_SOON : còn <= notify_before_days ngày hoặc <= notify_before_km km
---   OK       : còn lại
+-- View: trạng thái nhắc lịch, tính ngay lúc đọc (BR-06 -> BR-08)
+-- Không cần tác vụ chạy ngầm: Render free sleep nên cron không đáng tin.
 -- -------------------------------------------------------------
-CREATE VIEW v_reminder_status AS
-SELECT
-    rm.reminder_id,
-    rm.vehicle_id,
-    v.user_id,
-    v.name                                  AS vehicle_name,
-    rm.service_type_id,
-    st.name                                 AS service_type_name,
-    rm.interval_km,
-    rm.interval_months,
-    rm.next_due_date,
-    rm.next_due_odometer,
+CREATE OR REPLACE VIEW v_reminder_status WITH (security_invoker = true) AS
+WITH base AS (
+  SELECT
+    rm.*,
+    v.name             AS vehicle_name,
     v.current_odometer,
-    DATEDIFF(rm.next_due_date, CURDATE())   AS days_left,
-    rm.next_due_odometer - v.current_odometer AS km_left,
-    rm.is_active,
-    rm.last_notified_level,
-    CASE
-        WHEN rm.next_due_date <= CURDATE()
-          OR rm.next_due_odometer <= v.current_odometer THEN 'OVERDUE'
-        WHEN DATEDIFF(rm.next_due_date, CURDATE()) <= rm.notify_before_days
-          OR rm.next_due_odometer - v.current_odometer <= rm.notify_before_km THEN 'DUE_SOON'
-        ELSE 'OK'
-    END                                     AS status
-FROM reminders rm
-JOIN vehicles v       ON v.vehicle_id = rm.vehicle_id
-JOIN service_types st ON st.service_type_id = rm.service_type_id;
+    st.name            AS service_type_name,
+    last.service_date  AS last_service_date,
+    last.odometer      AS last_service_odometer
+  FROM reminders rm
+  JOIN vehicles v       ON v.id = rm.vehicle_id
+  JOIN service_types st ON st.id = rm.service_type_id
+  LEFT JOIN LATERAL (                                            -- lần làm gần nhất cùng loại dịch vụ
+    SELECT r.service_date, r.odometer
+    FROM maintenance_records r
+    JOIN maintenance_items i ON i.record_id = r.id
+    WHERE r.vehicle_id = rm.vehicle_id
+      AND i.service_type_id = rm.service_type_id
+    ORDER BY r.service_date DESC, r.odometer DESC
+    LIMIT 1
+  ) last ON true
+), due AS (
+  SELECT
+    base.*,
+    CASE WHEN last_service_date >= start_date THEN last_service_date ELSE start_date END AS base_date,
+    CASE WHEN last_service_date >= start_date THEN last_service_odometer ELSE start_odometer END AS base_odometer
+  FROM base
+), calc AS (
+  SELECT
+    due.*,
+    (base_date + make_interval(months => interval_months))::date AS next_due_date,
+    base_odometer + interval_km                                  AS next_due_odometer
+  FROM due
+)
+SELECT
+  id AS reminder_id,
+  vehicle_id,
+  vehicle_name,
+  service_type_id,
+  service_type_name,
+  interval_km,
+  interval_months,
+  base_date,
+  base_odometer,
+  next_due_date,
+  next_due_odometer,
+  current_odometer,
+  next_due_date - current_date            AS days_left,
+  next_due_odometer - current_odometer    AS km_left,
+  is_active,
+  CASE
+    WHEN next_due_date <= current_date
+      OR next_due_odometer <= current_odometer THEN 'OVERDUE'
+    WHEN next_due_date - current_date <= notify_before_days
+      OR next_due_odometer - current_odometer <= notify_before_km THEN 'DUE_SOON'
+    ELSE 'OK'
+  END                                     AS status
+FROM calc;
+
+-- Supabase publishes an automatic REST API for tables in "public". We do not use it.
+-- RLS on + no policies = that API sees nothing. The app connects as the table
+-- owner, which bypasses RLS, so the app is not affected.
+ALTER TABLE service_types       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vehicles            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maintenance_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maintenance_items   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reminders           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE diagnoses           ENABLE ROW LEVEL SECURITY;
