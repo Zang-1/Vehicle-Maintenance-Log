@@ -15,12 +15,12 @@ Mỗi người có 3 loại việc: **tài liệu thiết kế** (8 bước), **
 | # | Bước | Người làm | Cần có trước | Sản phẩm nộp |
 |---|---|---|---|---|
 | 01 | Requirements | Giang ✅ | – | [`01-requirements/requirements.md`](01-requirements/requirements.md) |
-| 02 | Use Case Diagram | Lâm | 01 | `02-use-case/`: sơ đồ + đặc tả use case chính, ghi mã `FR-xx` |
-| 03 | Activity Diagram | Lâm | 01, 02 | `03-activity/`: ghi nhận bảo dưỡng, tạo nhắc lịch, **chẩn đoán AI (có nhánh lỗi)**, luồng CI/CD |
+| 02 | Use Case Diagram | Lâm ✅ | 01 | `02-use-case/`: sơ đồ + đặc tả use case chính, ghi mã `FR-xx` |
+| 03 | Activity Diagram | Lâm ✅ | 01, 02 | `03-activity/`: ghi nhận bảo dưỡng, tạo nhắc lịch, **chẩn đoán AI (có nhánh lỗi)**, luồng CI/CD |
 | 04 | ERD & Database Design | Giang ✅ | 01 | [`04-database/`](04-database/erd.md): ERD, từ điển dữ liệu, `schema.sql`, `seed.sql` (PostgreSQL, chạy được trên Supabase) |
 | 05 | Wireframe | Khoa | 01, 02 | `05-wireframe/`: 11 màn hình S01–S11 |
 | 06 | UI Design trên Figma | Khoa | 05 | `06-ui-design/`: link Figma, style guide, component, ảnh xuất |
-| 07 | Architecture & Class Diagram | Lâm | 02, 04 | `07-architecture/`: **sơ đồ triển khai khớp thực tế** (Render + Supabase + Gemini + GitHub Actions), class diagram |
+| 07 | Architecture & Class Diagram | Lâm ✅ | 02, 04 | `07-architecture/`: **sơ đồ triển khai khớp thực tế** (Render + Supabase + Gemini + GitHub Actions), class diagram |
 | 08 | Implementation Plan | Giang ✅ | 04, 07 | [`08-implementation-plan/implementation-plan.md`](08-implementation-plan/implementation-plan.md) |
 
 ## 2. Code
@@ -41,14 +41,16 @@ Chi tiết từng module, API và hợp đồng giữa các module: mục 4 củ
 | Lâm | 1 Platform selection · 2 Architecture · 4 CI/CD | Kiến trúc · Một lỗi đã gặp và cách sửa |
 | Khoa | 3 Dockerfile & Compose · 7 Secret (cùng Giang) | Giới thiệu ứng dụng · Nếu làm lại · Clean clone trong demo |
 
-## 4. Lịch theo mốc của Brief
+## 4. Lộ trình theo phase
 
-| Tuần | Giang | Lâm | Khoa |
-|---|---|---|---|
-| **W7** (hiện tại) | Khung FastAPI + `/health`, `/health/db`; Supabase + schema (M1) | 02 Use Case, 03 Activity; workflow CI | 05 Wireframe; Dockerfile + Compose (P2) |
-| **W8** – AI live | M7 Chẩn đoán AI | 07 Architecture; M2 Xe; Render + deploy tự động (P1) | 06 Figma; `base.html` + CSS |
-| **W9** – audit + nháp report | M5 Nhắc lịch; audit secret | M3 Lần bảo dưỡng | M4 Loại dịch vụ; Dashboard, Thống kê |
-| **W10** – tập demo, nộp report | Hoàn thiện report | Nhánh "cố tình đỏ" cho demo | Clean clone trên máy khác; slide |
+| Phase | Thời gian | Giang | Lâm | Khoa |
+|---|---|---|---|---|
+| **1. Thiết kế** ✅ | đến 25/10 | 01 · 04 · 08 ✅ | 02 · 03 · 07 ✅ | 05 · 06: đưa lên repo trước 25/10 |
+| **2. Demo giao diện chạy local** | 26/10 – 1/11 | Khung FastAPI + DB (M0, M1) · Nhắc lịch (M5) · AI chạy local (M7) | Workflow CI + branch protection (P1) · Xe (M2) · Lần bảo dưỡng (M3) | Dockerfile + Compose (P2) · `base.html`, Dashboard (M6) · Loại dịch vụ (M4) |
+| **3. Hoàn thiện** | 2/11 – 8/11 | Supabase · AI trên URL live · audit secret · report mục 5, 6, 7 | Render + deploy tự động · lưu trữ xe, xuất CSV · report mục 1, 2, 4 | Responsive · thống kê chi phí · report mục 3, 7 |
+| **4. Tập demo và nộp** | 9/11 – Session 20 | Report PDF, tập demo có bấm giờ | Nhánh "cố tình đỏ" cho demo | Clean clone trên máy khác · slide |
+
+Mốc kiểm tra: **buổi demo nội bộ 1/11** (chạy local từ clean clone), **8/11** (chạy trên URL live, có bản nháp report). Việc theo từng ngày và điều kiện xong mỗi phase: mục 6 của [Implementation Plan](08-implementation-plan/implementation-plan.md).
 
 ## 5. Quy ước chung
 

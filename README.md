@@ -24,13 +24,24 @@ Chi tiết (report, thuyết trình, lịch theo tuần): [docs/PHAN-CONG.md](do
 | # | Bước | Người làm | Trạng thái |
 |---|---|---|---|
 | 01 | [Requirements](docs/01-requirements/requirements.md) | Giang | ✅ Xong |
-| 02 | [Use Case Diagram](docs/02-use-case/) | Lâm | ✅ Xong (chờ review) |
-| 03 | [Activity Diagram](docs/03-activity/) | Lâm | ✅ Xong (chờ review) |
+| 02 | [Use Case Diagram](docs/02-use-case/) | Lâm | ✅ Xong |
+| 03 | [Activity Diagram](docs/03-activity/) | Lâm | ✅ Xong |
 | 04 | [ERD & Database Design](docs/04-database/erd.md) | Giang | ✅ Xong (đã chạy thử trên PostgreSQL 16) |
 | 05 | [Wireframe](docs/05-wireframe/) | Khoa | ⏳ |
 | 06 | [UI Design trên Figma](docs/06-ui-design/) | Khoa | ⏳ |
-| 07 | [Architecture & Class Diagram](docs/07-architecture/) | Lâm | ✅ Xong (chờ review) |
-| 08 | [Implementation Plan](docs/08-implementation-plan/implementation-plan.md) | Giang | ✅ Xong (cập nhật lại sau khi có 07) |
+| 07 | [Architecture & Class Diagram](docs/07-architecture/) | Lâm | ✅ Xong |
+| 08 | [Implementation Plan](docs/08-implementation-plan/implementation-plan.md) | Giang | ✅ Xong (đã cập nhật theo 07) |
+
+## Lộ trình
+
+| Phase | Thời gian | Kết quả |
+|---|---|---|
+| 1. Thiết kế | đến 25/10/2026 | 8 tài liệu thiết kế |
+| 2. Demo giao diện chạy local | 26/10 – 1/11 | `podman compose up --build` từ clean clone, dùng được các chức năng chính trên `localhost:3000` |
+| 3. Hoàn thiện | 2/11 – 8/11 | Chạy trên URL HTTPS, nối Supabase, AI chạy live, merge là tự deploy, bản nháp report |
+| 4. Tập demo và nộp | 9/11 – Session 20 | Report PDF, demo đã tập trên máy khác |
+
+Chi tiết theo ngày: mục 6 của [Implementation Plan](docs/08-implementation-plan/implementation-plan.md).
 
 ## Cách đóng góp
 
