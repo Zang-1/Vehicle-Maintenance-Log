@@ -69,6 +69,16 @@ Chờ dòng `Uvicorn running on http://0.0.0.0:8000`, rồi mở http://localhos
 
 Chọn `DB_PASSWORD` trước lần chạy đầu và giữ nguyên: PostgreSQL lưu mật khẩu khi tạo volume, đổi về sau sẽ báo `password authentication failed` cho tới khi `down -v`. Không chạy `down -v` trước buổi demo.
 
+**Nếu `podman compose` báo `failed to connect to the docker API at npipe:////./pipe/podman-machine-default`:** trên Windows, `podman machine start` lúc đó có in dòng `win-sshproxy.exe failed to start`, nên compose không có cổng Docker API. Cách vòng: mở API của Podman qua TCP, chỉ trong máy mình (`127.0.0.1`), rồi trỏ compose vào đó:
+
+```bash
+podman machine ssh "nohup podman system service --time=0 tcp://127.0.0.1:23750 >/tmp/svc.log 2>&1 &"
+export DOCKER_HOST=tcp://localhost:23750
+podman compose up --build
+```
+
+`DOCKER_HOST` chỉ có hiệu lực trong cửa sổ Git Bash đó. Máy không bị lỗi này thì bỏ qua bước trên.
+
 | Endpoint | Trả về |
 |---|---|
 | `GET /` | Tên app, phiên bản, môi trường |
