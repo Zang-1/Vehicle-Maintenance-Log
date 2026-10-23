@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · Vehicle Maintenance Log</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  {# key, href, desktop label, mobile label #}
+  {% set nav = [
+    ("dashboard", "/", "Dashboard", "Trang chủ"),
+    ("xe", "/xe", "Xe của tôi", "Xe"),
+    ("loai-dich-vu", "/loai-dich-vu", "Loại dịch vụ", "Dịch vụ"),
+    ("thong-ke", "/thong-ke", "Thống kê", "Thống kê"),
+    ("chan-doan", "/chan-doan", "Chẩn đoán AI", "AI"),
+  ] %}
+
+  <aside class="sidebar">
+    <a class="brand" href="/">Vehicle<br>Maintenance Log</a>
+    <nav class="side-nav" aria-label="Menu chính">
+      {% for key, href, label, short in nav %}
+        <a href="{{ href }}" {% if key == active %}class="active" aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <p class="sidebar-foot">Bản demo · dữ liệu dùng chung</p>
+  </aside>
+
+  <div class="main">
+    <header class="page-head">
+      <h1>{% block heading %}{% endblock %}</h1>
+      {% block actions %}{% endblock %}
+    </header>
+
+    <div id="error" class="alert alert-bad" role="alert" hidden></div>
+
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="page-foot">{% block screen %}{% endblock %} · v{{ request.app.version }}</footer>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Menu chính">
+    {% for key, href, label, short in nav %}
+      <a href="{{ href }}" {% if key == active %}class="active" aria-current="page"{% endif %}>{{ short }}</a>
+    {% endfor %}
+  </nav>
+
+  <script src="/static/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

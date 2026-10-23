@@ -50,7 +50,7 @@ Vehicle-Maintenance-Log/
 ├── .env.example                  # mọi biến môi trường, không có giá trị bí mật
 ├── requirements.txt · requirements-dev.txt
 ├── db/
-│   ├── schema.sql                # chuyển từ docs/04-database khi bắt đầu code
+│   ├── schema.sql                # tạo bảng, view, RLS (tài liệu 04)
 │   └── seed.sql
 ├── app/
 │   ├── main.py                   # tạo app, lifespan mở/đóng pool, /, /health, /health/db, gắn router
@@ -104,7 +104,7 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 
 | Phương thức & URL | Mô tả | Module |
 |---|---|---|
-| `GET /` · `GET /health` · `GET /health/db` | Thông tin app · sống (không chạm DB) · DB ok/503 | M0, M1 |
+| `GET /` · `GET /api/info` · `GET /health` · `GET /health/db` | Dashboard (HTML) · tên + phiên bản · sống (không chạm DB) · DB ok/503 | M0, M1 |
 | `GET/POST /api/vehicles` · `GET/PUT/DELETE /api/vehicles/{id}` | CRUD xe (DELETE trả 409 nếu xe đã có lịch sử) | M2 |
 | `PATCH /api/vehicles/{id}/archive` | Lưu trữ xe | M2 |
 | `GET/POST /api/vehicles/{id}/records` · `GET/PUT/DELETE /api/records/{id}` | Lịch sử, ghi nhận, chi tiết, sửa, xóa | M3 |

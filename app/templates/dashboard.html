@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block actions %}<a class="btn btn-primary" href="/xe">+ Ghi nhận bảo dưỡng</a>{% endblock %}
+
+{% block content %}
+<section class="stats" aria-label="Tổng quan">
+  <div class="card stat">
+    <p class="stat-label">Số xe đang dùng</p>
+    <p class="stat-value" id="stat-vehicles">–</p>
+  </div>
+  <div class="card stat">
+    <p class="stat-label">Quá hạn</p>
+    <p class="stat-value text-bad" id="stat-overdue">–</p>
+  </div>
+  <div class="card stat">
+    <p class="stat-label">Sắp đến hạn</p>
+    <p class="stat-value text-warn" id="stat-due-soon">–</p>
+  </div>
+  <div class="card stat">
+    <p class="stat-label">Chi phí tháng này</p>
+    <p class="stat-value" id="stat-cost">–</p>
+  </div>
+</section>
+
+<section class="columns">
+  <div class="card">
+    <h2 class="card-title">Nhắc lịch cần chú ý</h2>
+    <ul class="rows" id="attention-list">
+      <li class="row muted">Đang tải…</li>
+    </ul>
+    <a class="card-link" href="/xe">Xem tất cả nhắc lịch →</a>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">5 lần bảo dưỡng gần nhất</h2>
+    <ul class="rows" id="recent-list">
+      <li class="row muted">Đang tải…</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}
+
+{% block screen %}S01 · Dashboard · FR-16{% endblock %}
+
+{% block scripts %}<script src="/static/dashboard.js"></script>{% endblock %}

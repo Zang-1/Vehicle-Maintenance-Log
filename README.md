@@ -46,38 +46,71 @@ Chi tiết theo ngày: mục 6 của [Implementation Plan](docs/08-implementatio
 
 ## Chạy code
 
-Cần Python 3.12 (cùng phiên bản với CI). Chạy trong Git Bash, tại thư mục repo:
+### Cách chính: cả stack bằng một lệnh (Compose)
+
+**Windows, nhanh nhất:** bấm đúp `chay-local.bat`. Script tự bật Podman, tạo `.env` (mật khẩu DB ngẫu nhiên) nếu chưa có, chạy `podman compose up --build -d`, chờ app sẵn sàng rồi mở http://localhost:3000. Bấm đúp `dung-local.bat` để dừng (dữ liệu vẫn giữ).
+
+Hoặc chạy tay:
+
+Cần Podman 4+ có compose provider (`podman compose version` phải in ra phiên bản). Trên Windows, Podman machine phải đang chạy (`podman machine start`). Chạy trong Git Bash:
 
 ```bash
-python -m venv .venv
-source .venv/Scripts/activate        # macOS / Linux: source .venv/bin/activate
-pip install -r requirements-dev.txt
-ruff check . && pytest -q            # giống job check của CI, không cần database
+git clone https://github.com/Zang-1/Vehicle-Maintenance-Log.git
+cd Vehicle-Maintenance-Log
+cp .env.example .env          # mở .env, đặt DB_PASSWORD (chỉ chữ và số), các dòng khác để nguyên
+podman compose up --build
 ```
 
-Chạy server (cần một PostgreSQL đã chạy `db/schema.sql` + `db/seed.sql`):
+Chờ dòng `Uvicorn running on http://0.0.0.0:8000`, rồi mở **http://localhost:3000** để xem giao diện. Kiểm tra database: http://localhost:3000/health/db → `{"db":"ok","vehicles":3}`.
+
+| Việc | Lệnh |
+|---|---|
+| Chạy nền | `podman compose up --build -d` |
+| Trạng thái | `podman compose ps` |
+| Xem log | `podman compose logs web` |
+| Dừng (giữ dữ liệu) | `podman compose down` |
+| Xóa dữ liệu, tạo lại từ `db/schema.sql` + `db/seed.sql` | `podman compose down -v` rồi `podman compose up --build` |
+
+Chọn `DB_PASSWORD` trước lần chạy đầu và giữ nguyên: PostgreSQL lưu mật khẩu khi tạo volume, đổi về sau sẽ báo `password authentication failed` cho tới khi `down -v`. Không chạy `down -v` trước buổi demo.
+
+**Nếu `podman compose` báo `failed to connect to the docker API at npipe:////./pipe/podman-machine-default`:** trên Windows, `podman machine start` lúc đó có in dòng `win-sshproxy.exe failed to start`, nên compose không có cổng Docker API. Cách vòng: mở API của Podman qua TCP, chỉ trong máy mình (`127.0.0.1`), rồi trỏ compose vào đó:
 
 ```bash
-DATABASE_URL=postgresql://app:<mật-khẩu>@localhost:5432/appdb python -m uvicorn app.main:app --port 8000
+podman machine ssh "nohup podman system service --time=0 tcp://127.0.0.1:23750 >/tmp/svc.log 2>&1 &"
+export DOCKER_HOST=tcp://localhost:23750
+podman compose up --build
 ```
+
+`DOCKER_HOST` chỉ có hiệu lực trong cửa sổ Git Bash đó. Máy không bị lỗi này thì bỏ qua bước trên.
 
 | Endpoint | Trả về |
 |---|---|
-| `GET /` | Tên app, phiên bản, môi trường |
+| `GET /` | Giao diện: Dashboard (S01). Các mục menu khác hiện trang "đang xây dựng" cho tới khi module tương ứng xong |
+| `GET /api/info` | Tên app, phiên bản, môi trường (đối chiếu sau mỗi lần deploy) |
+| `GET /api/stats/dashboard` | Số liệu cho Dashboard |
 | `GET /health` | `{"status":"ok"}`, **không** chạm database (Render health check) |
 | `GET /health/db` | `{"db":"ok","vehicles":N}`; mất database thì 503 `{"db":"error"}` sau tối đa 5 giây |
 | `GET /docs` | Tài liệu API tự sinh của FastAPI |
 
-### Chạy bằng container (giống trên Render)
+### Chạy image với Supabase (giống trên Render)
 
 ```bash
 podman build -t vml:dev .
 podman run --rm -p 3000:8000 --env-file .env.cloud vml:dev     # .env.cloud: một dòng DATABASE_URL=<Supabase transaction pooler>
 ```
 
-Mở http://localhost:3000/health/db. File `.env.cloud` nằm trong `.gitignore` và `.dockerignore`, không bao giờ vào repo hay image.
+File `.env.cloud` nằm trong `.gitignore` và `.dockerignore`, không bao giờ vào repo hay image.
 
-Khi có `compose.yml`, cả stack (web + PostgreSQL) sẽ chạy bằng một lệnh `podman compose up --build`.
+### Chạy test (giống job `check` của CI, không cần database)
+
+Cần Python 3.12:
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate        # macOS / Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
+ruff check . && pytest -q
+```
 
 ## Cách đóng góp
 

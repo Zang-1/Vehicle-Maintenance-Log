@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card empty">
+  <p class="empty-title">Màn hình này đang được xây dựng</p>
+  <p class="muted">{{ screens }} · {{ owner }}</p>
+  <a class="btn btn-secondary" href="/">← Về Dashboard</a>
+</div>
+{% endblock %}
+
+{% block screen %}{{ screens }} · {{ title }}{% endblock %}
