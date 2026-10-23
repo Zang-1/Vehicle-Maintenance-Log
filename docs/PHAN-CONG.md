@@ -47,7 +47,7 @@ Chi tiết từng module, API và hợp đồng giữa các module: mục 4 củ
 |---|---|---|---|---|
 | **1. Thiết kế** ✅ | đến 25/10 | 01 · 04 · 08 ✅ | 02 · 03 · 07 ✅ | 05 trước 24/10 · 06 trước 29/10 |
 | **2. Chạy local** | T6 23/10 → **T2 26/10** | Khung FastAPI + DB (M0, M1) · API + tab Nhắc lịch (M5) | Workflow CI + branch protection (P1) · Xe: xem, thêm (M2) · Lịch sử: xem (M3) | Dockerfile + Compose (P2) · `base.html`, Dashboard (M6) · API loại dịch vụ (M4) |
-| **3. Lên Render + Supabase** | T3 27/10 → **T5 29/10** | Tạo Supabase, chạy schema + seed, đưa `DATABASE_URL` cho Lâm, thử pause/restore | Tạo Render service, đặt biến môi trường, deploy hook + job `deploy`, thử commit đến production | 06 Figma · trang S09 · giao diện trên điện thoại · URL vào README |
+| **3. Lên Render + Supabase** | T3 27/10 → **T5 29/10** | Tạo Supabase + Render service, chạy schema + seed, đặt biến môi trường, deploy hook, thử pause/restore | Job `deploy` trong workflow, bật required check `check`, thử commit đến production | 06 Figma · trang S09 · giao diện trên điện thoại · URL vào README |
 | **4. Hoàn thiện** | T6 30/10 → CN 8/11 | AI trên URL live (M7) · tạo/sửa nhắc lịch · audit secret · report mục 5, 6, 7 | Ghi nhận/sửa/xóa bảo dưỡng · sửa xe, lưu trữ, CSV · report mục 1, 2, 4 | Thống kê chi phí · chỉnh theo Figma · report mục 3, 7 |
 | **5. Tập demo và nộp** | T2 9/11 → Session 20 | Report PDF, tập demo có bấm giờ | Nhánh "cố tình đỏ" cho demo | Clean clone trên máy khác · slide |
 
