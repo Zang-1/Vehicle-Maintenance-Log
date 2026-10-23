@@ -50,7 +50,7 @@ Vehicle-Maintenance-Log/
 ├── .env.example                  # mọi biến môi trường, không có giá trị bí mật
 ├── requirements.txt · requirements-dev.txt
 ├── db/
-│   ├── schema.sql                # chuyển từ docs/04-database khi bắt đầu code
+│   ├── schema.sql                # tạo bảng, view, RLS (tài liệu 04)
 │   └── seed.sql
 ├── app/
 │   ├── main.py                   # tạo app, lifespan mở/đóng pool, /, /health, /health/db, gắn router

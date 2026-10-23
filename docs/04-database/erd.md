@@ -3,12 +3,12 @@
 **Người phụ trách:** Kiều Bảo Giang · **Đầu vào:** [01 Requirements](../01-requirements/requirements.md)
 **Hệ quản trị:** PostgreSQL 16: `postgres:16-alpine` trong Compose (local) và **Supabase** trên cloud
 
-File đi kèm (chuyển vào thư mục `db/` ở gốc repo khi bắt đầu code):
+File đi kèm (hai file SQL nằm ở thư mục `db/` ở gốc repo, nơi Compose và Supabase cùng dùng):
 
 | File | Nội dung |
 |---|---|
-| [`schema.sql`](schema.sql) | Tạo bảng, ràng buộc, index, view, bật RLS. **Chạy lại nhiều lần không lỗi** |
-| [`seed.sql`](seed.sql) | Dữ liệu mẫu, **chạy lại không nhân đôi** (dựa trên khóa tự nhiên, không ghi cứng id) |
+| [`db/schema.sql`](../../db/schema.sql) | Tạo bảng, ràng buộc, index, view, bật RLS. **Chạy lại nhiều lần không lỗi** |
+| [`db/seed.sql`](../../db/seed.sql) | Dữ liệu mẫu, **chạy lại không nhân đôi** (dựa trên khóa tự nhiên, không ghi cứng id) |
 | [`sample-queries.sql`](sample-queries.sql) | Các truy vấn chính, viết theo tham số psycopg `%(ten)s` |
 
 ## 1. Danh sách bảng
