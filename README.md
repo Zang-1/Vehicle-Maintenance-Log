@@ -68,7 +68,16 @@ DATABASE_URL=postgresql://app:<mật-khẩu>@localhost:5432/appdb python -m uvic
 | `GET /health/db` | `{"db":"ok","vehicles":N}`; mất database thì 503 `{"db":"error"}` sau tối đa 5 giây |
 | `GET /docs` | Tài liệu API tự sinh của FastAPI |
 
-Khi có `Dockerfile` và `compose.yml` (P2), cả stack sẽ chạy bằng một lệnh `podman compose up --build`.
+### Chạy bằng container (giống trên Render)
+
+```bash
+podman build -t vml:dev .
+podman run --rm -p 3000:8000 --env-file .env.cloud vml:dev     # .env.cloud: một dòng DATABASE_URL=<Supabase transaction pooler>
+```
+
+Mở http://localhost:3000/health/db. File `.env.cloud` nằm trong `.gitignore` và `.dockerignore`, không bao giờ vào repo hay image.
+
+Khi có `compose.yml`, cả stack (web + PostgreSQL) sẽ chạy bằng một lệnh `podman compose up --build`.
 
 ## Cách đóng góp
 

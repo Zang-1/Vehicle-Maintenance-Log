@@ -1,0 +1,36 @@
+# Only app/ and requirements.txt are needed to run the image.
+
+# Secrets: never inside an image
+.env
+.env.*
+
+# Version control and CI
+.git
+.gitignore
+.github
+
+# Python leftovers
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Not needed at run time
+docs/
+tests/
+db/
+*.md
+pytest.ini
+requirements-dev.txt
+compose.yml
+Dockerfile
+.dockerignore
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
