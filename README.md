@@ -46,20 +46,28 @@ Chi tiết theo ngày: mục 6 của [Implementation Plan](docs/08-implementatio
 
 ## Chạy code
 
-Cần Python 3.12 (cùng phiên bản với CI). Chạy trong Git Bash, tại thư mục repo:
+### Cách chính: cả stack bằng một lệnh (Compose)
+
+Cần Podman 4+ có compose provider (`podman compose version` phải in ra phiên bản). Trên Windows, Podman machine phải đang chạy (`podman machine start`). Chạy trong Git Bash:
 
 ```bash
-python -m venv .venv
-source .venv/Scripts/activate        # macOS / Linux: source .venv/bin/activate
-pip install -r requirements-dev.txt
-ruff check . && pytest -q            # giống job check của CI, không cần database
+git clone https://github.com/Zang-1/Vehicle-Maintenance-Log.git
+cd Vehicle-Maintenance-Log
+cp .env.example .env          # mở .env, đặt DB_PASSWORD (chỉ chữ và số), các dòng khác để nguyên
+podman compose up --build
 ```
 
-Chạy server (cần một PostgreSQL đã chạy `db/schema.sql` + `db/seed.sql`):
+Chờ dòng `Uvicorn running on http://0.0.0.0:8000`, rồi mở http://localhost:3000/health/db → `{"db":"ok","vehicles":3}`.
 
-```bash
-DATABASE_URL=postgresql://app:<mật-khẩu>@localhost:5432/appdb python -m uvicorn app.main:app --port 8000
-```
+| Việc | Lệnh |
+|---|---|
+| Chạy nền | `podman compose up --build -d` |
+| Trạng thái | `podman compose ps` |
+| Xem log | `podman compose logs web` |
+| Dừng (giữ dữ liệu) | `podman compose down` |
+| Xóa dữ liệu, tạo lại từ `db/schema.sql` + `db/seed.sql` | `podman compose down -v` rồi `podman compose up --build` |
+
+Chọn `DB_PASSWORD` trước lần chạy đầu và giữ nguyên: PostgreSQL lưu mật khẩu khi tạo volume, đổi về sau sẽ báo `password authentication failed` cho tới khi `down -v`. Không chạy `down -v` trước buổi demo.
 
 | Endpoint | Trả về |
 |---|---|
@@ -68,16 +76,25 @@ DATABASE_URL=postgresql://app:<mật-khẩu>@localhost:5432/appdb python -m uvic
 | `GET /health/db` | `{"db":"ok","vehicles":N}`; mất database thì 503 `{"db":"error"}` sau tối đa 5 giây |
 | `GET /docs` | Tài liệu API tự sinh của FastAPI |
 
-### Chạy bằng container (giống trên Render)
+### Chạy image với Supabase (giống trên Render)
 
 ```bash
 podman build -t vml:dev .
 podman run --rm -p 3000:8000 --env-file .env.cloud vml:dev     # .env.cloud: một dòng DATABASE_URL=<Supabase transaction pooler>
 ```
 
-Mở http://localhost:3000/health/db. File `.env.cloud` nằm trong `.gitignore` và `.dockerignore`, không bao giờ vào repo hay image.
+File `.env.cloud` nằm trong `.gitignore` và `.dockerignore`, không bao giờ vào repo hay image.
 
-Khi có `compose.yml`, cả stack (web + PostgreSQL) sẽ chạy bằng một lệnh `podman compose up --build`.
+### Chạy test (giống job `check` của CI, không cần database)
+
+Cần Python 3.12:
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate        # macOS / Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
+ruff check . && pytest -q
+```
 
 ## Cách đóng góp
 
