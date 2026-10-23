@@ -7,7 +7,7 @@
 | | |
 |---|---|
 | **Công nghệ** | FastAPI · Jinja2 · PostgreSQL 16 (Compose / Supabase) · Podman · Render · GitHub Actions · Gemini API |
-| **URL live** | (cập nhật khi deploy lên Render) |
+| **URL live** | https://vehicle-maintenance-log.onrender.com/ |
 
 ## Thành viên và phân công
 
