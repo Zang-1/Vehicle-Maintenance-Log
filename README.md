@@ -27,8 +27,8 @@ Chi tiết (report, thuyết trình, lịch theo tuần): [docs/PHAN-CONG.md](do
 | 02 | [Use Case Diagram](docs/02-use-case/) | Lâm | ✅ Xong |
 | 03 | [Activity Diagram](docs/03-activity/) | Lâm | ✅ Xong |
 | 04 | [ERD & Database Design](docs/04-database/erd.md) | Giang | ✅ Xong (đã chạy thử trên PostgreSQL 16) |
-| 05 | [Wireframe](docs/05-wireframe/) | Khoa | ⏳ |
-| 06 | [UI Design trên Figma](docs/06-ui-design/) | Khoa | ⏳ |
+| 05 | [Wireframe](docs/05-wireframe/) | Khoa | ✅ Xong |
+| 06 | [UI Design trên Figma](docs/06-ui-design/) | Khoa | ✅ Xong |
 | 07 | [Architecture & Class Diagram](docs/07-architecture/) | Lâm | ✅ Xong |
 | 08 | [Implementation Plan](docs/08-implementation-plan/implementation-plan.md) | Giang | ✅ Xong (đã cập nhật theo 07) |
 
