@@ -1,6 +1,6 @@
 # 08 – Implementation Plan (Kế hoạch triển khai)
 
-**Người phụ trách:** Kiều Bảo Giang · **Phiên bản:** 2.1
+**Người phụ trách:** Kiều Bảo Giang · **Phiên bản:** 2.2 (thêm lộ trình theo phase; cập nhật theo ghi chú mục 9 tài liệu 07)
 **Đầu vào:** [01 Requirements](../01-requirements/requirements.md) · [04 Database](../04-database/erd.md) · [07 Architecture](../07-architecture/)
 
 ## 1. Công nghệ
@@ -15,7 +15,7 @@ Lâm chốt chính thức ở tài liệu 07.
 | Container | **Podman** + Dockerfile, **Compose** | Docker Desktop (cần license với tổ chức lớn; Podman miễn phí, không cần daemon) |
 | Cloud | **Render** Web Service (Docker, Free) | Railway, Fly.io (gói miễn phí bị giới hạn hoặc phải thêm phương thức thanh toán; kiểm tra lại điều khoản hiện tại khi viết report) |
 | CI/CD | **GitHub Actions** + Render Deploy Hook | Render Auto-Deploy (không có cổng chặn khi test đỏ) |
-| AI | **Google Gemini API** (Google AI Studio, free tier, không cần billing), gọi từ server bằng `google-genai` hoặc `httpx` | Gọi AI từ trình duyệt (lộ key) |
+| AI | **Google Gemini API** (Google AI Studio, free tier, không cần billing), gọi từ server bằng **`httpx`** (chốt ở tài liệu 07: đặt được timeout, đọc được mã HTTP gốc để ánh xạ lỗi, dễ mock) | `google-genai` SDK; gọi AI từ trình duyệt (lộ key) |
 | Kiểm thử | pytest + FastAPI `TestClient`, ruff | |
 
 **Cái giá của lựa chọn** (report yêu cầu nêu): Render free sleep sau ~15 phút nên lần mở đầu chậm và không chạy được tác vụ hẹn giờ; Supabase free pause sau 7 ngày không hoạt động; Gemini free tier có rate limit nên lúc demo có thể gặp 429.
@@ -55,6 +55,7 @@ Vehicle-Maintenance-Log/
 ├── app/
 │   ├── main.py                   # tạo app, lifespan mở/đóng pool, /, /health, /health/db, gắn router
 │   ├── db.py                     # ConnectionPool
+│   ├── schemas.py                # Pydantic model (VehicleIn/Out, RecordIn, ..., ErrorOut) theo class diagram tài liệu 07
 │   ├── routers/
 │   │   ├── vehicles.py           # /api/vehicles
 │   │   ├── records.py            # /api/records, /api/vehicles/{id}/records
@@ -86,7 +87,7 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 | **M5. Nhắc lịch** | FR-13 → FR-15 | S04 (tab Nhắc lịch), S07 | **Giang** | Đọc trạng thái từ `v_reminder_status` |
 | **M6. Giao diện chung, Dashboard, Thống kê** | FR-16, FR-17 | S01, S08 + `base.html` | **Khoa** | Layout, CSS theo Figma, điều hướng, biểu đồ |
 | **M7. Chẩn đoán AI** | FR-18 → FR-22 | S10, S11 | **Giang** | `services/ai.py`, xử lý lỗi theo BR-10, lưu `diagnoses`, mock trong test |
-| **P1. CI/CD + Render** | PR-01, PR-04 | – | **Lâm** | Workflow `check` + `deploy`; branch protection; tạo Render service, tắt Auto-Deploy, lưu deploy hook vào GitHub Secrets |
+| **P1. CI/CD + Render** | PR-01, PR-04 | – | **Lâm** | Workflow `check` + `deploy`; branch protection; tạo Render service (health check path `/health`), tắt Auto-Deploy, lưu deploy hook vào GitHub Secrets |
 | **P2. Dockerfile + Compose** | PR-02, PR-03 | – | **Khoa** | `python:3.12-slim` (cùng phiên bản với CI), copy `requirements.txt` và cài trước rồi mới copy code, `exec uvicorn ... --port ${PORT:-8000}`; Compose `web` + `db`; thử clean clone trên máy khác |
 
 ### Hợp đồng giữa các module
@@ -97,6 +98,7 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 | M2 (Lâm) | M3, M5, M7 | `GET /api/vehicles/{id}` trả 404 nếu không có xe |
 | M4 (Khoa) | M3, M5, M7 | `GET /api/service-types?active=true` |
 | M6 (Khoa) | Tất cả | `templates/base.html` (thanh điều hướng, vùng thông báo lỗi), `static/style.css`, hàm `showError(message)` trong `app.js` |
+| Tất cả router | M6 (`app.js`) | Lỗi nghiệp vụ và lỗi AI trả body `ErrorOut` `{error_code, message}`; lỗi 422 giữ định dạng mặc định của FastAPI. `app.js` chỉ cần xử lý hai dạng này |
 
 ### Danh sách API
 
@@ -117,7 +119,7 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 | Câu hỏi của Brief | Thiết kế |
 |---|---|
 | **Gọi ở đâu?** | Chỉ ở server, trong `app/services/ai.py`, được `POST /diagnose` gọi. Trình duyệt không bao giờ thấy key hay gọi thẳng Gemini |
-| **Bảo mật key?** | `GEMINI_API_KEY` đọc bằng `os.getenv`. Local: `.env` (đã gitignore). Production: Render → Environment. CI: không cần key, vì test mock hàm gọi AI |
+| **Bảo mật key?** | `GEMINI_API_KEY` đọc bằng `os.getenv`. Local: `.env` (đã gitignore). Production: Render → Environment. CI: không cần key, vì test mock hàm gọi AI. Key gửi qua header `x-goog-api-key`, **không** đặt trong query string `?key=`, để key không xuất hiện trong log request |
 | **Thiếu key thì sao?** | App **vẫn khởi động** (khác `DATABASE_URL`, biến bắt buộc). `/diagnose` trả 503 `NO_KEY`; các trang khác không bị ảnh hưởng |
 | **Rate limit?** | Free tier giới hạn số request mỗi phút và mỗi ngày (xem trang *Rate limits* của Google AI Studio cho model đang dùng). Gặp 429 thì **không tự gọi lại**: trả ngay 429 kèm thông báo. Nút "Chẩn đoán" bị khóa trong lúc chờ để tránh bấm liên tục |
 | **Timeout?** | 20 giây; quá thời gian thì trả 504 |
@@ -125,19 +127,80 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 | **Prompt** | Gửi kèm loại xe, hãng, dòng xe, ODO (nếu chọn xe) và danh sách tên loại dịch vụ đang dùng; yêu cầu trả về JSON `{suggestion, urgency_level, service_type}`. Server kiểm tra JSON bằng Pydantic; sai định dạng thì xử lý như `UPSTREAM_ERROR` |
 | **Bằng chứng cho report** | Bảng `diagnoses` lưu mọi lần gọi kèm `error_code`; log server ghi chi tiết lỗi (không ghi key) |
 
-## 6. Thứ tự thực hiện theo mốc của Brief
+## 6. Lộ trình theo phase
 
-Hôm nay là **22/10/2026 (Week 7)**. Brief chấm tại **Session 20**. Thứ tự ưu tiên: dựng pipeline trước (khung app → Docker/Compose → CI → Render → Supabase), rồi mới làm chức năng. Brief nhắc rằng URL, CI xanh và Compose không thể làm xong trong một cuối tuần.
+Ngày tính theo tuần học: **W7 = 19–25/10/2026**, W8 = 26/10–1/11, W9 = 2–8/11, W10 = 9–15/11. Nếu lịch Session thực tế khác thì dời các mốc cho khớp, giữ nguyên thứ tự.
 
-| Tuần (mốc Brief) | Giang | Lâm | Khoa | Kết quả phải có cuối tuần |
-|---|---|---|---|---|
-| **W7** | **M0** khung FastAPI; **M1** schema + Supabase | Tài liệu **02**, **03**; **P1** workflow `check`, branch protection | Tài liệu **05**; **P2** Dockerfile + Compose | Compose chạy từ clean clone; CI chạy trên PR |
-| **W8** | **M7** chẩn đoán AI | Tài liệu **07**; **P1** Render + job `deploy`; **M2** xe | Tài liệu **06 Figma**; **M6** `base.html` + CSS | URL HTTPS live nối Supabase; AI chạy trên URL live, lỗi được xử lý |
-| **W9** | **M5** nhắc lịch; audit secret | **M3** lần bảo dưỡng | **M4** loại dịch vụ; **M6** Dashboard + thống kê | Đủ chức năng Must; audit secret xong; góp ý peer review thành Issues; **bản nháp report đủ 8 mục** |
-| **W10** | Sửa lỗi, hoàn thiện report | Sửa lỗi; chuẩn bị nhánh "cố tình đỏ" cho demo | Thử **clean clone trên máy khác**; slide | Demo đã tập có bấm giờ; **nộp report PDF** |
-| **Session 20** | Demo + bảo vệ | | | |
+| Phase | Thời gian | Mục tiêu | Mốc Brief cùng lúc |
+|---|---|---|---|
+| **1. Thiết kế** | đến 25/10 (W7) | 8 tài liệu thiết kế | – |
+| **2. Demo giao diện chạy local** | 26/10 – 1/11 (W8) | Clone về, chạy 1 lệnh, dùng được các chức năng chính trên `localhost:3000` | AI chạy được (W8) |
+| **3. Hoàn thiện** | 2/11 – 8/11 (W9) | Lên cloud, đủ chức năng, AI chạy trên URL live, bản nháp report | Audit secret, nháp report đủ 8 mục (W9) |
+| **4. Tập demo và nộp** | 9/11 – Session 20 (W10) | Không thêm chức năng; tập demo trên máy khác, nộp report PDF | Demo đã tập, report đã nộp (W10) |
 
-Chức năng **Should/Could** (FR-05, FR-10, FR-12, FR-17, FR-21, FR-22) chỉ làm khi các chức năng Must và 5 tiêu chí demo đã xong.
+**Nguyên tắc:** pipeline (Dockerfile, Compose, CI) dựng **ngay đầu Phase 2**, trước khi viết chức năng. 21/25 điểm demo nằm ở pipeline (HTTPS, Compose, CI, auto deploy), và Brief nhắc rằng những thứ này không thể làm kịp trong một cuối tuần.
+
+### Phase 1 – Thiết kế (đến 25/10) ✅
+
+| Việc | Người | Trạng thái |
+|---|---|---|
+| 01 Requirements · 04 Database · 08 Implementation Plan | Giang | ✅ |
+| 02 Use Case · 03 Activity · 07 Architecture & Class | Lâm | ✅ (PR #4) |
+| 05 Wireframe · 06 UI Figma | Khoa | Đưa lên repo trước **25/10**: Phase 2 cần wireframe để dựng `base.html` |
+
+**Xong phase khi:** cả 8 thư mục `docs/0x-*` có nội dung trên `main`, mỗi tài liệu được ít nhất 1 người khác review.
+
+### Phase 2 – Demo giao diện chạy local (26/10 – 1/11)
+
+**Mục tiêu:** trên một máy bất kỳ: `git clone` → `cp .env.example .env` → đặt `DB_PASSWORD` → `podman compose up --build` → mở `http://localhost:3000` và dùng được các chức năng Must với dữ liệu mẫu.
+
+| Ngày | Giang | Lâm | Khoa |
+|---|---|---|---|
+| **26–27/10** (dựng khung, merge sớm để mọi người dùng chung) | **M0** khung FastAPI: `/`, `/health`, `/health/db`, `app/db.py` (pool), `app/schemas.py` rỗng; **M1** chuyển `schema.sql`, `seed.sql` vào `db/` | **P1** workflow `check` (compileall, ruff, pytest, build image); bật branch protection | **P2** Dockerfile + `.dockerignore` + `compose.yml` (`web` + `db`), `.env.example` |
+| **28–30/10** (làm module song song) | **M5** nhắc lịch: API + tab Nhắc lịch, trang S07 | **M2** xe: API + S02, S03, tab Thông tin của S04 | **M6** `base.html`, `style.css`, `app.js` (`showError`), Dashboard S01 |
+| **31/10** | **M7** chẩn đoán AI chạy local với key trong `.env`, đủ 4 nhánh lỗi, test dùng mock | **M3** lần bảo dưỡng: API + S05, S06, tab Lịch sử | **M4** loại dịch vụ: API + S09 |
+| **1/11 – buổi demo nội bộ** | Dẫn buổi demo, ghi lỗi thành Issues | Thử clean clone trên máy mình | Thử clean clone trên máy mình |
+
+**Xong phase khi** (kiểm tra trong buổi demo nội bộ 1/11):
+- [ ] Clean clone trên **ít nhất 2 máy** chạy được bằng một lệnh `podman compose up --build`.
+- [ ] `/health` → 200; `/health/db` → `{"db":"ok","vehicles":3}`.
+- [ ] Trên giao diện: xem Dashboard; thêm/sửa xe; ghi nhận một lần bảo dưỡng có 2 hạng mục; nhắc lịch tự chuyển trạng thái (TC-08); xem danh mục loại dịch vụ.
+- [ ] Chẩn đoán AI chạy được local; tắt key thì thấy thông báo `NO_KEY` mà trang không hỏng (TC-14).
+- [ ] Mọi thay đổi vào `main` qua PR; check `check` xanh; `main` đã bật branch protection.
+- [ ] Lỗi tìm được trong buổi demo đã thành GitHub Issues, có người nhận.
+
+### Phase 3 – Hoàn thiện (2/11 – 8/11)
+
+**Mục tiêu:** app chạy trên URL HTTPS công khai, nối Supabase, AI chạy trên URL live, merge là tự deploy; đủ chức năng Must và các Should làm kịp; có bản nháp report.
+
+| Ngày | Giang | Lâm | Khoa |
+|---|---|---|---|
+| **2–3/11** (lên cloud) | Tạo Supabase (cùng region với Render), chạy `schema.sql` + `seed.sql`, đưa `DATABASE_URL` (pooler 6543) cho Lâm qua kênh riêng, không gửi vào group chat | Tạo Render service (Docker, Free, health check `/health`, tắt Auto-Deploy); job `deploy` gọi `RENDER_DEPLOY_HOOK`; đặt biến môi trường trên Render | Responsive cho điện thoại (360px); sửa các Issues giao diện từ Phase 2 |
+| **4–5/11** (AI live + chức năng còn lại) | Đặt `GEMINI_API_KEY` trên Render; kiểm tra AI trên URL live (TC-12 → TC-15); FR-21 lịch sử chẩn đoán | FR-05 lưu trữ/xóa xe; FR-10 xuất CSV | **M6** thống kê chi phí S08 (FR-17); FR-12 thêm/sửa loại dịch vụ |
+| **6/11** (kiểm thử) | Kiểm thử chéo M2, M3 | Kiểm thử chéo M4, M6 | Kiểm thử chéo M5, M7 |
+| **7–8/11** (audit + report) | **Audit secret** (PT-05, cả lịch sử Git); viết report mục 5, 6, 7; tổng hợp bảng đóng góp từ `git shortlog -sne` | Viết report mục 1, 2, 4 | Viết report mục 3, 7; PT-06 thử pause/restore Supabase |
+
+**Xong phase khi:**
+- [ ] URL Render mở được trên điện thoại dùng 4G (PT-01); cập nhật URL vào `README.md`.
+- [ ] Một PR được merge thì tự lên URL live, commit hash trên Render Events khớp (PT-04).
+- [ ] `/health/db` trên URL live → ok với Supabase; pause/restore Supabase thì app tự phục hồi (PT-06).
+- [ ] AI chạy trên URL live; gặp 429 thì hiện thông báo thân thiện (TC-13).
+- [ ] Toàn bộ test case TC-01 → TC-16 đạt; Issues mức `bug` đã đóng.
+- [ ] `git grep` không ra key hay connection string trong file và lịch sử (PT-05).
+- [ ] Bản nháp report có đủ 8 mục, góp ý peer review đã thành Issues.
+
+### Phase 4 – Tập demo và nộp (9/11 – Session 20)
+
+**Đóng băng chức năng:** từ 9/11 chỉ sửa lỗi, không thêm chức năng mới.
+
+| Ngày | Giang | Lâm | Khoa |
+|---|---|---|---|
+| **9–10/11** | Hoàn thiện report, xuất **PDF ≤ 12 trang**; cả nhóm ký bảng đóng góp | Chuẩn bị nhánh "cố tình đỏ" sẵn cho phần demo cổng chặn (PT-03) | **Clean clone trên máy chưa từng có project** (PT-02); slide 10 phút |
+| **11/11** | Tập toàn bộ kịch bản demo (mục 11), có bấm giờ | | |
+| **Session 19** | **Nộp report**; mỗi người ôn lại các commit của mình và câu hỏi bảo vệ cá nhân trong Brief | | |
+| **Ngày demo (Session 20)** | Trước 5 phút: mở URL cho Render thức dậy, kiểm tra Supabase không bị pause, chạy một truy vấn | | |
+
+**Xong phase khi:** đánh dấu đủ các ô trong *Submission checklist* (mục 8) của Final Project Brief.
 
 ## 7. Kế hoạch kiểm thử
 
@@ -264,7 +327,7 @@ Test trong CI **không cần database thật và không gọi Gemini thật**: `
 
 | Rủi ro | Cách xử lý |
 |---|---|
-| Để pipeline (Render, CI, Compose) đến cuối kỳ mới làm | Làm M0, P1, P2 ngay W7–W8, trước các chức năng |
+| Để pipeline (Render, CI, Compose) đến cuối kỳ mới làm | Làm M0, P1, P2 ngay 26–27/10 (đầu Phase 2), trước các chức năng |
 | Deploy hook trỏ nhầm service, job `deploy` xanh nhưng URL không đổi | Chỉ giữ **một** Render service chính thức; sau mỗi lần merge đối chiếu commit hash trên Render Events |
 | Phiên bản Python trong Dockerfile khác CI: CI xanh nhưng image lỗi | Dùng 3.12 ở cả hai; job `check` có bước build image |
 | Clean clone chỉ chạy trên một máy | Tập trên máy khác từ W10; README ghi đủ bước |
