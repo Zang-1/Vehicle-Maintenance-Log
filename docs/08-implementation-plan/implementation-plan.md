@@ -173,11 +173,11 @@ Vì chỉ có 4 ngày, Phase 2 chỉ làm phần **đọc dữ liệu + thêm xe
 
 **Mục tiêu:** `https://<tên-service>.onrender.com` mở được trên điện thoại dùng 4G, đọc dữ liệu từ Supabase, và merge một PR là tự lên URL.
 
-| Ngày | Giang (Supabase) | Lâm (Render + CI/CD) | Khoa |
+| Ngày | Giang (Supabase + Render) | Lâm (CI/CD) | Khoa |
 |---|---|---|---|
-| **T3 27/10** | Tạo project Supabase, region **Southeast Asia (Singapore)**, lưu mật khẩu DB ở chỗ riêng tư. SQL Editor: chạy `db/schema.sql` rồi `db/seed.sql`, chạy lại lần 2 để chắc không nhân đôi; kiểm tra không bảng nào có nhãn "RLS disabled" | Tạo Render Web Service: runtime **Docker**, branch `main`, gói **Free**, region **Singapore** (cùng Supabase), health check path `/health`, **tắt Auto-Deploy**. Environment: `APP_ENV=production`, **không** đặt `PORT` | **06** Figma; **M4** trang S09 |
-| **T4 28/10** | Lấy **Transaction pooler URI** (cổng `6543`) của Supabase, gửi riêng cho Lâm (không gửi vào group chat, không chụp màn hình). Thử local: `podman run --env-file .env.cloud ...` → `/health/db` ok | Đặt `DATABASE_URL` trên Render → deploy. Tạo **Deploy Hook**, lưu vào GitHub secret `RENDER_DEPLOY_HOOK`; thêm job `deploy` (`needs: check`, chỉ chạy khi push vào `main`) | Kiểm tra giao diện trên điện thoại (360px); sửa Issues giao diện từ Phase 2 |
-| **T5 29/10** | Thử pause/restore Supabase: `/health/db` 503 rồi tự ok lại, `/health` luôn 200 (PT-06) | Thử **commit đến production**: PR tăng `APP_VERSION` → `check` xanh → merge → `deploy` xanh → Render Events có commit hash mới → `/` hiện version mới (PT-04) | Cập nhật URL live vào `README.md` |
+| **T3 27/10** | Supabase: tạo project ở **Southeast Asia (Singapore)**, chạy `db/schema.sql` + `db/seed.sql` (chạy lại lần 2 không nhân đôi), kiểm tra RLS. Render: tạo Web Service **Docker**, `main`, **Singapore**, **Free**, health check `/health`, `APP_ENV=production`, `DATABASE_URL` tạm; **không** đặt `PORT` | Review PR `db/`; chuẩn bị job `deploy` trong workflow (`needs: check`, chỉ chạy khi push vào `main`) | **06** Figma; **M4** trang S09 |
+| **T4 28/10** | Thử local với `.env.cloud` (transaction pooler, cổng `6543`) → `/health/db` ok; đặt `DATABASE_URL` thật trên Render; tạo **Deploy Hook**, lưu vào GitHub secret `RENDER_DEPLOY_HOOK`; **tắt Auto-Deploy** | Merge job `deploy`; bật **Require status checks** (`check`) cho `main` | Kiểm tra giao diện trên điện thoại (360px); sửa Issues giao diện từ Phase 2 |
+| **T5 29/10** | Thử pause/restore Supabase: `/health/db` 503 rồi tự ok lại, `/health` luôn 200 (PT-06); đo độ trễ 3 lần | Thử **commit đến production**: PR tăng `APP_VERSION` → `check` xanh → merge → `deploy` xanh → Render Events có commit hash mới → `/` hiện version mới (PT-04) | Cập nhật URL live vào `README.md` |
 
 **Xong phase khi** (kiểm tra tối **T5 29/10**):
 - [ ] URL Render mở được trên điện thoại dùng 4G, có HTTPS (PT-01).
