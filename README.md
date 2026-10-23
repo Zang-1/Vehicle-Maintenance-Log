@@ -48,6 +48,10 @@ Chi tiết theo ngày: mục 6 của [Implementation Plan](docs/08-implementatio
 
 ### Cách chính: cả stack bằng một lệnh (Compose)
 
+**Windows, nhanh nhất:** bấm đúp `chay-local.bat`. Script tự bật Podman, tạo `.env` (mật khẩu DB ngẫu nhiên) nếu chưa có, chạy `podman compose up --build -d`, chờ app sẵn sàng rồi mở http://localhost:3000. Bấm đúp `dung-local.bat` để dừng (dữ liệu vẫn giữ).
+
+Hoặc chạy tay:
+
 Cần Podman 4+ có compose provider (`podman compose version` phải in ra phiên bản). Trên Windows, Podman machine phải đang chạy (`podman machine start`). Chạy trong Git Bash:
 
 ```bash
