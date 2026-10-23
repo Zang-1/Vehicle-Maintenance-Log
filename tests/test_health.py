@@ -39,8 +39,8 @@ def timed_out_pool_connection(timeout=None):
     raise PoolTimeout("couldn't get a connection after 5.00 sec")
 
 
-def test_root():
-    r = client.get("/")
+def test_info():
+    r = client.get("/api/info")
     assert r.status_code == 200
     body = r.json()
     assert body["app"] == "vehicle-maintenance-log"

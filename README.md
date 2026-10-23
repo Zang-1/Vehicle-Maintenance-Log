@@ -57,7 +57,7 @@ cp .env.example .env          # mở .env, đặt DB_PASSWORD (chỉ chữ và s
 podman compose up --build
 ```
 
-Chờ dòng `Uvicorn running on http://0.0.0.0:8000`, rồi mở http://localhost:3000/health/db → `{"db":"ok","vehicles":3}`.
+Chờ dòng `Uvicorn running on http://0.0.0.0:8000`, rồi mở **http://localhost:3000** để xem giao diện. Kiểm tra database: http://localhost:3000/health/db → `{"db":"ok","vehicles":3}`.
 
 | Việc | Lệnh |
 |---|---|
@@ -81,7 +81,9 @@ podman compose up --build
 
 | Endpoint | Trả về |
 |---|---|
-| `GET /` | Tên app, phiên bản, môi trường |
+| `GET /` | Giao diện: Dashboard (S01). Các mục menu khác hiện trang "đang xây dựng" cho tới khi module tương ứng xong |
+| `GET /api/info` | Tên app, phiên bản, môi trường (đối chiếu sau mỗi lần deploy) |
+| `GET /api/stats/dashboard` | Số liệu cho Dashboard |
 | `GET /health` | `{"status":"ok"}`, **không** chạm database (Render health check) |
 | `GET /health/db` | `{"db":"ok","vehicles":N}`; mất database thì 503 `{"db":"error"}` sau tối đa 5 giây |
 | `GET /docs` | Tài liệu API tự sinh của FastAPI |
