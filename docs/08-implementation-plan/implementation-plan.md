@@ -1,6 +1,6 @@
 # 08 – Implementation Plan (Kế hoạch triển khai)
 
-**Người phụ trách:** Kiều Bảo Giang · **Phiên bản:** 2.2 (thêm lộ trình theo phase; cập nhật theo ghi chú mục 9 tài liệu 07)
+**Người phụ trách:** Kiều Bảo Giang · **Phiên bản:** 2.3 (lộ trình mới: chạy local trước 26/10, lên Render + Supabase trước 29/10)
 **Đầu vào:** [01 Requirements](../01-requirements/requirements.md) · [04 Database](../04-database/erd.md) · [07 Architecture](../07-architecture/)
 
 ## 1. Công nghệ
@@ -129,16 +129,17 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 
 ## 6. Lộ trình theo phase
 
-Ngày tính theo tuần học: **W7 = 19–25/10/2026**, W8 = 26/10–1/11, W9 = 2–8/11, W10 = 9–15/11. Nếu lịch Session thực tế khác thì dời các mốc cho khớp, giữ nguyên thứ tự.
+Hai mốc nhóm đã chốt: **chạy được local trước hết thứ Hai 26/10**, và **lên Render dùng Supabase trước hết thứ Năm 29/10**.
 
-| Phase | Thời gian | Mục tiêu | Mốc Brief cùng lúc |
-|---|---|---|---|
-| **1. Thiết kế** | đến 25/10 (W7) | 8 tài liệu thiết kế | – |
-| **2. Demo giao diện chạy local** | 26/10 – 1/11 (W8) | Clone về, chạy 1 lệnh, dùng được các chức năng chính trên `localhost:3000` | AI chạy được (W8) |
-| **3. Hoàn thiện** | 2/11 – 8/11 (W9) | Lên cloud, đủ chức năng, AI chạy trên URL live, bản nháp report | Audit secret, nháp report đủ 8 mục (W9) |
-| **4. Tập demo và nộp** | 9/11 – Session 20 (W10) | Không thêm chức năng; tập demo trên máy khác, nộp report PDF | Demo đã tập, report đã nộp (W10) |
+| Phase | Thời gian | Mục tiêu |
+|---|---|---|
+| **1. Thiết kế** ✅ | đến 25/10 | 8 tài liệu thiết kế |
+| **2. Chạy local** | **T6 23/10 → T2 26/10** | Clone về, chạy 1 lệnh, các trang chính hiện dữ liệu mẫu trên `localhost:3000` |
+| **3. Lên Render + Supabase** | **T3 27/10 → T5 29/10** | URL HTTPS công khai nối Supabase; merge vào `main` là tự deploy |
+| **4. Hoàn thiện** | T6 30/10 → CN 8/11 | AI chạy trên URL live, đủ chức năng, kiểm thử, audit secret, bản nháp report |
+| **5. Tập demo và nộp** | T2 9/11 → Session 20 | Không thêm chức năng; tập demo trên máy khác; nộp report PDF |
 
-**Nguyên tắc:** pipeline (Dockerfile, Compose, CI) dựng **ngay đầu Phase 2**, trước khi viết chức năng. 21/25 điểm demo nằm ở pipeline (HTTPS, Compose, CI, auto deploy), và Brief nhắc rằng những thứ này không thể làm kịp trong một cuối tuần.
+**Nguyên tắc:** pipeline đi trước chức năng. Khi URL đã chạy (Phase 3), mọi chức năng làm sau đều được merge và tự deploy lên Render, nên lúc nào URL cũng có bản mới nhất. 21/25 điểm demo nằm ở pipeline.
 
 ### Phase 1 – Thiết kế (đến 25/10) ✅
 
@@ -146,59 +147,69 @@ Ngày tính theo tuần học: **W7 = 19–25/10/2026**, W8 = 26/10–1/11, W9 =
 |---|---|---|
 | 01 Requirements · 04 Database · 08 Implementation Plan | Giang | ✅ |
 | 02 Use Case · 03 Activity · 07 Architecture & Class | Lâm | ✅ (PR #4) |
-| 05 Wireframe · 06 UI Figma | Khoa | Đưa lên repo trước **25/10**: Phase 2 cần wireframe để dựng `base.html` |
+| 05 Wireframe | Khoa | Đưa lên repo trước **T7 24/10** (cần cho `base.html`) |
+| 06 UI Figma | Khoa | Hoàn thiện trong Phase 3 (trước 29/10); giao diện local dựng theo wireframe trước, chỉnh theo Figma sau |
 
-**Xong phase khi:** cả 8 thư mục `docs/0x-*` có nội dung trên `main`, mỗi tài liệu được ít nhất 1 người khác review.
+### Phase 2 – Chạy local (T6 23/10 → T2 26/10)
 
-### Phase 2 – Demo giao diện chạy local (26/10 – 1/11)
+**Mục tiêu:** trên máy bất kỳ: `git clone` → `cp .env.example .env` → đặt `DB_PASSWORD` → `podman compose up --build` → mở `http://localhost:3000`, thấy Dashboard, danh sách xe, lịch sử bảo dưỡng, nhắc lịch với dữ liệu mẫu, và thêm được xe mới.
 
-**Mục tiêu:** trên một máy bất kỳ: `git clone` → `cp .env.example .env` → đặt `DB_PASSWORD` → `podman compose up --build` → mở `http://localhost:3000` và dùng được các chức năng Must với dữ liệu mẫu.
+Vì chỉ có 4 ngày, Phase 2 chỉ làm phần **đọc dữ liệu + thêm xe**. Sửa, xóa và các form còn lại làm tiếp ở Phase 3–4.
 
 | Ngày | Giang | Lâm | Khoa |
 |---|---|---|---|
-| **26–27/10** (dựng khung, merge sớm để mọi người dùng chung) | **M0** khung FastAPI: `/`, `/health`, `/health/db`, `app/db.py` (pool), `app/schemas.py` rỗng; **M1** chuyển `schema.sql`, `seed.sql` vào `db/` | **P1** workflow `check` (compileall, ruff, pytest, build image); bật branch protection | **P2** Dockerfile + `.dockerignore` + `compose.yml` (`web` + `db`), `.env.example` |
-| **28–30/10** (làm module song song) | **M5** nhắc lịch: API + tab Nhắc lịch, trang S07 | **M2** xe: API + S02, S03, tab Thông tin của S04 | **M6** `base.html`, `style.css`, `app.js` (`showError`), Dashboard S01 |
-| **31/10** | **M7** chẩn đoán AI chạy local với key trong `.env`, đủ 4 nhánh lỗi, test dùng mock | **M3** lần bảo dưỡng: API + S05, S06, tab Lịch sử | **M4** loại dịch vụ: API + S09 |
-| **1/11 – buổi demo nội bộ** | Dẫn buổi demo, ghi lỗi thành Issues | Thử clean clone trên máy mình | Thử clean clone trên máy mình |
+| **T6 23/10** (khung, merge trong ngày để mọi người dùng chung) | **M0** khung FastAPI: `/`, `/health`, `/health/db`, `app/db.py` (pool), `app/schemas.py`, `requirements*.txt`, `tests/` đầu tiên; **M1** đưa `schema.sql`, `seed.sql` vào `db/` | **P1** workflow `check` (compileall, ruff, pytest, build image); bật branch protection cho `main` | **P2** `Dockerfile`, `.dockerignore`, `compose.yml` (`web` + `db`), `.env.example` |
+| **T7 24/10** | **M5** API nhắc lịch (đọc từ `v_reminder_status`) | **M2** API xe: danh sách, chi tiết, thêm | **05** Wireframe lên repo; **M6** `base.html`, `style.css`, `app.js` (`showError`) |
+| **CN 25/10** | **M5** tab Nhắc lịch trên S04; review và merge PR của bạn | **M2** trang S02 danh sách xe, S03 thêm xe | **M6** Dashboard S01 (`/api/stats/dashboard`) |
+| **T2 26/10** | Thử **clean clone** trên máy mình; ghi lỗi thành Issues | **M3** API + tab Lịch sử (chỉ xem) trên S04; thử clean clone | **M4** API danh sách loại dịch vụ (cho các form dùng) |
 
-**Xong phase khi** (kiểm tra trong buổi demo nội bộ 1/11):
-- [ ] Clean clone trên **ít nhất 2 máy** chạy được bằng một lệnh `podman compose up --build`.
+**Xong phase khi** (cả nhóm kiểm tra tối **T2 26/10**):
+- [ ] Clean clone trên **ít nhất 2 máy** chạy được bằng `podman compose up --build`.
 - [ ] `/health` → 200; `/health/db` → `{"db":"ok","vehicles":3}`.
-- [ ] Trên giao diện: xem Dashboard; thêm/sửa xe; ghi nhận một lần bảo dưỡng có 2 hạng mục; nhắc lịch tự chuyển trạng thái (TC-08); xem danh mục loại dịch vụ.
-- [ ] Chẩn đoán AI chạy được local; tắt key thì thấy thông báo `NO_KEY` mà trang không hỏng (TC-14).
-- [ ] Mọi thay đổi vào `main` qua PR; check `check` xanh; `main` đã bật branch protection.
-- [ ] Lỗi tìm được trong buổi demo đã thành GitHub Issues, có người nhận.
+- [ ] Trên giao diện: Dashboard hiện số xe, nhắc lịch quá hạn, chi phí; danh sách xe; lịch sử bảo dưỡng của một xe; thêm được xe mới.
+- [ ] Mọi thay đổi vào `main` qua PR; check `check` xanh; branch protection đã bật.
 
-### Phase 3 – Hoàn thiện (2/11 – 8/11)
+### Phase 3 – Lên Render + Supabase (T3 27/10 → T5 29/10)
 
-**Mục tiêu:** app chạy trên URL HTTPS công khai, nối Supabase, AI chạy trên URL live, merge là tự deploy; đủ chức năng Must và các Should làm kịp; có bản nháp report.
+**Mục tiêu:** `https://<tên-service>.onrender.com` mở được trên điện thoại dùng 4G, đọc dữ liệu từ Supabase, và merge một PR là tự lên URL.
 
-| Ngày | Giang | Lâm | Khoa |
+| Ngày | Giang (Supabase) | Lâm (Render + CI/CD) | Khoa |
 |---|---|---|---|
-| **2–3/11** (lên cloud) | Tạo Supabase (cùng region với Render), chạy `schema.sql` + `seed.sql`, đưa `DATABASE_URL` (pooler 6543) cho Lâm qua kênh riêng, không gửi vào group chat | Tạo Render service (Docker, Free, health check `/health`, tắt Auto-Deploy); job `deploy` gọi `RENDER_DEPLOY_HOOK`; đặt biến môi trường trên Render | Responsive cho điện thoại (360px); sửa các Issues giao diện từ Phase 2 |
-| **4–5/11** (AI live + chức năng còn lại) | Đặt `GEMINI_API_KEY` trên Render; kiểm tra AI trên URL live (TC-12 → TC-15); FR-21 lịch sử chẩn đoán | FR-05 lưu trữ/xóa xe; FR-10 xuất CSV | **M6** thống kê chi phí S08 (FR-17); FR-12 thêm/sửa loại dịch vụ |
-| **6/11** (kiểm thử) | Kiểm thử chéo M2, M3 | Kiểm thử chéo M4, M6 | Kiểm thử chéo M5, M7 |
-| **7–8/11** (audit + report) | **Audit secret** (PT-05, cả lịch sử Git); viết report mục 5, 6, 7; tổng hợp bảng đóng góp từ `git shortlog -sne` | Viết report mục 1, 2, 4 | Viết report mục 3, 7; PT-06 thử pause/restore Supabase |
+| **T3 27/10** | Tạo project Supabase, region **Southeast Asia (Singapore)**, lưu mật khẩu DB ở chỗ riêng tư. SQL Editor: chạy `db/schema.sql` rồi `db/seed.sql`, chạy lại lần 2 để chắc không nhân đôi; kiểm tra không bảng nào có nhãn "RLS disabled" | Tạo Render Web Service: runtime **Docker**, branch `main`, gói **Free**, region **Singapore** (cùng Supabase), health check path `/health`, **tắt Auto-Deploy**. Environment: `APP_ENV=production`, **không** đặt `PORT` | **06** Figma; **M4** trang S09 |
+| **T4 28/10** | Lấy **Transaction pooler URI** (cổng `6543`) của Supabase, gửi riêng cho Lâm (không gửi vào group chat, không chụp màn hình). Thử local: `podman run --env-file .env.cloud ...` → `/health/db` ok | Đặt `DATABASE_URL` trên Render → deploy. Tạo **Deploy Hook**, lưu vào GitHub secret `RENDER_DEPLOY_HOOK`; thêm job `deploy` (`needs: check`, chỉ chạy khi push vào `main`) | Kiểm tra giao diện trên điện thoại (360px); sửa Issues giao diện từ Phase 2 |
+| **T5 29/10** | Thử pause/restore Supabase: `/health/db` 503 rồi tự ok lại, `/health` luôn 200 (PT-06) | Thử **commit đến production**: PR tăng `APP_VERSION` → `check` xanh → merge → `deploy` xanh → Render Events có commit hash mới → `/` hiện version mới (PT-04) | Cập nhật URL live vào `README.md` |
+
+**Xong phase khi** (kiểm tra tối **T5 29/10**):
+- [ ] URL Render mở được trên điện thoại dùng 4G, có HTTPS (PT-01).
+- [ ] `/health/db` trên URL live → `{"db":"ok","vehicles":3}` (dữ liệu từ Supabase).
+- [ ] Merge một PR thì tự lên URL live, commit hash khớp Render Events (PT-04).
+- [ ] `git grep -n -i -E "pooler.supabase|api.render.com/deploy"` không ra kết quả (PT-05).
+
+### Phase 4 – Hoàn thiện (T6 30/10 → CN 8/11)
+
+| Thời gian | Giang | Lâm | Khoa |
+|---|---|---|---|
+| **30/10 – 1/11** | **M7** chẩn đoán AI: chạy local, đặt `GEMINI_API_KEY` trên Render, chạy trên URL live (mốc W8 của Brief) | **M3** ghi nhận/sửa/xóa lần bảo dưỡng (S05, S06); **M2** sửa xe, cập nhật ODO | **M6** thống kê chi phí S08; chỉnh giao diện theo Figma |
+| **2 – 5/11** | **M5** tạo/sửa nhắc lịch (S07); FR-21 lịch sử chẩn đoán | FR-05 lưu trữ/xóa xe; FR-10 xuất CSV | FR-12 thêm/sửa loại dịch vụ; trang S10, S11 cho AI (cùng Giang) |
+| **6/11** | Kiểm thử chéo M2, M3 | Kiểm thử chéo M4, M6 | Kiểm thử chéo M5, M7 |
+| **7 – 8/11** | **Audit secret** (cả lịch sử Git); report mục 5, 6, 7; tổng hợp bảng đóng góp từ `git shortlog -sne` | Report mục 1, 2, 4 | Report mục 3, 7 |
 
 **Xong phase khi:**
-- [ ] URL Render mở được trên điện thoại dùng 4G (PT-01); cập nhật URL vào `README.md`.
-- [ ] Một PR được merge thì tự lên URL live, commit hash trên Render Events khớp (PT-04).
-- [ ] `/health/db` trên URL live → ok với Supabase; pause/restore Supabase thì app tự phục hồi (PT-06).
-- [ ] AI chạy trên URL live; gặp 429 thì hiện thông báo thân thiện (TC-13).
-- [ ] Toàn bộ test case TC-01 → TC-16 đạt; Issues mức `bug` đã đóng.
-- [ ] `git grep` không ra key hay connection string trong file và lịch sử (PT-05).
-- [ ] Bản nháp report có đủ 8 mục, góp ý peer review đã thành Issues.
+- [ ] AI chạy trên URL live; gặp 429, timeout hay thiếu key thì hiện thông báo thân thiện (TC-12 → TC-15).
+- [ ] Test case TC-01 → TC-16 đạt; Issues mức `bug` đã đóng.
+- [ ] Không có key hay connection string trong file và lịch sử Git (PT-05).
+- [ ] Bản nháp report đủ 8 mục; góp ý peer review đã thành Issues.
 
-### Phase 4 – Tập demo và nộp (9/11 – Session 20)
+### Phase 5 – Tập demo và nộp (T2 9/11 → Session 20)
 
-**Đóng băng chức năng:** từ 9/11 chỉ sửa lỗi, không thêm chức năng mới.
+**Đóng băng chức năng:** từ 9/11 chỉ sửa lỗi.
 
 | Ngày | Giang | Lâm | Khoa |
 |---|---|---|---|
-| **9–10/11** | Hoàn thiện report, xuất **PDF ≤ 12 trang**; cả nhóm ký bảng đóng góp | Chuẩn bị nhánh "cố tình đỏ" sẵn cho phần demo cổng chặn (PT-03) | **Clean clone trên máy chưa từng có project** (PT-02); slide 10 phút |
+| **9–10/11** | Hoàn thiện report, xuất **PDF ≤ 12 trang**; cả nhóm ký bảng đóng góp | Chuẩn bị nhánh "cố tình đỏ" cho phần demo cổng chặn (PT-03) | **Clean clone trên máy chưa từng có project** (PT-02); slide 10 phút |
 | **11/11** | Tập toàn bộ kịch bản demo (mục 11), có bấm giờ | | |
 | **Session 19** | **Nộp report**; mỗi người ôn lại các commit của mình và câu hỏi bảo vệ cá nhân trong Brief | | |
-| **Ngày demo (Session 20)** | Trước 5 phút: mở URL cho Render thức dậy, kiểm tra Supabase không bị pause, chạy một truy vấn | | |
+| **Ngày demo** | Trước 5 phút: mở URL cho Render thức dậy, kiểm tra Supabase không bị pause, chạy một truy vấn | | |
 
 **Xong phase khi:** đánh dấu đủ các ô trong *Submission checklist* (mục 8) của Final Project Brief.
 
@@ -327,7 +338,7 @@ Test trong CI **không cần database thật và không gọi Gemini thật**: `
 
 | Rủi ro | Cách xử lý |
 |---|---|
-| Để pipeline (Render, CI, Compose) đến cuối kỳ mới làm | Làm M0, P1, P2 ngay 26–27/10 (đầu Phase 2), trước các chức năng |
+| Để pipeline (Render, CI, Compose) đến cuối kỳ mới làm | Làm M0, P1, P2 ngay T6 23/10; Render + Supabase xong trước T5 29/10 |
 | Deploy hook trỏ nhầm service, job `deploy` xanh nhưng URL không đổi | Chỉ giữ **một** Render service chính thức; sau mỗi lần merge đối chiếu commit hash trên Render Events |
 | Phiên bản Python trong Dockerfile khác CI: CI xanh nhưng image lỗi | Dùng 3.12 ở cả hai; job `check` có bước build image |
 | Clean clone chỉ chạy trên một máy | Tập trên máy khác từ W10; README ghi đủ bước |

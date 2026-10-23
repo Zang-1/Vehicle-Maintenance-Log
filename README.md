@@ -37,9 +37,10 @@ Chi tiết (report, thuyết trình, lịch theo tuần): [docs/PHAN-CONG.md](do
 | Phase | Thời gian | Kết quả |
 |---|---|---|
 | 1. Thiết kế | đến 25/10/2026 | 8 tài liệu thiết kế |
-| 2. Demo giao diện chạy local | 26/10 – 1/11 | `podman compose up --build` từ clean clone, dùng được các chức năng chính trên `localhost:3000` |
-| 3. Hoàn thiện | 2/11 – 8/11 | Chạy trên URL HTTPS, nối Supabase, AI chạy live, merge là tự deploy, bản nháp report |
-| 4. Tập demo và nộp | 9/11 – Session 20 | Report PDF, demo đã tập trên máy khác |
+| 2. Chạy local | 23/10 – **26/10** | `podman compose up --build` từ clean clone; Dashboard, xe, lịch sử, nhắc lịch hiện trên `localhost:3000` |
+| 3. Lên Render + Supabase | 27/10 – **29/10** | URL HTTPS công khai nối Supabase; merge vào `main` là tự deploy |
+| 4. Hoàn thiện | 30/10 – 8/11 | AI chạy trên URL live, đủ chức năng, audit secret, bản nháp report |
+| 5. Tập demo và nộp | 9/11 – Session 20 | Report PDF, demo đã tập trên máy khác |
 
 Chi tiết theo ngày: mục 6 của [Implementation Plan](docs/08-implementation-plan/implementation-plan.md).
 
