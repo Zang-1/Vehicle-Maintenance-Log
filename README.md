@@ -44,6 +44,32 @@ Chi tiết (report, thuyết trình, lịch theo tuần): [docs/PHAN-CONG.md](do
 
 Chi tiết theo ngày: mục 6 của [Implementation Plan](docs/08-implementation-plan/implementation-plan.md).
 
+## Chạy code
+
+Cần Python 3.12 (cùng phiên bản với CI). Chạy trong Git Bash, tại thư mục repo:
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate        # macOS / Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
+ruff check . && pytest -q            # giống job check của CI, không cần database
+```
+
+Chạy server (cần một PostgreSQL đã chạy `db/schema.sql` + `db/seed.sql`):
+
+```bash
+DATABASE_URL=postgresql://app:<mật-khẩu>@localhost:5432/appdb python -m uvicorn app.main:app --port 8000
+```
+
+| Endpoint | Trả về |
+|---|---|
+| `GET /` | Tên app, phiên bản, môi trường |
+| `GET /health` | `{"status":"ok"}`, **không** chạm database (Render health check) |
+| `GET /health/db` | `{"db":"ok","vehicles":N}`; mất database thì 503 `{"db":"error"}` sau tối đa 5 giây |
+| `GET /docs` | Tài liệu API tự sinh của FastAPI |
+
+Khi có `Dockerfile` và `compose.yml` (P2), cả stack sẽ chạy bằng một lệnh `podman compose up --build`.
+
 ## Cách đóng góp
 
 1. Clone: `git clone https://github.com/Zang-1/Vehicle-Maintenance-Log.git`
