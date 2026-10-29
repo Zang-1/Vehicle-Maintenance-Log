@@ -3,25 +3,106 @@
 {% block title %}Chẩn đoán AI{% endblock %}
 {% block heading %}Chẩn đoán AI{% endblock %}
 
-{% block content %}
-<section class="card diagnose">
-  <h2 class="card-title">Mô tả triệu chứng</h2>
-  <div class="diagnose-body">
-    <label class="field-label" for="symptom">Xe đang gặp vấn đề gì? Khi nào xảy ra, có tiếng kêu, mùi hay đèn báo không?</label>
-    <textarea id="symptom" maxlength="1000" rows="5"
-              placeholder="Ví dụ: Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu"></textarea>
-    <div class="field-foot">
-      <span class="muted" id="symptom-help">Từ 10 đến 1000 ký tự</span>
-      <span class="muted" id="symptom-count">0/1000</span>
-    </div>
-    <button class="btn btn-primary" id="diagnose-btn" type="button">Chẩn đoán</button>
+{% set examples = [
+  "Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu",
+  "Xe khó nổ máy vào buổi sáng, đề vài lần mới nổ",
+  "Đèn báo kiểm tra động cơ sáng sau khi đổ xăng",
+  "Có mùi khét và khói nhẹ khi chạy đường dài",
+] %}
 
-    <div id="result" class="result" role="status" aria-live="polite" hidden></div>
-    <p class="muted disclaimer">Gợi ý do AI tạo ra, chỉ mang tính tham khảo, không thay thế kiểm tra của thợ.</p>
-  </div>
-</section>
+{% block content %}
+<div class="diagnose-grid">
+  <section class="card">
+    <header class="dx-head">
+      <span class="dx-icon dx-icon-accent" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3l-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/></svg>
+      </span>
+      <div>
+        <h2 class="dx-title">Mô tả triệu chứng</h2>
+        <p class="dx-sub">Càng cụ thể càng tốt: khi nào xảy ra, có tiếng kêu, mùi hay đèn báo không.</p>
+      </div>
+    </header>
+
+    <div class="dx-body">
+      <label class="field-label" for="symptom">Triệu chứng <span class="text-bad">*</span></label>
+      <textarea id="symptom" maxlength="1000" rows="6" aria-describedby="symptom-help"
+                placeholder="Ví dụ: Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu"></textarea>
+      <div class="field-foot">
+        <span class="muted" id="symptom-help">Từ 10 đến 1000 ký tự</span>
+        <span class="muted" id="symptom-count">0/1000</span>
+      </div>
+
+      <p class="field-label">Ví dụ nhanh</p>
+      <div class="chips">
+        {% for example in examples %}
+          <button class="chip" type="button" data-example="{{ example }}">{{ example }}</button>
+        {% endfor %}
+      </div>
+
+      <div class="dx-actions">
+        <span class="dx-privacy">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9 12l2 2 4-4"/></svg>
+          Chỉ gửi mô tả lên AI, không gửi thông tin cá nhân
+        </span>
+        <button class="btn btn-primary" id="diagnose-btn" type="button">Chẩn đoán</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <header class="dx-head">
+      <div>
+        <h2 class="dx-title">Kết quả</h2>
+        <p class="dx-sub">Gợi ý nguyên nhân, cách xử lý và mức khẩn cấp</p>
+      </div>
+      <span class="badge badge-ai">AI · Gemini</span>
+    </header>
+
+    <div class="dx-body">
+      <div id="state-empty" class="dx-empty">
+        <span class="dx-icon dx-icon-muted" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </span>
+        <p class="empty-title">Chưa có kết quả</p>
+        <p class="muted">Mô tả triệu chứng bên trái rồi bấm <b>Chẩn đoán</b>.</p>
+      </div>
+
+      <div id="state-wait" class="dx-wait" hidden>
+        <div class="skel skel-block"></div>
+        <div class="skel" style="width: 40%"></div>
+        <div class="skel"></div>
+        <div class="skel" style="width: 85%"></div>
+        <p class="muted">AI đang phân tích, thường mất vài giây…</p>
+      </div>
+
+      <div id="state-ok" hidden>
+        <div id="urgency" class="urgency" hidden>
+          <div>
+            <p class="urgency-label">Mức khẩn cấp</p>
+            <p class="urgency-value" id="urgency-text"></p>
+          </div>
+          <span class="meter" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+        <p class="field-label">Gợi ý</p>
+        <p class="result-text" id="suggestion"></p>
+        <div class="dx-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <p><b>Chỉ mang tính tham khảo.</b> Gợi ý do AI tạo ra, không thay thế kiểm tra của thợ. Nếu phanh hoặc lái có vấn đề, dừng xe ngay.</p>
+        </div>
+      </div>
+
+      <div id="state-bad" class="dx-error" role="alert" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <div>
+          <p class="dx-error-title" id="error-text"></p>
+          <p>Mô tả của bạn vẫn được giữ nguyên, bấm <b>Chẩn đoán</b> để thử lại.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
 {% endblock %}
 
 {% block screen %}S10 · Chẩn đoán AI · FR-18 → FR-20{% endblock %}
 
-{% block scripts %}<script src="/static/diagnose.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/diagnose.js?v={{ request.app.version }}"></script>{% endblock %}
