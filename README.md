@@ -88,6 +88,8 @@ podman compose up --build
 | `GET /` | Giao diện: Dashboard (S01). Các mục menu khác hiện trang "đang xây dựng" cho tới khi module tương ứng xong |
 | `GET /api/info` | Tên app, phiên bản, môi trường (đối chiếu sau mỗi lần deploy) |
 | `GET /api/stats/dashboard` | Số liệu cho Dashboard |
+| `GET /chan-doan` | Giao diện Chẩn đoán AI (S10) |
+| `POST /diagnose` | `{"symptom_text": "..."}` (10–1000 ký tự) → `{"suggestion": "..."}` từ Gemini. Thiếu/sai `GEMINI_API_KEY` hoặc AI lỗi → 503 `AI_UNAVAILABLE` kèm thông báo thân thiện, lý do chỉ ghi vào log (`ai failed: ...`) |
 | `GET /health` | `{"status":"ok"}`, **không** chạm database (Render health check) |
 | `GET /health/db` | `{"db":"ok","vehicles":N}`; mất database thì 503 `{"db":"error"}` sau tối đa 5 giây |
 | `GET /docs` | Tài liệu API tự sinh của FastAPI |

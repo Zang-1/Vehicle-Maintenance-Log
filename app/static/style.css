@@ -195,6 +195,31 @@ a { color: var(--color-primary); }
 .empty-title { font-size: 15px; font-weight: 700; }
 .empty .btn { margin-top: var(--space-2); }
 
+/* ---------- S10 Chẩn đoán AI ---------- */
+.diagnose { max-width: 760px; }
+.diagnose-body { display: flex; flex-direction: column; gap: var(--space-1); padding: 18px; }
+.field-label { font-size: 13px; font-weight: 600; }
+.diagnose textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-control);
+  font: inherit;
+  resize: vertical;
+}
+.diagnose textarea:focus { outline: 2px solid var(--color-primary); outline-offset: -1px; }
+.field-foot { display: flex; justify-content: space-between; font-size: 12px; }
+.diagnose .btn { align-self: flex-start; }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+.result { margin-top: var(--space-1); padding: 12px var(--space-2); border: 1px solid; border-radius: var(--radius-control); }
+.result-wait { background: var(--color-head); border-color: var(--color-border); color: var(--color-muted); }
+.result-ok { background: var(--color-ok-bg); border-color: #86EFAC; }
+.result-bad { background: var(--color-bad-bg); border-color: #FCA5A5; color: var(--color-bad); }
+.result-title { font-weight: 700; margin-bottom: 4px; }
+.result-text { white-space: pre-wrap; }
+.disclaimer { font-size: 12px; }
+
 /* ---------- mobile (from 360 px) ---------- */
 @media (max-width: 767px) {
   .sidebar { display: none; }

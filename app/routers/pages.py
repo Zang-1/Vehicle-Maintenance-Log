@@ -15,12 +15,16 @@ def dashboard(request: Request):
     return templates.TemplateResponse(request, "dashboard.html", {"active": "dashboard"})
 
 
+@router.get("/chan-doan")
+def diagnose_page(request: Request):
+    return templates.TemplateResponse(request, "diagnose.html", {"active": "chan-doan"})
+
+
 # Menu entries whose screens come with later modules. Until then they show who builds them.
 UPCOMING = {
     "xe": ("Xe của tôi", "S02–S07", "M2, M3 – Lâm"),
     "loai-dich-vu": ("Loại dịch vụ", "S09", "M4 – Khoa"),
     "thong-ke": ("Thống kê chi phí", "S08", "M6 – Khoa"),
-    "chan-doan": ("Chẩn đoán AI", "S10, S11", "M7 – Giang"),
 }
 
 

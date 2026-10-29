@@ -93,7 +93,7 @@ def test_dashboard_page_needs_no_database(monkeypatch):
 
 
 def test_upcoming_pages_exist():
-    for path in ["/xe", "/loai-dich-vu", "/thong-ke", "/chan-doan"]:
+    for path in ["/xe", "/loai-dich-vu", "/thong-ke"]:
         r = client.get(path)
         assert r.status_code == 200, path
         assert "đang được xây dựng" in r.text

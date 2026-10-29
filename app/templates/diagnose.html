@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Chẩn đoán AI{% endblock %}
+{% block heading %}Chẩn đoán AI{% endblock %}
+
+{% block content %}
+<section class="card diagnose">
+  <h2 class="card-title">Mô tả triệu chứng</h2>
+  <div class="diagnose-body">
+    <label class="field-label" for="symptom">Xe đang gặp vấn đề gì? Khi nào xảy ra, có tiếng kêu, mùi hay đèn báo không?</label>
+    <textarea id="symptom" maxlength="1000" rows="5"
+              placeholder="Ví dụ: Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu"></textarea>
+    <div class="field-foot">
+      <span class="muted" id="symptom-help">Từ 10 đến 1000 ký tự</span>
+      <span class="muted" id="symptom-count">0/1000</span>
+    </div>
+    <button class="btn btn-primary" id="diagnose-btn" type="button">Chẩn đoán</button>
+
+    <div id="result" class="result" role="status" aria-live="polite" hidden></div>
+    <p class="muted disclaimer">Gợi ý do AI tạo ra, chỉ mang tính tham khảo, không thay thế kiểm tra của thợ.</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block screen %}S10 · Chẩn đoán AI · FR-18 → FR-20{% endblock %}
+
+{% block scripts %}<script src="/static/diagnose.js"></script>{% endblock %}
