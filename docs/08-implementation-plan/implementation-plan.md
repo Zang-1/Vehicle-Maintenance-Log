@@ -257,7 +257,7 @@ Test trong CI **không cần database thật và không gọi Gemini thật**: `
 | PT-02 | Compose 1 lệnh (5đ) | Máy chưa từng có project: `git clone` → `cp .env.example .env` → đặt `DB_PASSWORD` → `podman compose up --build` | `http://localhost:3000/health/db` → ok, có dữ liệu mẫu |
 | PT-03 | CI chặn PR hỏng (5đ) | PR cố tình làm test đỏ | Check `check` đỏ, nút merge bị khóa |
 | PT-04 | Merge là tự deploy (5đ) | Sửa test, tăng `APP_VERSION`, merge | Actions: `check` → `deploy` xanh; Render Events có commit hash mới; `/` hiện version mới |
-| PT-05 | Không có secret trong repo (4đ) | `git grep -n -i -E "pooler.supabase\|AIza\|api.render.com/deploy"` và `git log -p` cho các từ đó | Không ra kết quả |
+| PT-05 | Không có secret trong repo (4đ) | `git grep -n -i -E "pooler.supabase\|A[I]za\|api.render.com/deploy"` (viết `A[I]za` để chính dòng này không bị lệnh tìm thấy) và `git log -p` cho các từ đó | Không ra kết quả |
 | PT-06 | Supabase pause | Pause project → gọi `/health/db` và `/health` → Restore | 503 rồi tự ok lại, `/health` luôn 200, không redeploy |
 | PT-07 | Render ngủ | Không truy cập 15 phút rồi mở lại | Lần đầu chậm (~1 phút) nhưng tải được. Lúc demo: mở URL trước 5 phút |
 

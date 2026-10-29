@@ -11,11 +11,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app import db
 from app.errors import ApiError
-from app.routers import pages, stats
+from app.routers import diagnose, pages, stats
 from app.schemas import ErrorOut, HealthDbOut, HealthOut, RootOut
 
 APP_NAME = os.getenv("APP_NAME", "vehicle-maintenance-log")
-APP_VERSION = "0.2.0"  # bump in a pull request to trace a commit to production
+APP_VERSION = "0.3.0"  # bump in a pull request to trace a commit to production
 APP_ENV = os.getenv("APP_ENV", "development")
 
 
@@ -75,4 +75,5 @@ def health_db():
 
 
 app.include_router(stats.router)
+app.include_router(diagnose.router)
 app.include_router(pages.router)  # last: the HTML pages, "/" is the dashboard

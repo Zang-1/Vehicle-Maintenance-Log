@@ -7,8 +7,9 @@ in its own pull request.
 from datetime import date
 from decimal import Decimal
 from enum import Enum
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 
 
 class RootOut(BaseModel):
@@ -84,3 +85,13 @@ class DashboardOut(BaseModel):
     cost_this_month: Decimal
     attention_reminders: list[ReminderOut]
     recent_records: list[DashboardRecord]
+
+
+class DiagnoseIn(BaseModel):
+    """FR-18. Too short or too long gets FastAPI's 422 before any AI call."""
+
+    symptom_text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=1000)]
+
+
+class DiagnoseOut(BaseModel):
+    suggestion: str
