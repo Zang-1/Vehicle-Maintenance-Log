@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-  <link rel="stylesheet" href="/static/style.css">
+  {# ?v=<version>: a new release gets a new URL, so browsers never keep an old cached file #}
+  <link rel="stylesheet" href="/static/style.css?v={{ request.app.version }}">
 </head>
 <body>
   {# key, href, desktop label, mobile label #}
@@ -50,7 +51,7 @@
     {% endfor %}
   </nav>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v={{ request.app.version }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
