@@ -1,0 +1,58 @@
+# CI/CD (doc 07, section 2; doc 08, phases 2-3).
+#   check  : runs on every pull request and on every push to main. A red check blocks the merge
+#            (branch protection: Require status checks -> "check").
+#   deploy : runs only after check is green on a push to main. It calls the Render Deploy Hook;
+#            Auto-Deploy is turned off on Render, so a red commit can never reach production.
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same Python version as the Dockerfile (python:3.12-slim)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Install
+        run: pip install -r requirements-dev.txt
+
+      - name: Compile Python
+        run: python -m compileall -q app tests
+
+      - name: Lint
+        run: ruff check .
+
+      # No secret and no database: tests/conftest.py sets a dummy DATABASE_URL and the tests mock the
+      # database and the AI call.
+      - name: Test
+        run: pytest -q
+
+      # Proves the Dockerfile still builds, so a broken image fails here and not on Render.
+      - name: Build image
+        run: docker build -t vehicle-maintenance-log:ci .
+
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "Repository secret RENDER_DEPLOY_HOOK is not set (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "Deploy hook called. Compare the commit hash on Render > Events."
