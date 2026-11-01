@@ -9,7 +9,13 @@ from decimal import Decimal
 from enum import Enum
 from typing import Annotated
 
-from pydantic import BaseModel, Field, StringConstraints, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 VIETNAM = timezone(timedelta(hours=7))  # no daylight saving; zoneinfo would need the tzdata package in the slim image
 
@@ -237,6 +243,13 @@ class ItemIn(BaseModel):
     def empty_is_none(cls, value):
         return blank_to_none(value)
 
+    @model_validator(mode="after")
+    def line_total_fits(self):
+        # maintenance_items.line_total is numeric(14,0): a bigger product would fail in the database (500)
+        if self.quantity * self.unit_price >= Decimal(10) ** 14:
+            raise ValueError("Thành tiền quá lớn, hãy kiểm tra số lượng và đơn giá.")
+        return self
+
 
 class RecordIn(BaseModel):
     """FR-06, FR-09. BR-03: not in the future. BR-04: at least one item."""
@@ -280,5 +293,6 @@ class RecordListItem(RecordSummary):
 class RecordOut(RecordSummary):
     vehicle_id: int
     vehicle_name: str
+    license_plate: str | None
     note: str | None
     items: list[ItemOut]

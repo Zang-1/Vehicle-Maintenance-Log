@@ -597,3 +597,95 @@ a.vcard:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
   .history-tools .csv-link { margin-left: 0; }
   .history-row { padding: 12px 14px; }
 }
+
+/* =====================================================================
+   S05–S06 Ghi lần bảo dưỡng, Chi tiết lần bảo dưỡng (Lâm, M3)
+   ===================================================================== */
+.form-stack { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.note-area { min-height: 90px; resize: vertical; line-height: 1.6; }
+select.control { cursor: pointer; }
+
+/* items: type | description | quantity | price | line total | remove. Description and quantity stay
+   hidden until "Thêm chi tiết" is open, so the common case is just: what was done and how much it cost. */
+.items { display: flex; flex-direction: column; gap: 12px; }
+.item-head { display: none; }
+.item-head:has(+ .items.simple) { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) 120px 40px; gap: 10px; padding: 0 2px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+.item-head:has(+ .items.simple) span:nth-child(2), .item-head:has(+ .items.simple) span:nth-child(3) { display: none; }
+.item-head .r { text-align: right; }
+/* open: two lines per item (type, quantity, price on the first; description and line total on the second) */
+.item-row {
+  display: grid; align-items: start; gap: 10px;
+  grid-template-columns: minmax(0, 1.6fr) 84px minmax(0, 1.2fr) 40px;
+  grid-template-areas: "type qty price del" "desc desc total total";
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.item-row:last-child { padding-bottom: 0; border-bottom: 0; }
+.f-type { grid-area: type; } .f-qty { grid-area: qty; } .f-price { grid-area: price; }
+.f-desc { grid-area: desc; } .line-total { grid-area: total; } .item-del { grid-area: del; }
+/* folded: one line per item */
+.items.simple .item-row { grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) 120px 40px; grid-template-areas: "type price total del"; padding-bottom: 0; border-bottom: 0; }
+.items.simple .f-desc, .items.simple .f-qty { display: none; }
+.line-total { padding-top: 13px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.icon-btn.plain { border-color: transparent; background: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--text-muted); }
+.icon-btn.plain:hover { background: var(--bad-bg); color: var(--bad); }
+.item-del { width: 40px; height: 48px; border-radius: var(--radius-control); }
+.add-item { align-self: flex-start; }
+
+.summary-card { position: sticky; top: 24px; gap: var(--space-2); }
+.summary-vehicle-link { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; background: var(--surface-2); color: inherit; text-decoration: none; }
+.summary-vehicle-link .thumb { width: 64px; height: 44px; border-radius: 10px; }
+.sum-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.sum-total-line { padding-top: var(--space-2); border-top: 1px dashed var(--border-strong); }
+.sum-label { font-size: 16px; font-weight: 700; }
+.sum-total { font-size: 28px; line-height: 1.2; font-weight: 750; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.info-note { display: flex; align-items: flex-start; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--primary-soft); color: var(--primary); font-size: 13.5px; }
+.info-note span { color: var(--text); }
+.form-alert { padding: 12px 14px; border-radius: 14px; background: var(--bad-bg); color: var(--bad); font-weight: 600; }
+
+/* detail: S06 */
+.record-layout { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+.receipt { flex: 3 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: 28px; }
+.receipt-head { display: flex; align-items: flex-start; gap: 16px; }
+.receipt-head > div { flex: 1; min-width: 0; }
+.receipt-title { margin: 4px 0; font-size: 22px; line-height: 1.3; overflow-wrap: anywhere; }
+.info-boxes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.info-box { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); min-width: 0; }
+.info-box small { font-size: 12.5px; color: var(--text-muted); }
+.info-box b { overflow-wrap: anywhere; }
+.table-scroll { overflow-x: auto; }
+.receipt-table { width: 100%; border-collapse: collapse; }
+.receipt-table th { padding: 8px 10px; border-bottom: 1px solid var(--border-strong); font-size: 12.5px; font-weight: 600; text-align: left; color: var(--text-muted); }
+.receipt-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.receipt-table .r { text-align: right; }
+.receipt-table .num, .receipt-table .strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.receipt-table .strong { font-weight: 700; }
+.receipt-table .first b { font-weight: 550; overflow-wrap: anywhere; }
+.receipt-table .sub { display: block; font-size: 12.5px; color: var(--text-muted); }
+.receipt-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-top: 16px; border-top: 1px dashed var(--border-strong); }
+.record-side { flex: 1 1 240px; min-width: 240px; display: flex; flex-direction: column; gap: 12px; }
+.side-card { display: flex; flex-direction: column; gap: 10px; padding: 18px; }
+
+@media (max-width: 1100px) {
+  .summary-card { position: static; }
+}
+
+@media (max-width: 767px) {
+  .grid-3 { grid-template-columns: minmax(0, 1fr); }
+  .item-head:has(+ .items.simple) { display: none; }
+  .item-row { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: "type type" "desc desc" "qty qty" "price del" "total total"; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .items.simple .item-row { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: "type type" "price del" "total total"; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .item-row:last-child { padding-bottom: 0; border-bottom: 0; }
+  .item-del { width: 44px; }
+  .line-total { padding-top: 0; }
+  .receipt { padding: 18px; gap: 16px; }
+  .info-boxes { grid-template-columns: minmax(0, 1fr); }
+  .receipt-table thead { display: none; }
+  .receipt-table, .receipt-table tbody, .receipt-table tr, .receipt-table td { display: block; width: 100%; }
+  .receipt-table tr { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .receipt-table td { padding: 2px 0; border: 0; text-align: left; }
+  .receipt-table td[data-label]:not([data-label=""]) { display: flex; justify-content: space-between; gap: 12px; }
+  .receipt-table td[data-label]:not([data-label=""])::before { content: attr(data-label); color: var(--text-muted); }
+  .record-side { flex-basis: 100%; }
+  .summary-card .btn { width: 100%; }
+}

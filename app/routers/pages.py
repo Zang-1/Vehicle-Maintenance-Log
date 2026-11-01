@@ -46,12 +46,26 @@ def vehicle_edit_page(request: Request, vehicle_id: int):
     return templates.TemplateResponse(request, "vehicle_form.html", {"active": "xe", "vehicle_id": vehicle_id})
 
 
+# Maintenance records (M3, Lâm). "/bao-duong/moi?xe=<id>&loai=<service type id>" preselects both.
+@router.get("/bao-duong/moi")
+def record_add_page(request: Request):
+    return templates.TemplateResponse(request, "record_form.html", {"active": "xe", "record_id": None})
+
+
+@router.get("/bao-duong/{record_id:int}")
+def record_detail_page(request: Request, record_id: int):
+    return templates.TemplateResponse(request, "record_detail.html", {"active": "xe", "record_id": record_id})
+
+
+@router.get("/bao-duong/{record_id:int}/sua")
+def record_edit_page(request: Request, record_id: int):
+    return templates.TemplateResponse(request, "record_form.html", {"active": "xe", "record_id": record_id})
+
+
 # Screens built by teammates (docs/PHAN-CONG.md §2.1). Until then the link opens a page that says who
 # builds it, so links from the home screen never end on a 404.
 # path -> (menu key, title, screen in ui-design.html, owner)
 UPCOMING = {
-    "/bao-duong/moi": ("xe", "Ghi lần bảo dưỡng", "Ghi lần bảo dưỡng", "Lâm"),
-    "/bao-duong/{record_id}": ("xe", "Chi tiết lần bảo dưỡng", "Chi tiết lần bảo dưỡng", "Lâm"),
     "/thong-ke": ("thong-ke", "Chi phí", "Chi phí", "Khoa"),
     "/loai-dich-vu": ("loai-dich-vu", "Loại việc bảo dưỡng", "Loại việc bảo dưỡng", "Khoa"),
     "/them": ("them", "Thêm", "Thêm", "Khoa"),
