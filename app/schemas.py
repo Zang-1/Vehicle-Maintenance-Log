@@ -4,12 +4,25 @@ Each module adds its own models here (VehicleIn/Out for M2, RecordIn for M3, ...
 in its own pull request.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated
 
-from pydantic import BaseModel, StringConstraints
+from pydantic import (
+    BaseModel,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
+
+VIETNAM = timezone(timedelta(hours=7))  # no daylight saving; zoneinfo would need the tzdata package in the slim image
+
+
+def today_vn() -> date:
+    """Today for the user. The server runs on UTC, which is still yesterday in Vietnam before 07:00 (BR-03)."""
+    return datetime.now(VIETNAM).date()
 
 
 class RootOut(BaseModel):
@@ -131,3 +144,155 @@ class DiagnosisOut(BaseModel):
     urgency_level: str | None  # LOW | MEDIUM | HIGH
     error_code: str | None  # NO_KEY | RATE_LIMITED | TIMEOUT | UPSTREAM_ERROR
     model: str | None
+
+
+# ---------- M2 Xe (Lâm) ----------
+
+
+class VehicleType(str, Enum):
+    MOTORBIKE = "MOTORBIKE"
+    CAR = "CAR"
+    OTHER = "OTHER"
+
+
+def blank_to_none(value):
+    """An empty text box means "not given": the database stores NULL, not an empty string."""
+    if isinstance(value, str):
+        value = value.strip()
+        return value or None
+    return value
+
+
+class VehicleIn(BaseModel):
+    """FR-01, FR-04. Only name, type and odometer are required; the rest is optional (docs/PHAN-CONG.md §2.1)."""
+
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    vehicle_type: VehicleType
+    brand: Annotated[str, StringConstraints(max_length=50)] | None = None
+    model: Annotated[str, StringConstraints(max_length=50)] | None = None
+    manufacture_year: Annotated[int, Field(ge=1950, le=2100)] | None = None
+    license_plate: Annotated[str, StringConstraints(max_length=20)] | None = None
+    current_odometer: Annotated[int, Field(ge=0, le=10_000_000)] = 0
+    purchase_date: date | None = None
+
+    @field_validator("brand", "model", "license_plate", mode="before")
+    @classmethod
+    def empty_is_none(cls, value):
+        return blank_to_none(value)
+
+    @field_validator("license_plate")
+    @classmethod
+    def plate_upper(cls, value):
+        # BR-01: "59x1-123.45" and "59X1-123.45" are the same plate
+        return value.upper() if value else value
+
+    @field_validator("purchase_date")
+    @classmethod
+    def not_in_future(cls, value):
+        if value and value > today_vn():
+            raise ValueError("Ngày mua không được ở tương lai.")
+        return value
+
+
+class ArchiveIn(BaseModel):
+    archived: bool = True
+
+
+class VehicleOut(BaseModel):
+    """A vehicle plus what its list card and detail header show."""
+
+    id: int
+    name: str
+    vehicle_type: VehicleType
+    brand: str | None
+    model: str | None
+    manufacture_year: int | None
+    license_plate: str | None
+    current_odometer: int
+    purchase_date: date | None
+    is_archived: bool
+    created_at: datetime
+    record_count: int
+    last_service_date: date | None
+    total_cost: Decimal
+    overdue_count: int
+    due_soon_count: int
+
+
+# ---------- M3 Lần bảo dưỡng (Lâm) ----------
+
+
+class ServiceTypeOut(BaseModel):
+    id: int
+    name: str
+    description: str | None
+    applies_to: str  # MOTORBIKE | CAR | ALL
+    default_interval_km: int | None
+    default_interval_months: int | None
+    is_active: bool
+
+
+class ItemIn(BaseModel):
+    service_type_id: Annotated[int, Field(gt=0)]
+    description: Annotated[str, StringConstraints(max_length=255)] | None = None
+    quantity: Annotated[Decimal, Field(gt=0, max_digits=8, decimal_places=2)] = Decimal(1)
+    unit_price: Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=0)] = Decimal(0)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def empty_is_none(cls, value):
+        return blank_to_none(value)
+
+    @model_validator(mode="after")
+    def line_total_fits(self):
+        # maintenance_items.line_total is numeric(14,0): a bigger product would fail in the database (500)
+        if self.quantity * self.unit_price >= Decimal(10) ** 14:
+            raise ValueError("Thành tiền quá lớn, hãy kiểm tra số lượng và đơn giá.")
+        return self
+
+
+class RecordIn(BaseModel):
+    """FR-06, FR-09. BR-03: not in the future. BR-04: at least one item."""
+
+    service_date: date
+    odometer: Annotated[int, Field(ge=0, le=10_000_000)]
+    garage_name: Annotated[str, StringConstraints(max_length=100)] | None = None
+    note: Annotated[str, StringConstraints(max_length=500)] | None = None
+    items: Annotated[list[ItemIn], Field(min_length=1, max_length=30)]
+
+    @field_validator("garage_name", "note", mode="before")
+    @classmethod
+    def empty_is_none(cls, value):
+        return blank_to_none(value)
+
+    @field_validator("service_date")
+    @classmethod
+    def not_in_future(cls, value):
+        if value > today_vn():
+            raise ValueError("Ngày bảo dưỡng không được ở tương lai.")
+        return value
+
+
+class ItemOut(BaseModel):
+    id: int
+    service_type_id: int
+    service_type_name: str
+    description: str | None
+    quantity: Decimal
+    unit_price: Decimal
+    line_total: Decimal  # computed by the database (BR-05)
+
+
+class RecordListItem(RecordSummary):
+    """A row of a vehicle's history: RecordSummary plus the service types done."""
+
+    note: str | None
+    items_summary: str | None
+
+
+class RecordOut(RecordSummary):
+    vehicle_id: int
+    vehicle_name: str
+    license_plate: str | None
+    note: str | None
+    items: list[ItemOut]

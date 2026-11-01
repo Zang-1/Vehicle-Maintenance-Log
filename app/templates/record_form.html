@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% set editing = record_id is not none %}
+{% block title %}{{ "Sửa lần bảo dưỡng" if editing else "Ghi lần bảo dưỡng" }}{% endblock %}
+{% block subheading %}<p class="page-sub"><a id="back-link" href="{{ '/bao-duong/' ~ record_id if editing else '/xe' }}">← Quay lại</a></p>{% endblock %}
+{% block heading %}{{ "Sửa lần bảo dưỡng" if editing else "Ghi lần bảo dưỡng" }}{% endblock %}
+
+{% block content %}
+{# record_form.js fills the lists and sends POST /api/vehicles/{id}/records, or PUT /api/records/{id} when the page has an id.
+   Opened from the home screen as /bao-duong/moi?xe=<vehicle>&loai=<service type>: both are preselected. #}
+<form class="split" id="record-form" novalidate data-record-id="{{ record_id if editing else '' }}" hidden>
+  <div class="form-stack">
+    <div class="card form-card">
+      <div class="grid-3">
+        <div class="field" data-field="vehicle_id">
+          <label class="field-label" for="f-vehicle">Xe <span class="req">*</span></label>
+          <select class="control" id="f-vehicle" name="vehicle_id"></select>
+        </div>
+        <div class="field" data-field="service_date">
+          <label class="field-label" for="f-date">Ngày làm <span class="req">*</span></label>
+          <input class="control" id="f-date" name="service_date" type="date">
+        </div>
+        <div class="field" data-field="odometer">
+          <label class="field-label" for="f-odo">Số km lúc làm <span class="req">*</span></label>
+          <div class="input-wrap"><input class="control" id="f-odo" name="odometer" inputmode="numeric" autocomplete="off" placeholder="0"><span class="suffix">km</span></div>
+          <span class="field-help" id="odo-help"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card form-card">
+      <div>
+        <h2 class="card-heading">Việc đã làm</h2>
+        <p class="muted">Bấm để chọn nhanh, rồi nhập giá tiền cho từng việc.</p>
+      </div>
+      <div class="chips" id="quick-chips" aria-label="Chọn nhanh việc đã làm"></div>
+      <div class="item-head" id="item-head" aria-hidden="true"><span>Việc</span><span>Mô tả</span><span>Số lượng</span><span>Giá tiền</span><span class="r">Thành tiền</span><span></span></div>
+      <div class="items simple" id="items"></div>
+      <button class="btn btn-ghost btn-sm add-item" type="button" id="add-item"><svg class="ic"><use href="#i-plus"></use></svg>Thêm việc khác</button>
+    </div>
+
+    <details class="disc" id="more">
+      <summary><svg class="ic"><use href="#i-chevron-down"></use></svg>Thêm chi tiết: gara, ghi chú, mô tả, số lượng</summary>
+      <div class="disc-body">
+        <div class="field" data-field="garage_name">
+          <label class="field-label" for="f-garage">Nơi làm</label>
+          <input class="control" id="f-garage" name="garage_name" maxlength="100" autocomplete="off" placeholder="Ví dụ: Honda Head Phát Tiến">
+        </div>
+        <div class="field" data-field="note">
+          <label class="field-label" for="f-note">Ghi chú</label>
+          <textarea class="control note-area" id="f-note" name="note" maxlength="500" rows="3"></textarea>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <aside class="card form-card summary-card" aria-label="Tóm tắt">
+    <h2 class="card-heading">Tóm tắt</h2>
+    <div class="summary-vehicle" id="summary-vehicle"></div>
+    <div class="sum-line"><span class="muted">Số việc</span><b id="sum-count">0</b></div>
+    <div class="sum-line sum-total-line"><span class="sum-label">Tổng cộng</span><span class="sum-total" id="sum-total">0 đ</span></div>
+    <p class="info-note"><svg class="ic"><use href="#i-info"></use></svg><span>Nhắc bảo dưỡng của những việc này sẽ tự tính lại cho lần tới.</span></p>
+    <p class="form-alert" id="form-alert" role="alert" hidden></p>
+    <button class="btn btn-primary btn-big" type="submit" id="save"><svg class="ic"><use href="#i-check"></use></svg>{{ "Lưu thay đổi" if editing else "Lưu lần bảo dưỡng" }}</button>
+    <a class="btn btn-secondary" id="cancel" href="{{ '/bao-duong/' ~ record_id if editing else '/xe' }}">Hủy</a>
+  </aside>
+</form>
+
+<section class="card empty" id="no-vehicle" hidden>
+  <p class="empty-title">Bạn chưa có xe nào</p>
+  <p class="muted">Thêm xe trước, rồi quay lại ghi lần bảo dưỡng đầu tiên.</p>
+  <a class="btn btn-primary" href="/xe/moi"><svg class="ic"><use href="#i-plus"></use></svg>Thêm xe</a>
+</section>
+{% endblock %}
+
+{% block screen %}S05 · {{ "Sửa lần bảo dưỡng · FR-09" if editing else "Ghi lần bảo dưỡng · FR-06" }}{% endblock %}
+
+{% block scripts %}
+<script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/record_form.js?v={{ request.app.version }}"></script>
+{% endblock %}

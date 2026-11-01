@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết xe{% endblock %}
+{% block subheading %}<p class="page-sub"><a href="/xe">← Xe của tôi</a></p>{% endblock %}
+{% block heading %}Chi tiết xe{% endblock %}
+
+{% block content %}
+{# vehicle_detail.js fills everything from GET /api/vehicles/{{ vehicle_id }}.
+   The tab "Nhắc bảo dưỡng" is written by Khoa: it defines window.renderVehicleReminders(container, vehicle)
+   (vehicle = the JSON of /api/vehicles/{id}); this page calls it once, the first time the tab opens. #}
+<section class="card vd-head" id="vd-head" data-vehicle-id="{{ vehicle_id }}" aria-live="polite">
+  <div class="skel skel-block"></div>
+</section>
+
+<div class="tabs" role="tablist" aria-label="Chi tiết xe">
+  <button class="tab on" type="button" role="tab" id="tab-info" data-tab="thong-tin" aria-selected="true" aria-controls="pane-info">Thông tin</button>
+  <button class="tab" type="button" role="tab" id="tab-history" data-tab="lich-su" aria-selected="false" aria-controls="pane-history">Lịch sử <span class="cnt" id="count-history">0</span></button>
+  <button class="tab" type="button" role="tab" id="tab-reminders" data-tab="nhac-bao-duong" aria-selected="false" aria-controls="pane-reminders">Nhắc bảo dưỡng</button>
+</div>
+
+<section class="card" id="pane-info" role="tabpanel" aria-labelledby="tab-info"></section>
+
+<section id="pane-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+  <div class="history-tools">
+    <div class="field">
+      <label class="field-label" for="from-date">Từ ngày</label>
+      <input class="control" id="from-date" type="date">
+    </div>
+    <div class="field">
+      <label class="field-label" for="to-date">Đến ngày</label>
+      <input class="control" id="to-date" type="date">
+    </div>
+    <button class="btn btn-ghost btn-sm" type="button" id="clear-filter" hidden>Xóa lọc</button>
+    <a class="btn btn-secondary btn-sm csv-link" id="csv-link" href="#"><svg class="ic"><use href="#i-history"></use></svg>Xuất CSV</a>
+  </div>
+  <div class="card" id="history-list" aria-live="polite"></div>
+</section>
+
+<section id="pane-reminders" role="tabpanel" aria-labelledby="tab-reminders" hidden>
+  <div id="reminders-mount"></div>
+</section>
+
+<dialog class="dialog" id="archive-dialog" aria-labelledby="archive-title"><div class="dialog-body">
+  <span class="dialog-icon tone-primary"><svg class="ic"><use href="#i-shield"></use></svg></span>
+  <h2 id="archive-title">Lưu trữ xe này?</h2>
+  <p class="muted">Xe sẽ ẩn khỏi danh sách "Đang dùng" và không còn nhắc bảo dưỡng. Lịch sử bảo dưỡng vẫn được giữ, bạn có thể khôi phục bất cứ lúc nào.</p>
+  <div class="dialog-actions">
+    <button class="btn btn-secondary" type="button" data-close>Hủy</button>
+    <button class="btn btn-primary" type="button" id="archive-confirm">Lưu trữ</button>
+  </div>
+</div></dialog>
+
+<dialog class="dialog" id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-body">
+  <span class="dialog-icon tone-bad"><svg class="ic"><use href="#i-alert"></use></svg></span>
+  <h2 id="delete-title">Xóa hẳn xe này?</h2>
+  <p class="muted">Xe chưa có lịch sử bảo dưỡng nên xóa được. Các nhắc bảo dưỡng của xe cũng bị xóa. Không thể hoàn tác.</p>
+  <div class="dialog-actions">
+    <button class="btn btn-secondary" type="button" data-close>Hủy</button>
+    <button class="btn btn-danger" type="button" id="delete-confirm">Xóa xe</button>
+  </div>
+</div></dialog>
+{% endblock %}
+
+{% block screen %}S04 · Chi tiết xe · FR-03, FR-05, FR-07{% endblock %}
+
+{% block scripts %}
+<script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/vehicle_detail.js?v={{ request.app.version }}"></script>
+{% endblock %}

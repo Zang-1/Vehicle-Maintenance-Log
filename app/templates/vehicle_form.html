@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% set editing = vehicle_id is not none %}
+{% block title %}{{ "Sửa thông tin xe" if editing else "Thêm xe mới" }}{% endblock %}
+{% block subheading %}<p class="page-sub"><a href="{{ '/xe/' ~ vehicle_id if editing else '/xe' }}">← {{ "Chi tiết xe" if editing else "Xe của tôi" }}</a></p>{% endblock %}
+{% block heading %}{{ "Sửa thông tin xe" if editing else "Thêm xe mới" }}{% endblock %}
+
+{% block content %}
+{# Only name, type and odometer are required; the rest is folded away (docs/PHAN-CONG.md §2.1).
+   vehicle_form.js loads the vehicle when data-vehicle-id is set, and sends POST or PUT /api/vehicles. #}
+<form class="split" id="vehicle-form" novalidate data-vehicle-id="{{ vehicle_id if editing else '' }}">
+  <div class="card form-card">
+    <div>
+      <h2 class="card-heading">Thông tin xe</h2>
+      <p class="muted">Chỉ cần tên gọi và số km hiện tại. Ô có dấu <span class="req">*</span> là bắt buộc.</p>
+    </div>
+
+    <div class="field" data-field="vehicle_type">
+      <span class="field-label" id="type-label">Loại xe <span class="req">*</span></span>
+      <div class="chips" role="group" aria-labelledby="type-label" id="type-chips">
+        <button class="chip big active" type="button" data-type="MOTORBIKE" aria-pressed="true">Xe máy</button>
+        <button class="chip big" type="button" data-type="CAR" aria-pressed="false">Ô tô</button>
+        <button class="chip big" type="button" data-type="OTHER" aria-pressed="false">Loại khác</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field" data-field="name">
+        <label class="field-label" for="f-name">Tên gọi <span class="req">*</span></label>
+        <input class="control" id="f-name" name="name" maxlength="100" autocomplete="off" placeholder="Ví dụ: Vision đi làm">
+      </div>
+      <div class="field" data-field="current_odometer">
+        <label class="field-label" for="f-odo">Số km hiện tại <span class="req">*</span></label>
+        <div class="input-wrap"><input class="control" id="f-odo" name="current_odometer" inputmode="numeric" autocomplete="off" placeholder="0"><span class="suffix">km</span></div>
+        <span class="field-help" id="odo-help">Xem số trên đồng hồ xe.</span>
+      </div>
+    </div>
+
+    <details class="disc" id="more">
+      <summary><svg class="ic"><use href="#i-chevron-down"></use></svg>Thêm chi tiết (không bắt buộc)</summary>
+      <div class="disc-body">
+        <div class="grid-2">
+          <div class="field" data-field="license_plate">
+            <label class="field-label" for="f-plate">Biển số</label>
+            <input class="control" id="f-plate" name="license_plate" maxlength="20" autocomplete="off" placeholder="59X1-123.45">
+            <span class="field-help">Xe chưa có biển thì để trống.</span>
+          </div>
+          <div class="field" data-field="brand">
+            <label class="field-label" for="f-brand">Hãng</label>
+            <input class="control" id="f-brand" name="brand" maxlength="50" autocomplete="off" placeholder="Honda">
+          </div>
+          <div class="field" data-field="model">
+            <label class="field-label" for="f-model">Dòng xe</label>
+            <input class="control" id="f-model" name="model" maxlength="50" autocomplete="off" placeholder="Vision">
+          </div>
+          <div class="field" data-field="manufacture_year">
+            <label class="field-label" for="f-year">Năm sản xuất</label>
+            <input class="control" id="f-year" name="manufacture_year" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="2020">
+          </div>
+          <div class="field" data-field="purchase_date">
+            <label class="field-label" for="f-purchase">Ngày mua</label>
+            <input class="control" id="f-purchase" name="purchase_date" type="date">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <div class="form-actions">
+      <a class="btn btn-secondary" href="{{ '/xe/' ~ vehicle_id if editing else '/xe' }}">Hủy</a>
+      <button class="btn btn-primary" type="submit" id="save"><svg class="ic"><use href="#i-check"></use></svg>{{ "Lưu thay đổi" if editing else "Lưu xe" }}</button>
+    </div>
+  </div>
+
+  <aside class="card form-card preview-card" aria-label="Xem trước">
+    <span class="eyebrow">Xem trước</span>
+    <div class="thumb preview-thumb" id="preview-thumb"></div>
+    <div>
+      <b class="preview-name" id="preview-name">Tên xe</b>
+      <p class="row-sub" id="preview-sub"></p>
+    </div>
+    <span class="plate" id="preview-plate" hidden></span>
+    <p class="muted preview-tip">Sau khi lưu, bạn có thể ghi lần bảo dưỡng đầu tiên và đặt nhắc bảo dưỡng cho xe này.</p>
+  </aside>
+</form>
+{% endblock %}
+
+{% block screen %}S03 · {{ "Sửa xe · FR-04" if editing else "Thêm xe · FR-01" }}{% endblock %}
+
+{% block scripts %}
+<script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/vehicle_form.js?v={{ request.app.version }}"></script>
+{% endblock %}

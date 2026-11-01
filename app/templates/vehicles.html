@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Xe của tôi{% endblock %}
+{% block subheading %}<p class="page-sub">Các xe bạn đang theo dõi bảo dưỡng</p>{% endblock %}
+{% block heading %}Xe của tôi{% endblock %}
+{% block actions %}<a class="btn btn-primary" href="/xe/moi"><svg class="ic"><use href="#i-plus"></use></svg>Thêm xe</a>{% endblock %}
+
+{% block content %}
+{# vehicles.js loads GET /api/vehicles and fills #vehicle-list. The chips pick which vehicles are listed. #}
+<div class="chips" role="group" aria-label="Lọc xe" id="filter">
+  <button class="chip active" type="button" data-filter="active" aria-pressed="true">Đang dùng</button>
+  <button class="chip" type="button" data-filter="archived" aria-pressed="false">Đã lưu trữ</button>
+  <button class="chip" type="button" data-filter="all" aria-pressed="false">Tất cả</button>
+</div>
+
+<div class="vcard-grid" id="vehicle-list" aria-live="polite">
+  <div class="card vcard"><div class="skel skel-block"></div></div>
+  <div class="card vcard"><div class="skel skel-block"></div></div>
+  <div class="card vcard"><div class="skel skel-block"></div></div>
+</div>
+{% endblock %}
+
+{% block screen %}S02 · Xe của tôi · FR-02{% endblock %}
+
+{% block scripts %}
+<script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/vehicles.js?v={{ request.app.version }}"></script>
+{% endblock %}

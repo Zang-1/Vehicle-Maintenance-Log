@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết lần bảo dưỡng{% endblock %}
+{% block subheading %}<p class="page-sub"><a id="back-link" href="/xe">← Xe của tôi</a></p>{% endblock %}
+{% block heading %}Chi tiết lần bảo dưỡng{% endblock %}
+
+{% block content %}
+{# record_detail.js fills the receipt from GET /api/records/{{ record_id }} (FR-08). #}
+<div class="record-layout" id="record-layout" data-record-id="{{ record_id }}">
+  <section class="card receipt" id="receipt" aria-live="polite">
+    <div class="skel skel-block"></div>
+  </section>
+  <aside class="record-side">
+    <div class="card side-card">
+      <b>Thao tác</b>
+      <a class="btn btn-secondary" id="edit-link" href="/bao-duong/{{ record_id }}/sua"><svg class="ic"><use href="#i-wrench"></use></svg>Sửa lần bảo dưỡng</a>
+      <button class="btn btn-ghost text-bad" type="button" id="delete-open"><svg class="ic"><use href="#i-x"></use></svg>Xóa lần bảo dưỡng</button>
+    </div>
+    <div class="card side-card">
+      <b>Ghi chú</b>
+      <p class="muted" id="note-text">—</p>
+    </div>
+  </aside>
+</div>
+
+<dialog class="dialog" id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-body">
+  <span class="dialog-icon tone-bad"><svg class="ic"><use href="#i-alert"></use></svg></span>
+  <h2 id="delete-title">Xóa lần bảo dưỡng này?</h2>
+  <p class="muted" id="delete-text">Các việc và số tiền của lần này cũng bị xóa. Số km hiện tại của xe không đổi. Không thể hoàn tác.</p>
+  <div class="dialog-actions">
+    <button class="btn btn-secondary" type="button" data-close>Hủy</button>
+    <button class="btn btn-danger" type="button" id="delete-confirm">Xóa</button>
+  </div>
+</div></dialog>
+{% endblock %}
+
+{% block screen %}S06 · Chi tiết lần bảo dưỡng · FR-08, FR-09{% endblock %}
+
+{% block scripts %}
+<script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/record_detail.js?v={{ request.app.version }}"></script>
+{% endblock %}
