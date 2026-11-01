@@ -22,6 +22,7 @@ docs/
 tests/
 db/
 *.md
+ui-design.html
 pytest.ini
 requirements-dev.txt
 compose.yml

@@ -33,6 +33,32 @@ Mỗi người có 3 loại việc: **tài liệu thiết kế** (8 bước), **
 
 Chi tiết từng module, API và hợp đồng giữa các module: mục 4 của [Implementation Plan](08-implementation-plan/implementation-plan.md).
 
+### 2.1. Làm giao diện mới (từ 01/11)
+
+Giảng viên góp ý Dashboard hiện quá nhiều thứ, khó dùng với người dùng phổ thông. Bản thiết kế mới là [`ui-design.html`](../ui-design.html): mở bằng trình duyệt là chạy, có trang Design System (màu, chữ, icon, component) và bản demo bấm được đủ màn hình. Phong cách kính mờ, Trang chủ chỉ giữ thông tin quan trọng và bấm vào mới xem chi tiết, biểu mẫu chỉ hiện ô bắt buộc.
+
+Giang làm **khung giao diện, Trang chủ và trang Chẩn đoán AI**; Lâm và Khoa chia nhau các trang còn lại. Việc backend của Giang (M1 database, API nhắc lịch M5, M7 AI) giữ nguyên.
+
+| Người | Phần việc | Màn hình trong `ui-design.html` | Xong trước |
+|---|---|---|---|
+| **Giang** | **Khung giao diện:** màu sáng/tối và lớp kính trong `style.css`, `base.html` (sidebar kính, thanh dưới trên điện thoại, nút sáng/tối, nút Hướng dẫn), các component dùng chung (nút, ô nhập, chip chọn nhanh, phần gấp gọn "Thêm chi tiết", hộp thoại, thông báo, vòng đồng hồ hạn bảo dưỡng) | Design System | **T3 03/11** |
+| **Giang** | Trang chủ: dòng tình trạng, thẻ "Việc nên làm trước", 3 ô số liệu bấm được, thẻ từng xe | Trang chủ | T6 06/11 |
+| **Giang** | Chẩn đoán AI và Lịch sử hỏi AI (M7) | Hỏi AI về xe · Các lần đã hỏi AI | T6 06/11 |
+| **Lâm** | Xe của tôi, Thêm/Sửa xe (chỉ tên và số km là bắt buộc, phần còn lại gấp gọn), Chi tiết xe với tab Thông tin và Lịch sử, lưu trữ/xoá xe (M2) | Xe của tôi · Thêm xe · Chi tiết xe | T6 06/11 |
+| **Lâm** | Ghi lần bảo dưỡng (chọn nhanh việc đã làm, nhập giá gõ kiểu `135.000`), Chi tiết lần bảo dưỡng và hộp thoại xoá (M3) | Ghi lần bảo dưỡng · Chi tiết lần bảo dưỡng | T6 06/11 |
+| **Khoa** | Chi phí: lọc theo năm và xe, biểu đồ theo tháng, theo loại việc, theo xe (M6) | Chi phí | T6 06/11 |
+| **Khoa** | Loại việc bảo dưỡng: danh sách, thêm/sửa, ngừng dùng/xoá (M4) · trang "Thêm" trên điện thoại | Loại việc bảo dưỡng · Thêm | T6 06/11 |
+| **Khoa** | Nhắc bảo dưỡng: form tạo/sửa nhắc nhở với xem trước, và nội dung tab Nhắc bảo dưỡng (thẻ nhắc kèm thanh tiến độ) để Lâm gắn vào trang Chi tiết xe | Nhắc bảo dưỡng · Tạo nhắc nhở | T6 06/11 |
+| Cả nhóm | Kiểm tra chéo trên điện thoại và ở cả 2 chế độ sáng/tối, sửa chỗ lệch với bản thiết kế | Tất cả | CN 08/11 |
+
+Quy ước cho phần giao diện:
+
+- **Giang giữ `style.css` và `base.html`.** Lâm và Khoa cần style riêng cho trang mình thì viết vào cuối `style.css`, trong một khối có ghi tên trang, để tránh conflict khi merge.
+- **Lâm và Khoa bắt đầu code sau khi PR khung giao diện của Giang được merge** (T3 03/11), để dùng chung class thay vì tự viết lại. Trước đó đọc kỹ `ui-design.html` và dựng sẵn `.html` của trang mình.
+- **Mỗi trang một file JS** trong `app/static/` (như `dashboard.js`, `diagnose.js`), chỉ gọi API của chính app qua `fetchJson`, dựng DOM bằng `el()`, không dùng `innerHTML` với dữ liệu người dùng.
+- **Tab Nhắc bảo dưỡng** nằm trong trang Chi tiết xe của Lâm; Khoa viết phần nội dung, Lâm gắn vào. Hai người thống nhất tên hàm ngay khi bắt đầu.
+- **Ngoài phạm vi:** Đăng nhập/Đăng ký và nút chuyển Anh–Việt chỉ có trong bản thiết kế để minh hoạ. Yêu cầu (tài liệu 01) không có đăng nhập và giao diện chỉ tiếng Việt, nên app thật không làm hai phần này nếu nhóm chưa thống nhất đổi yêu cầu.
+
 ## 3. Report và thuyết trình
 
 | Người | Mục report | Khối thuyết trình |
