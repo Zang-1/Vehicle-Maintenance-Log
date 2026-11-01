@@ -1,0 +1,1650 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sổ Bảo Dưỡng Xe – UI Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   Sổ Bảo Dưỡng Xe — Glass UI
+   Frosted panels over a soft colour field: morning sky (light), city at night (dark).
+   Colour goes on data and actions; panels stay neutral glass.
+   ===================================================================== */
+:root{
+  /* ground: the colour field behind the glass */
+  --bg:#E6EEF7; --mesh-1:#7DD3FC; --mesh-2:#86EFAC; --mesh-3:#FDBA74; --mesh-4:#93C5FD;
+  /* glass */
+  --surface:rgba(255,255,255,.58); --surface-strong:rgba(255,255,255,.88); --surface-2:rgba(15,23,42,.05);
+  --glass-border:rgba(255,255,255,.75); --border:rgba(15,23,42,.09); --border-strong:rgba(15,23,42,.18);
+  --glass-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 10px 30px -12px rgba(15,40,70,.18);
+  --blur:18px; --nav-active:rgba(255,255,255,.85);
+  /* ink */
+  --text:#0B1626; --text-muted:#475569;
+  /* action and data */
+  --primary:#0E7490; --primary-hover:#155E75; --primary-soft:rgba(14,116,144,.12); --on-primary:#FFFFFF;
+  --accent:#D97706; --accent-soft:rgba(217,119,6,.14); --on-accent:#FFFFFF;
+  --ok:#047857; --ok-bg:rgba(4,120,87,.12); --warn:#B45309; --warn-bg:rgba(217,119,6,.15); --bad:#C2271F; --bad-bg:rgba(220,38,38,.12);
+  --overlay:rgba(15,23,42,.35); --shadow:0 18px 40px -16px rgba(15,40,70,.28);
+  --sidebar:rgba(255,255,255,.55); --sidebar-text:#334155; --sidebar-active:rgba(255,255,255,.85);
+  --radius-card:20px; --radius-control:12px; --radius-pill:999px;
+  --font:"Be Vietnam Pro",Inter,Arial,sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#050A14; --mesh-1:rgba(14,165,233,.30); --mesh-2:rgba(16,185,129,.20); --mesh-3:rgba(245,158,11,.22); --mesh-4:rgba(56,189,248,.14);
+  --surface:rgba(17,26,45,.58); --surface-strong:rgba(14,22,40,.92); --surface-2:rgba(255,255,255,.06);
+  --glass-border:rgba(255,255,255,.10); --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.18);
+  --glass-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 14px 34px -14px rgba(0,0,0,.6);
+  --nav-active:rgba(255,255,255,.12);
+  --text:#EAF0F8; --text-muted:#9AA8BC;
+  --primary:#22D3EE; --primary-hover:#67E8F9; --primary-soft:rgba(34,211,238,.14); --on-primary:#04222B;
+  --accent:#FBBF24; --accent-soft:rgba(251,191,36,.14); --on-accent:#1F1300;
+  --ok:#34D399; --ok-bg:rgba(52,211,153,.14); --warn:#FBBF24; --warn-bg:rgba(251,191,36,.14); --bad:#F87171; --bad-bg:rgba(248,113,113,.15);
+  --overlay:rgba(0,0,0,.55); --shadow:0 18px 44px -16px rgba(0,0,0,.7);
+  --sidebar:rgba(17,26,45,.55); --sidebar-text:#C3CEDD; --sidebar-active:rgba(255,255,255,.12);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font);font-size:15px;line-height:23px;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;min-height:100vh}
+/* the colour field the glass blurs: fixed, so panels keep the same tint while scrolling */
+body::before{content:"";position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:radial-gradient(38% 42% at 12% 10%,var(--mesh-1),transparent 70%),radial-gradient(34% 40% at 88% 14%,var(--mesh-3),transparent 70%),
+             radial-gradient(40% 44% at 80% 88%,var(--mesh-2),transparent 70%),radial-gradient(36% 40% at 18% 86%,var(--mesh-4),transparent 70%)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--primary);text-decoration:none;cursor:pointer}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;display:inline-block;vertical-align:middle}
+.ic.s16{width:16px;height:16px}.ic.s18{width:18px;height:18px}.ic.s22{width:22px;height:22px}.ic.s24{width:24px;height:24px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--text-muted)}
+.t-display{font-size:34px;line-height:40px;font-weight:800;letter-spacing:-.8px}
+.t-h1{font-size:28px;line-height:34px;font-weight:700;letter-spacing:-.5px}
+.t-h2{font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
+.t-h3{font-size:16px;line-height:24px;font-weight:600}
+.t-body{font-size:15px;line-height:23px}
+.t-small{font-size:14px;line-height:21px}
+.t-caption{font-size:12.5px;line-height:17px;font-weight:500}
+.t-overline{font-size:12px;line-height:16px;font-weight:600}
+.t-numl{font-size:30px;line-height:36px;font-weight:750;letter-spacing:-.6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row{display:flex;align-items:center;gap:12px}
+.col{display:flex;flex-direction:column;gap:4px}
+.grow{flex:1;min-width:0}
+.wrap{flex-wrap:wrap}
+.hide{display:none!important}
+
+/* ---------- glass surfaces ---------- */
+.card,.sidebar,.mheader,.bnav,.pop,.ds-sheet,.auth-form .box,.vcard{background:var(--surface);-webkit-backdrop-filter:blur(var(--blur)) saturate(160%);backdrop-filter:blur(var(--blur)) saturate(160%);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow)}
+.card{border-radius:var(--radius-card);padding:22px}
+/* glass inside glass blurs twice and turns muddy: inner panels become a plain tint */
+.card .card,.modal .card,.ds-sheet .card,.cset .card{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surface-2);box-shadow:none;border-color:var(--border)}
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:var(--radius-pill);border:1px solid transparent;font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,transform .1s,box-shadow .15s;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.btn .ic{width:18px;height:18px}
+.btn.sm{height:36px;padding:0 14px;font-size:14px}.btn.sm .ic{width:16px;height:16px}
+.btn.big{height:54px;padding:0 26px;font-size:16px}
+.btn.primary{background:var(--primary);color:var(--on-primary);box-shadow:0 8px 20px -10px var(--primary)}.btn.primary:hover{background:var(--primary-hover)}
+.btn.secondary{background:var(--surface-strong);border-color:var(--glass-border);color:var(--text)}.btn.secondary:hover{border-color:var(--border-strong)}
+.btn.ghost{background:transparent;color:var(--primary)}.btn.ghost:hover{background:var(--primary-soft)}
+.btn.danger{background:var(--bad);color:#fff}
+.btn.danger-ghost{background:var(--surface-strong);border-color:var(--glass-border);color:var(--bad)}
+.btn.soft{background:var(--primary-soft);color:var(--primary)}
+.btn.accent{background:var(--accent);color:#1F1300}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.icon-btn{width:44px;height:44px;display:inline-grid;place-items:center;border-radius:50%;border:1px solid var(--glass-border);background:var(--surface);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--text);cursor:pointer;position:relative;flex:none;transition:background .15s}
+.icon-btn:hover{background:var(--surface-strong)}
+.icon-btn.plain{border-color:transparent;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.icon-btn .dot{position:absolute;top:4px;right:3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:10.5px;font-weight:700;line-height:18px}
+
+/* ---------- badges, links ---------- */
+.badge{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:var(--radius-pill);font-size:12.5px;font-weight:600;white-space:nowrap}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.badge.nodot::before{display:none}
+.b-ok{color:var(--ok);background:var(--ok-bg)}.b-warn{color:var(--warn);background:var(--warn-bg)}.b-bad{color:var(--bad);background:var(--bad-bg)}
+.b-neutral{color:var(--text-muted);background:var(--surface-2)}.b-info{color:var(--primary);background:var(--primary-soft)}.b-accent{color:var(--accent);background:var(--accent-soft)}
+.link{display:inline-flex;align-items:center;gap:2px;font-size:14px;font-weight:600;color:var(--primary);cursor:pointer;white-space:nowrap;background:none;border:0;padding:0}
+
+/* ---------- forms ---------- */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.field>.lbl{font-size:13px;font-weight:600;line-height:18px}
+.req{color:var(--bad)}
+.control{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border-radius:var(--radius-control);border:1px solid var(--border-strong);background:var(--surface-strong);color:var(--text-muted);transition:border-color .15s,box-shadow .15s}
+.control:focus-within,.control.focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.control.error{border-color:var(--bad);box-shadow:0 0 0 4px var(--bad-bg)}
+.control input,.control select{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);height:100%;appearance:none}
+.control input[type=date]{appearance:auto}
+.control select{cursor:pointer}
+.control select option{background:var(--bg);color:var(--text)}
+.control .suffix{font-size:13px;color:var(--text-muted);white-space:nowrap}
+textarea.area{width:100%;min-height:120px;resize:vertical;padding:12px 14px;border-radius:var(--radius-control);border:1px solid var(--border-strong);background:var(--surface-strong);color:var(--text);outline:0;line-height:23px}
+textarea.area:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+textarea.area.error{border-color:var(--bad);box-shadow:0 0 0 4px var(--bad-bg)}
+.help{font-size:12.5px;line-height:17px;color:var(--text-muted)}
+.help.err{color:var(--bad);font-weight:600}
+.seg{display:inline-flex;flex-wrap:wrap;padding:4px;gap:2px;border-radius:var(--radius-pill);background:var(--surface-2);border:1px solid var(--border)}
+.seg button{border:0;background:transparent;height:38px;padding:0 16px;border-radius:var(--radius-pill);display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--text-muted);font-weight:600;transition:background .15s,color .15s}
+.seg button.on{background:var(--surface-strong);color:var(--text);box-shadow:0 2px 8px -2px rgba(15,23,42,.2)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 15px;border-radius:var(--radius-pill);border:1px solid var(--glass-border);background:var(--surface);color:var(--text-muted);font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+.chip:hover{color:var(--text);border-color:var(--border-strong)}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip .count{font-size:11.5px;opacity:.7}
+.chip.big{height:42px;font-size:14px}
+.chip.big.on{background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.switch{width:46px;height:28px;border-radius:999px;background:var(--border-strong);position:relative;cursor:pointer;border:0;flex:none;padding:0;transition:background .15s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .18s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch.on{background:var(--primary)}.switch.on::after{left:21px}
+.check{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--primary);margin:0}
+.toggle{display:inline-flex;padding:3px;gap:2px;border-radius:var(--radius-pill);background:var(--surface);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--glass-border);flex:none}
+.toggle button{min-width:36px;height:36px;padding:0 9px;border:0;border-radius:999px;background:transparent;color:var(--text-muted);display:grid;place-items:center;cursor:pointer;font-size:12.5px;font-weight:700}
+.toggle button .ic{width:17px;height:17px}
+.toggle button.on{background:var(--surface-strong);color:var(--accent);box-shadow:0 2px 8px -2px rgba(15,23,42,.25)}
+.toggle.lang button.on{color:var(--primary)}
+
+/* ---------- data bits ---------- */
+.stat{display:flex;flex-direction:column;gap:8px;padding:22px}
+.stat .top{display:flex;align-items:center;gap:10px}
+.chipico{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:none}
+.tone-primary{color:var(--primary);background:var(--primary-soft)}.tone-bad{color:var(--bad);background:var(--bad-bg)}.tone-warn{color:var(--warn);background:var(--warn-bg)}.tone-accent{color:var(--accent);background:var(--accent-soft)}.tone-ok{color:var(--ok);background:var(--ok-bg)}.tone-neutral{color:var(--text-muted);background:var(--surface-2)}
+.fg-primary{color:var(--primary)}.fg-bad{color:var(--bad)}.fg-warn{color:var(--warn)}.fg-accent{color:var(--accent)}.fg-ok{color:var(--ok)}.fg-neutral{color:var(--text-muted)}
+.progress{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.progress>span{display:block;height:100%;border-radius:999px;background:var(--primary);transition:width .4s}
+.progress.bad>span{background:var(--bad)}.progress.warn>span{background:var(--warn)}.progress.ok>span{background:var(--ok)}.progress.neutral>span{background:var(--border-strong)}
+.alert{display:flex;gap:12px;padding:14px 16px;border-radius:16px}
+.alert>.ic{margin-top:1px}
+.alert.warn{background:var(--warn-bg);color:var(--warn)}.alert.bad{background:var(--bad-bg);color:var(--bad)}.alert.info{background:var(--primary-soft);color:var(--primary)}
+.alert b{display:block;font-weight:650}
+.alert p{color:var(--text);font-size:14px;line-height:21px}
+.tabs{display:inline-flex;gap:2px;padding:4px;border-radius:var(--radius-pill);background:var(--surface);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur));border:1px solid var(--glass-border);overflow-x:auto;max-width:100%;align-self:flex-start}
+.tabs button{border:0;background:transparent;height:40px;padding:0 16px;color:var(--text-muted);font-weight:600;cursor:pointer;border-radius:var(--radius-pill);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:background .15s,color .15s}
+.tabs button.on{background:var(--surface-strong);color:var(--text);box-shadow:0 2px 8px -2px rgba(15,23,42,.2)}
+.tabs .cnt{font-size:11.5px;background:var(--surface-2);color:var(--text-muted);border-radius:999px;padding:0 7px;line-height:18px}
+.skel{border-radius:10px;background:linear-gradient(90deg,var(--surface-2) 0%,var(--border-strong) 50%,var(--surface-2) 100%);background-size:200% 100%;animation:sh 1.4s ease-in-out infinite}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:36px 20px}
+.empty .art{width:96px;height:96px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;color:var(--text-muted)}
+.thumb{border-radius:16px;background:var(--surface-2);display:grid;place-items:center;overflow:hidden;flex:none}
+.thumb svg{display:block}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;font-size:12.5px;font-weight:700;flex:none}
+.kbd{font-size:11px;padding:1px 7px;border-radius:6px;background:var(--surface-2);color:var(--text-muted);white-space:nowrap}
+.divider{height:1px;background:var(--border);margin:4px 0}
+.plate{white-space:nowrap;display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:7px;border:1.5px solid var(--text);font-size:12.5px;font-weight:700;letter-spacing:.3px;background:var(--surface-strong);color:var(--text)}
+.box2{background:var(--surface-2);border-radius:14px;padding:12px}
+.tbl{width:100%;border-collapse:separate;border-spacing:0}
+.tbl th{white-space:nowrap;font-size:12.5px;font-weight:600;color:var(--text-muted);text-align:left;padding:10px 16px;border-bottom:1px solid var(--border)}
+.tbl td{padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr.click{cursor:pointer;transition:background .12s}.tbl tbody tr.click:hover{background:var(--surface-2)}
+.tbl .r{text-align:right}
+.tbl .strong{font-weight:600;font-size:14.5px}
+.tbl .sub{display:block;font-size:12.5px;color:var(--text-muted);font-weight:400}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:16px;margin:16px 0 16px 16px;height:calc(100vh - 32px);border-radius:26px;padding:22px 16px 16px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.logo{display:flex;align-items:center;gap:12px;padding:0 6px 22px}
+.logo .mark{width:42px;height:42px;border-radius:14px;background:var(--accent);display:grid;place-items:center;color:var(--on-accent);flex:none;box-shadow:0 8px 18px -8px var(--accent)}
+.logo b{display:block;color:var(--text);font-size:16px;line-height:22px;font-weight:700}
+.logo small{display:block;color:var(--text-muted);font-size:12px;line-height:16px}
+.nav-label{color:var(--text-muted);margin:12px 12px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;height:48px;padding:0 14px;border-radius:14px;color:var(--sidebar-text);font-weight:600;cursor:pointer;border:0;background:none;width:100%;text-align:left;transition:background .15s,color .15s}
+.nav-item .ic{color:var(--text-muted)}
+.nav-item:hover{background:var(--surface-2)}
+.nav-item.on{background:var(--nav-active);color:var(--text);box-shadow:0 4px 14px -6px rgba(15,23,42,.25)}
+.nav-item.on .ic{color:var(--primary)}
+.nav-item .cnt{margin-left:auto;font-size:11.5px;font-weight:700;background:var(--bad);color:#fff;border-radius:999px;padding:0 8px;line-height:20px}
+.sb-user{display:flex;align-items:center;gap:10px;padding:14px 6px 0;margin-top:auto;border-top:1px solid var(--border);color:var(--text-muted)}
+.sb-user b{color:var(--text);font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-user .icon-btn{width:40px;height:40px}
+.main{padding:30px 40px 56px 32px;min-width:0}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:26px;position:relative}
+.topbar .search{width:280px;height:46px;border-radius:var(--radius-pill);background:var(--surface);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-color:var(--glass-border)}
+.mheader,.bnav{display:none}
+.screen{display:flex;flex-direction:column;gap:24px}
+.enter>*{animation:rise .35s cubic-bezier(.2,.8,.2,1) both}
+.enter>*:nth-child(2){animation-delay:.05s}.enter>*:nth-child(3){animation-delay:.1s}.enter>*:nth-child(4){animation-delay:.15s}.enter>*:nth-child(n+5){animation-delay:.2s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pop{position:absolute;right:0;top:56px;width:350px;z-index:30;border-radius:20px;padding:8px;background:var(--surface-strong)}
+.pop .pi{display:flex;gap:10px;align-items:center;padding:10px;border-radius:14px;cursor:pointer}
+.pop .pi:hover{background:var(--surface-2)}
+.lrow{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+.lrow:last-child{border-bottom:0}
+.lrow .t{font-weight:600}
+.bars{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;height:200px;padding-top:8px}
+.bars .b{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;height:100%;justify-content:flex-end}
+.bars .bar{width:100%;max-width:28px;border-radius:10px 10px 4px 4px;background:var(--primary);position:relative;transition:height .4s}
+.bars .bar.lo{opacity:.5}.bars .bar.zero{background:var(--border-strong);opacity:.6}
+.bars .bar:hover::after{content:attr(data-v);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11.5px;padding:3px 7px;border-radius:7px;white-space:nowrap;z-index:2}
+.donut{width:184px;height:184px;border-radius:50%;position:relative;flex:none}
+.donut::after{content:"";position:absolute;inset:26px;border-radius:50%;background:var(--surface-strong)}
+.donut .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:1}
+.legend{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0}
+.legend .li{display:flex;align-items:center;gap:10px;font-size:14px}
+.legend .sw{width:11px;height:11px;border-radius:4px;flex:none}
+
+/* ---------- vehicles ---------- */
+.vcard{padding:0;overflow:hidden;display:flex;flex-direction:column;border-radius:var(--radius-card);transition:transform .18s,box-shadow .18s;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.vcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.vcard .pic{height:156px;display:grid;place-items:center;position:relative;background:linear-gradient(180deg,transparent 40%,var(--surface-2))}
+.vcard .pic .badge{position:absolute;top:14px;right:14px}
+.vcard .pic .type{position:absolute;top:14px;left:14px;right:auto}
+.vcard.arch .pic svg{filter:grayscale(1);opacity:.6}
+.vcard .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px}
+.vcard .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vcard .meta div{background:var(--surface-2);border-radius:12px;padding:8px 10px}
+.vcard .meta small{display:block;font-size:12px;color:var(--text-muted);line-height:15px}
+.vcard .meta b{font-weight:650;font-size:14px}
+.vcard.add{border-style:dashed;border-width:1.5px;border-color:var(--border-strong);align-items:center;justify-content:center;gap:12px;color:var(--text-muted);min-height:320px;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.vcard.add:hover{background:var(--surface)}
+.vcard.add .chipico{width:56px;height:56px;border-radius:18px}
+.tl{display:flex;flex-direction:column;gap:16px}
+.tl-item{display:grid;grid-template-columns:30px minmax(0,1fr);gap:14px;position:relative}
+.tl-dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);z-index:1}
+.tl-line{position:absolute;left:14px;top:32px;bottom:-18px;width:2px;background:var(--border)}
+.tl-item:last-child .tl-line{display:none}
+.vd-head{flex-wrap:wrap}.vd-head>.col{min-width:260px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--border)}
+.kpis>div{padding:16px 24px;border-right:1px solid var(--border)}
+.kpis>div:last-child{border-right:0}
+
+/* ---------- maintenance form ---------- */
+.items{display:flex;flex-direction:column;gap:10px}
+.item-head,.item-row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.3fr) 76px 140px 120px 44px;gap:10px;align-items:start}
+.item-head span{font-size:12.5px;font-weight:600;color:var(--text-muted)}
+.item-row .control{height:46px}
+.item-row .lt{height:46px;display:flex;align-items:center;justify-content:flex-end;font-weight:650}
+.items.simple .f-desc,.items.simple .f-qty,.items.simple .lt{display:none}
+.items.simple .item-row{grid-template-columns:minmax(0,1fr) 190px 44px;padding:0;border:0}
+.items.simple .item-row .f-type{grid-column:auto;padding-right:0}
+.items.simple .item-row .del{position:static}
+.rec-top{grid-template-columns:repeat(2,minmax(0,1fr))}.rec-top>.field:first-child{grid-column:1/-1}
+.sum{display:flex;flex-direction:column;gap:10px}
+.sum .li{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.receipt{flex:1 1 520px;min-width:0;max-width:760px}
+.receipt .card{border-radius:var(--radius-card)}
+.receipt .zig{display:none}
+.urg{display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px}
+.meter{display:flex;gap:4px}
+.meter i{width:28px;height:8px;border-radius:4px;background:color-mix(in srgb,currentColor 25%,transparent)}
+.meter i.on{background:currentColor}
+
+/* ---------- home ---------- */
+.dash-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dash-status{display:inline-flex;align-items:center;gap:8px;font-weight:650;padding:9px 16px;border-radius:999px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.dash-status.bad{background:var(--bad-bg);color:var(--bad)}.dash-status.ok{background:var(--ok-bg);color:var(--ok)}
+.next-card{display:flex;align-items:center;gap:22px;padding:22px 26px}
+.next-card .thumb{width:128px;height:84px;background:var(--surface-2)}
+.next-card .t-h2{font-size:24px;line-height:30px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.tile,.dveh,.menu-row{font:inherit;color:inherit;text-align:left;cursor:pointer}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;transition:transform .18s,box-shadow .18s}
+.tile .t-numl{font-size:34px;line-height:42px;margin-top:2px}
+.tile-more{display:inline-flex;align-items:center;gap:2px;font-size:13.5px;font-weight:600;color:var(--primary);margin-top:4px}
+.tile:hover,.dveh:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.tile:active,.dveh:active,.vcard:active{transform:scale(.99)}
+.section-h{display:flex;align-items:center;gap:8px;margin-bottom:-8px}
+.dveh-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
+.dveh{display:flex;gap:16px;align-items:center;transition:transform .18s,box-shadow .18s;padding:16px 18px}
+.dveh .thumb{width:118px;height:76px;background:var(--surface-2)}
+/* service gauge: how much of the interval is used, like the needle on a car dashboard */
+.gauge{position:relative;width:64px;height:64px;flex:none}
+.gauge svg{display:block;transform:rotate(-90deg)}
+.gauge .track{stroke:var(--surface-2);stroke-width:7;fill:none}
+.gauge .val{stroke-width:7;fill:none;stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1)}
+.gauge b{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:750;font-variant-numeric:tabular-nums}
+.disc{border:1px solid var(--glass-border);border-radius:18px;background:var(--surface);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur))}
+.card .disc{background:var(--surface-2);-webkit-backdrop-filter:none;backdrop-filter:none;border-color:var(--border)}
+.disc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:14px 16px;font-weight:600;color:var(--primary);border-radius:18px}
+.disc>summary::-webkit-details-marker{display:none}
+.disc>summary .ic{transition:transform .2s}
+.disc[open]>summary .ic{transform:rotate(180deg)}
+.disc-body{padding:4px 16px 18px;display:flex;flex-direction:column;gap:16px}
+.menu-row{display:flex;align-items:center;gap:12px;width:100%;padding:15px 14px;border:0;background:none;border-radius:14px;transition:background .15s}
+.menu-row:hover{background:var(--surface-2)}
+.steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:14px}
+.steps li{display:flex;gap:12px;align-items:flex-start}
+.stepnum{width:30px;height:30px;border-radius:50%;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;font-weight:700;flex:none}
+
+/* ---------- modal, toast ---------- */
+.modal-bg{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.modal-bg.on{display:flex;animation:fade .15s}
+.modal{width:100%;max-width:500px;max-height:calc(100vh - 32px);overflow:auto;background:var(--surface-strong);-webkit-backdrop-filter:blur(28px) saturate(160%);backdrop-filter:blur(28px) saturate(160%);border-radius:26px;padding:26px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px;border:1px solid var(--glass-border);animation:rise .22s cubic-bezier(.2,.8,.2,1)}
+.modal .mic{width:50px;height:50px;border-radius:16px;display:grid;place-items:center}
+.modal .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;background:var(--surface-strong);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:1px solid var(--glass-border);color:var(--text);padding:12px 18px;border-radius:999px;display:flex;align-items:center;gap:10px;z-index:60;transition:all .22s;box-shadow:var(--shadow);font-weight:600;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .ic{color:var(--ok)}
+.toast.bad .ic{color:var(--bad)}
+
+/* ---------- sign in ---------- */
+.auth{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:100vh;padding:16px;gap:16px}
+.auth-art{position:relative;overflow:hidden;border-radius:30px;background:rgba(6,18,36,.78);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);color:#fff;padding:40px 52px;display:flex;flex-direction:column;justify-content:space-between;gap:24px;border:1px solid rgba(255,255,255,.08)}
+.auth-art .glow{position:absolute;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.35),transparent 65%);right:-180px;top:-140px}
+.auth-art .road{position:absolute;left:-10%;right:-10%;bottom:-80px;height:260px;background:radial-gradient(60% 60% at 50% 100%,rgba(34,211,238,.28),transparent 70%)}
+.auth-art>*{position:relative;z-index:1}
+.auth-art .logo b{color:#fff}
+.auth-art .feat{display:flex;align-items:flex-start;gap:12px}
+.auth-art .feat .chipico{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.12);color:#fff}
+.auth-art .scene{display:flex;align-items:flex-end;margin:12px 0}
+.auth-art .scene>span+span{margin-left:-40px}
+.auth-form{display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-form .box{width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;padding:32px;border-radius:28px}
+.or{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:12.5px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--border)}
+.strength{display:flex;gap:6px}.strength i{flex:1;height:6px;border-radius:3px;background:var(--surface-2)}
+.strength.s1 i:nth-child(-n+1){background:var(--bad)}.strength.s2 i:nth-child(-n+2){background:var(--warn)}.strength.s3 i:nth-child(-n+3){background:var(--ok)}.strength.s4 i{background:var(--ok)}
+
+/* ---------- design system sheet ---------- */
+.ds{max-width:1260px;margin:0 auto;padding:28px 28px 110px}
+.ds-top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.ds-sheet{border-radius:30px;padding:48px 56px;display:flex;flex-direction:column;gap:46px}
+.ds-sec{display:flex;flex-direction:column;gap:18px}
+.ds-sec>.t-overline{color:var(--text-muted);font-size:13px}
+.ds-grp{font-weight:650;font-size:14px}
+.sw-grid{display:flex;flex-wrap:wrap;gap:16px 12px}
+.sw{width:122px}
+.sw .c{height:60px;border-radius:14px;border:1px solid var(--border);background-clip:padding-box}
+.sw b{display:block;font-size:12.5px;font-weight:600;margin-top:8px;line-height:16px}
+.sw code{font-size:11px;color:var(--text-muted);font-family:inherit}
+.sw small{display:block;font-size:11.5px;color:var(--text-muted);line-height:15px;margin-top:2px}
+.type-row{display:grid;grid-template-columns:140px minmax(0,1fr) 190px;align-items:baseline;gap:24px;padding:12px 0;border-bottom:1px solid var(--border)}
+.type-row:last-child{border-bottom:0}
+.type-row .lab,.type-row .spec{font-size:12.5px;color:var(--text-muted)}
+.type-row .spec{text-align:right}
+.ico-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.ico-cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:14px;font-size:11.5px;color:var(--text-muted);text-align:center}
+.ico-cell:hover{background:var(--surface-2);color:var(--text)}
+.ico-cell .ic{color:var(--text);width:22px;height:22px}
+.cset{border:1.5px dashed color-mix(in srgb,var(--primary) 45%,transparent);border-radius:18px;padding:20px;display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.cset.dark{background:var(--surface-2)}
+.cname{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.cname b{font-size:14px;font-weight:650}
+.cname span{font-size:12.5px;color:var(--text-muted)}
+.anno{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.anno>small{font-size:12px;color:var(--primary);font-weight:600}
+.sp-row{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.sp-row .sp{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted)}
+.sp-row .sp i{display:block;background:var(--primary-soft);border:1px solid var(--primary);border-radius:3px}
+.rd-row{display:flex;gap:20px;flex-wrap:wrap}
+.rd-row .rd{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);text-align:center;max-width:110px}
+.rd-row .rd i{width:72px;height:56px;background:var(--primary-soft);border:1.5px solid var(--primary)}
+.wire{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.wire .desk{width:520px;max-width:100%;height:300px;border:1px solid var(--border-strong);border-radius:16px;display:grid;grid-template-columns:100px 1fr;gap:8px;padding:8px;overflow:hidden;font-size:11px;background:var(--surface-2)}
+.wire .desk .s{background:var(--surface-strong);border-radius:12px;color:var(--text-muted);padding:10px;display:flex;flex-direction:column;gap:6px}
+.wire .desk .s i{display:block;height:10px;border-radius:5px;background:var(--surface-2)}
+.wire .desk .s i.on{background:var(--primary)}
+.wire .desk .c{padding:6px;display:flex;flex-direction:column;gap:8px}
+.wire .blk{border:1px dashed var(--primary);border-radius:10px;display:grid;place-items:center;color:var(--primary);background:var(--primary-soft);text-align:center;padding:2px}
+.wire .mob{width:170px;height:300px;border:1px solid var(--border-strong);border-radius:26px;display:flex;flex-direction:column;overflow:hidden;font-size:11px;background:var(--surface-2)}
+.ds-note{font-size:13px;color:var(--text-muted);max-width:780px}
+
+/* ---------- prototype viewer ---------- */
+.viewer{position:fixed;right:20px;bottom:20px;z-index:40;display:flex;gap:4px;padding:6px;border-radius:999px;background:rgba(10,18,32,.82);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.1)}
+.viewer button{border:0;background:transparent;color:#EAF0F8;height:38px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13px}
+.viewer button:hover{background:rgba(255,255,255,.12)}
+.phone-bg{position:fixed;inset:0;background:var(--overlay);z-index:70;display:none;align-items:center;justify-content:center;gap:28px;padding:20px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.phone-bg.on{display:flex}
+.phone{width:414px;height:min(880px,calc(100vh - 40px));border-radius:50px;background:#05070D;padding:46px 12px 12px;box-shadow:0 30px 80px rgba(0,0,0,.5);position:relative;flex:none}
+.phone iframe{width:390px;height:100%;border:0;border-radius:8px 8px 40px 40px;background:var(--bg);display:block}
+.phone .notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:100px;height:22px;border-radius:20px;background:#1F2433}
+.phone-side{display:flex;flex-direction:column;gap:10px;color:#fff;max-width:240px}
+.phone-side .btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff}
+body.embed .viewer{display:none}
+
+/* ---------- responsive ---------- */
+@media (max-width:1180px){
+  .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .split{grid-template-columns:minmax(0,1fr)}
+  .topbar .search{width:200px}.topbar .kbd{display:none}
+  .topbar .t-h1{font-size:23px;line-height:30px}
+  .item-head{display:none}
+  .item-row{grid-template-columns:1fr 1fr 1fr;padding:12px;border:1px solid var(--border);border-radius:16px;position:relative}
+  .item-row .f-type{grid-column:span 2;padding-right:44px}
+  .item-row .f-desc{grid-column:span 3}
+  .item-row .del{position:absolute;top:12px;right:12px}
+  .item-row .lt{justify-content:flex-start}
+}
+@media (max-width:767px){
+  body{font-size:15px}
+  .app{grid-template-columns:minmax(0,1fr)}
+  .sidebar,.topbar{display:none}
+  .mheader{display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:20;padding:10px 14px;border-radius:0 0 22px 22px;border-top:0}
+  .mheader .mark{width:36px;height:36px;border-radius:12px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;flex:none}
+  .mheader .icon-btn{width:38px;height:38px}
+  .mheader .toggle button{min-width:30px;height:30px;padding:0 6px}
+  .mheader .t-h3{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bnav{display:flex;justify-content:space-around;position:fixed;left:12px;right:12px;bottom:12px;z-index:20;border-radius:26px;padding:6px 6px}
+  .bnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text-muted);font-size:11px;font-weight:600;line-height:15px;padding:6px 0 4px;border:0;background:none;cursor:pointer;white-space:nowrap;border-radius:18px}
+  .bnav button span{display:grid;place-items:center;padding:2px 0}
+  .bnav button.on{color:var(--primary);background:var(--primary-soft)}
+  .main{padding:16px 14px 110px}
+  .screen{gap:16px}
+  .t-display{font-size:24px;line-height:31px}
+  .card{padding:16px;border-radius:18px}
+  .grid-4,.grid-2{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .grid-3{grid-template-columns:minmax(0,1fr);gap:14px}
+  .grid-2.form{grid-template-columns:minmax(0,1fr)}
+  .stat{padding:14px;gap:8px}.stat .t-numl{font-size:21px;line-height:28px}
+  .stat .top{flex-direction:column;align-items:flex-start;gap:8px}
+  .chipico{width:36px;height:36px}
+  .row:has(>.t-numl){flex-wrap:wrap}
+  .next-card{flex-direction:column;align-items:stretch;gap:12px;padding:18px}
+  .next-card .thumb{display:none}
+  .next-card .t-h2{font-size:20px;line-height:27px}
+  .btn.big{width:100%}
+  .tiles{grid-template-columns:1fr 1fr;gap:12px}
+  .tiles .tile:last-child{grid-column:1/-1}
+  .tile .t-numl{font-size:24px;line-height:30px}
+  .dveh-list{grid-template-columns:1fr;gap:12px}
+  .dveh{padding:12px;gap:12px}
+  .dveh .thumb{width:64px;height:44px}
+  .dveh .badge{display:none} /* the gauge already says it */
+  .gauge{width:54px;height:54px}.gauge svg{width:54px;height:54px}.gauge b{font-size:12px}
+  .dash-bar .btn{width:100%}
+  .task .btn{display:inline-flex!important}
+  .hide-m{display:none!important}
+  .lrow .btn{display:none}
+  .bar .grow{flex-basis:100%}
+  .bar .control{flex:1}
+  .kpis{grid-template-columns:1fr 1fr}.kpis>div{border-bottom:1px solid var(--border)}.kpis>div:nth-child(2n){border-right:0}
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border-bottom:1px solid var(--border);padding:10px 0}
+  .tbl tr:last-child{border-bottom:0}
+  .tbl td{border:0;padding:3px 0;display:flex;justify-content:space-between;gap:12px;text-align:right}
+  .tbl td::before{content:attr(data-l);font-size:12.5px;color:var(--text-muted);text-align:left;flex:none}
+  .tbl td.first{display:block;text-align:left;font-weight:650;font-size:14.5px}.tbl td.first::before{display:none}
+  .item-row{grid-template-columns:1fr 1fr}
+  .item-row .f-type,.item-row .f-desc{grid-column:1/-1}
+  .items.simple .item-row{grid-template-columns:minmax(0,1fr) 120px 40px}
+  .items.simple .item-row .f-type{grid-column:auto}
+  .donut{width:150px;height:150px}
+  .auth{grid-template-columns:1fr;padding:12px;gap:12px}
+  .auth-art{padding:22px 20px;border-radius:24px}
+  .auth-art .feats,.auth-art .foot{display:none}
+  .auth-art .t-display{font-size:26px!important;line-height:34px!important}
+  .auth-art .scene svg{width:150px;height:auto}.auth-art .scene>span+span svg{width:100px}
+  .auth-form{padding:0 0 40px;align-items:flex-start}
+  .auth-form .box{padding:22px;border-radius:24px}
+  .ds{padding:14px 12px 110px}.ds-sheet{padding:22px 16px;gap:32px;border-radius:24px}
+  .type-row{grid-template-columns:1fr;gap:4px}.type-row .spec{text-align:left}
+  .viewer{right:12px;bottom:96px}
+  .viewer .vl,.viewer .phone-btn{display:none}
+  .modal-bg{align-items:flex-end;padding:0}
+  .modal{border-radius:26px 26px 0 0;max-width:none}
+  .modal .acts{flex-direction:column-reverse}.modal .acts .btn{width:100%}
+  .pop{position:fixed;left:12px;right:12px;top:68px;width:auto}
+}
+/* browsers without backdrop-filter get solid panels so text stays readable */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .card,.sidebar,.mheader,.bnav,.pop,.ds-sheet,.auth-form .box,.vcard,.modal,.toast{background:var(--surface-strong)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="modal-bg" id="modal"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="viewer" id="viewer"></div>
+<div class="phone-bg" id="phoneBg"><div class="phone"><div class="notch"></div><iframe id="phoneFrame" title="Mobile"></iframe></div><div class="phone-side" id="phoneSide"></div></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Sổ Bảo Dưỡng Xe – file thiết kế giao diện (Design System + demo).
+   Chạy hoàn toàn trong trình duyệt; dữ liệu mẫu nằm trong bộ nhớ,
+   tải lại trang là về dữ liệu ban đầu.
+   ===================================================================== */
+
+// Ngày "hôm nay" cố định để trạng thái nhắc lịch khớp với dữ liệu mẫu.
+const TODAY_ISO = '2026-10-23';
+const TODAY = new Date(TODAY_ISO + 'T00:00:00');
+
+/* ============================ I18N ============================ */
+const L = {
+  app_name:['Sổ Bảo Dưỡng','Maintenance Log'], app_sub:['Vehicle Maintenance Log','Vehicle Maintenance Log'],
+  menu:['Menu','Menu'], grp_design:['Thiết kế','Design'],
+  nav_dashboard:['Trang chủ','Home'], nav_vehicles:['Xe của tôi','My vehicles'], nav_services:['Loại việc bảo dưỡng','Service types'],
+  nav_stats:['Chi phí','Spending'], nav_ai:['Hỏi AI về xe','Ask AI'], nav_ai_history:['Các lần đã hỏi AI','AI history'],
+  nav_design:['Design System','Design System'],
+  bn_dashboard:['Trang chủ','Home'], bn_vehicles:['Xe','Vehicles'], bn_services:['Dịch vụ','Services'], bn_stats:['Chi phí','Spending'], bn_ai:['Hỏi AI','Ask AI'],
+  promo_title:['Xe có tiếng lạ?','Strange noise?'], promo_body:['Mô tả triệu chứng, AI gợi ý nguyên nhân và mức độ khẩn cấp.','Describe the symptom and AI suggests the cause and urgency.'], promo_btn:['Hỏi AI ngay','Ask AI now'],
+  owner_line:['Chủ xe · {n} xe','Owner · {n} vehicles'], logout:['Đăng xuất','Log out'],
+  search_ph:['Tìm xe theo tên, biển số…','Search by name or plate…'], notif:['Thông báo','Notifications'], notif_empty:['Không có nhắc lịch nào cần chú ý.','Nothing needs attention.'],
+  light:['Giao diện sáng','Light mode'], dark:['Giao diện tối','Dark mode'], lang_label:['Ngôn ngữ','Language'],
+  home:['Trang chủ','Home'], back:['Quay lại','Back'], cancel:['Huỷ','Cancel'], save:['Lưu','Save'], edit:['Sửa','Edit'], del:['Xoá','Delete'], close:['Đóng','Close'],
+  required_note:['Trường có dấu * là bắt buộc','Fields marked * are required'], none:['—','—'], view_all:['Xem tất cả','View all'],
+  not_found:['Không tìm thấy dữ liệu này','This item was not found'], not_found_body:['Có thể nó vừa bị xoá.','It may have been deleted.'],
+  // trạng thái & loại
+  st_OK:['Còn hạn','On track'], st_DUE_SOON:['Sắp đến hạn','Due soon'], st_OVERDUE:['Quá hạn','Overdue'], st_INACTIVE:['Đang tắt','Paused'], st_NONE:['Chưa có nhắc lịch','No reminders'],
+  vt_MOTORBIKE:['Xe máy','Motorbike'], vt_CAR:['Ô tô','Car'], vt_OTHER:['Khác','Other'], ap_ALL:['Tất cả','All'],
+  ug_LOW:['Thấp','Low'], ug_MEDIUM:['Trung bình','Medium'], ug_HIGH:['Cao','High'],
+  ug_LOW_d:['Có thể theo dõi thêm','Keep an eye on it'], ug_MEDIUM_d:['Nên xử lý trong tuần','Fix within a week'], ug_HIGH_d:['Cần kiểm tra ngay','Check it now'],
+  archived:['Đã lưu trữ','Archived'], active:['Đang dùng','Active'], inactive:['Ngừng dùng','Inactive'],
+  overdue_days:['Quá {n} ngày','{n} days overdue'], days_left:['Còn {n} ngày','{n} days left'], km_over:['Quá {n}','{n} over'], km_left:['Còn {n}','{n} left'], due_today:['Đến hạn hôm nay','Due today'],
+  every_km:['Mỗi {km}','Every {km}'], every_mo:['Mỗi {n} tháng','Every {n} months'], or:['hoặc','or'],
+  // dashboard
+  greet:['Chào buổi sáng, {name}','Good morning, {name}'], hero_pill:['{n} hạng mục đã quá hạn','{n} items overdue'],
+  hero_title:['Xe của bạn cần được chăm sóc','Your vehicles need attention'], hero_ok_title:['Mọi thứ đều ổn','Everything is on track'],
+  hero_desc:['{veh}: {svc} — {detail}. Ghi nhận ngay khi vừa đi gara để lịch nhắc tự cập nhật.','{veh}: {svc} — {detail}. Log it right after the garage visit and reminders update themselves.'],
+  hero_ok_desc:['Không có hạng mục nào quá hạn. Tiếp tục ghi nhận sau mỗi lần bảo dưỡng nhé.','Nothing is overdue. Keep logging after every service.'],
+  btn_log:['Ghi lần bảo dưỡng','Log a service'], btn_see_rem:['Xem nhắc lịch','See reminders'],
+  k_vehicles:['Số xe đang theo dõi','Vehicles tracked'], k_vehicles_sub:['{m} xe máy · {c} ô tô','{m} motorbikes · {c} cars'],
+  k_overdue:['Quá hạn','Overdue'], k_overdue_sub:['Cần xử lý ngay','Needs action now'], k_soon:['Sắp đến hạn','Due soon'], k_soon_sub:['Trong ngưỡng báo trước','Within notice window'],
+  k_cost_year:['Chi phí năm {y}','Spent in {y}'], k_cost_sub:['{n} lần bảo dưỡng','{n} services'],
+  attention:['Cần chú ý','Needs attention'], attention_sub:['Quá hạn xếp trước','Overdue first'], attention_empty:['Không có mục nào cần chú ý','Nothing needs attention'],
+  log_short:['Đã làm','Done'], cost_by_month:['Chi phí theo tháng','Cost by month'], cost_by_month_sub:['Năm {y} · rê chuột lên cột để xem số','Year {y} · hover a bar to see the amount'],
+  recent:['Bảo dưỡng gần đây','Recent maintenance'], recent_empty:['Chưa có lần bảo dưỡng nào','No maintenance yet'],
+  col_vehicle_date:['Xe · Ngày','Vehicle · Date'], col_items:['Việc đã làm','What was done'], col_garage:['Gara','Garage'], col_odo:['Số km','Odometer'], col_cost:['Chi phí','Cost'],
+  // vehicles
+  f_all:['Tất cả','All'], add_vehicle:['Thêm xe','Add vehicle'], add_vehicle_new:['Thêm xe mới','Add a vehicle'], add_vehicle_sub:['Xe máy, ô tô hoặc loại khác','Motorbike, car or other'],
+  m_odo:['Số km','Odometer'], m_last:['Lần gần nhất','Last service'], m_spent:['Đã chi','Spent'], m_count:['Bảo dưỡng','Services'], times:['{n} lần','{n}×'],
+  veh_empty:['Không có xe nào khớp','No vehicles match'], veh_empty_sub:['Thử bỏ bộ lọc hoặc thêm xe mới.','Clear the filter or add a vehicle.'],
+  // vehicle form
+  vf_new:['Thêm xe mới','Add a vehicle'], vf_edit:['Sửa thông tin xe','Edit vehicle'], vf_info:['Thông tin xe','Vehicle details'],
+  vf_type:['Loại xe','Vehicle type'], vf_name:['Tên gợi nhớ','Nickname'], vf_name_ph:['Ví dụ: Vision đi làm','e.g. Work scooter'], vf_plate:['Biển số','License plate'],
+  vf_plate_help:['Bỏ trống được nếu xe chưa có biển','Leave empty if not registered yet'], vf_brand:['Hãng','Brand'], vf_model:['Dòng xe','Model'], vf_year:['Năm sản xuất','Year'],
+  vf_odo:['Số km hiện tại','Current odometer'], vf_odo_help:['Dùng để tính mốc nhắc lịch theo km','Used for km-based reminders'], vf_purchase:['Ngày mua','Purchase date'],
+  vf_color:['Màu minh hoạ','Illustration colour'], vf_note:['Ghi chú','Notes'], vf_note_ph:['Ví dụ: xe của bố, chỉ đi gần','e.g. dad’s bike, short trips only'],
+  vf_save:['Lưu xe','Save vehicle'], vf_preview:['Xem trước','Preview'], vf_tip:['Mẹo','Tip'], vf_tip_body:['Sau khi lưu, tạo nhắc lịch thay nhớt để không quên mốc bảo dưỡng.','After saving, add an oil-change reminder so you never miss it.'],
+  e_required:['Vui lòng nhập trường này','This field is required'], e_plate_dup:['Biển số đã tồn tại ({veh})','Plate already used by {veh}'],
+  e_odo:['Nhập số km, ví dụ 12.850','Enter a number, e.g. 12,850'], e_odo_down:['Số km không được nhỏ hơn hiện tại ({km})','Odometer cannot be lower than now ({km})'],
+  e_year:['Năm từ 1950 đến {y}','Year between 1950 and {y}'], e_too_long:['Tối đa {n} ký tự','Max {n} characters'],
+  t_vehicle_added:['Đã thêm xe {name}','Added {name}'], t_vehicle_saved:['Đã lưu thay đổi','Changes saved'],
+  // vehicle detail
+  vd_archive:['Lưu trữ','Archive'], vd_restore:['Khôi phục','Restore'], vd_total:['Tổng chi phí','Total spent'], vd_count:['Số lần bảo dưỡng','Services'], vd_last:['Lần gần nhất','Last service'], vd_odo:['Số km hiện tại','Odometer'],
+  vd_bought:['Mua {d}','Bought {d}'], vd_over_badge:['Quá hạn {n} mục','{n} overdue'], vd_ok_badge:['Không có mục quá hạn','Nothing overdue'],
+  tab_info:['Thông tin','Details'], tab_his:['Lịch sử bảo dưỡng','Service history'], tab_rem:['Nhắc bảo dưỡng','Reminders'],
+  his_empty:['Xe này chưa có lần bảo dưỡng nào','No services logged for this vehicle'], n_items:['{n} việc','{n} items'],
+  rem_hint:['Mốc đến hạn tính từ lần bảo dưỡng gần nhất cùng loại, trạng thái tự cập nhật.','Due dates count from the last service of the same type and update automatically.'],
+  rem_add:['Thêm nhắc nhở','Add reminder'], rem_empty:['Chưa có nhắc lịch','No reminders yet'], rem_empty_sub:['Tạo nhắc lịch để được báo khi tới hạn.','Create one to get notified when it is due.'],
+  rem_time:['Thời gian','Time'], rem_dist:['Quãng đường','Distance'], rem_done:['Tôi đã làm việc này','I did this'], rem_next:['Lần tới {d} · {km}','Next {d} · {km}'],
+  status:['Trạng thái','Status'], in_use:['Đang sử dụng','In use'],
+  m_archive_t:['Lưu trữ {name}?','Archive {name}?'], m_archive_b:['Xe đã có lịch sử nên không xoá hẳn được. Lưu trữ sẽ ẩn xe khỏi danh sách và tắt nhắc lịch; bạn có thể khôi phục bất cứ lúc nào.','This vehicle has history, so it can only be archived. Archiving hides it and pauses its reminders; you can restore it anytime.'],
+  m_delveh_t:['Xoá {name}?','Delete {name}?'], m_delveh_b:['Xe chưa có lần bảo dưỡng nào nên xoá hẳn được. Nhắc lịch của xe cũng bị xoá.','This vehicle has no history, so it can be deleted along with its reminders.'],
+  t_archived:['Đã lưu trữ {name}','Archived {name}'], t_restored:['Đã khôi phục {name}','Restored {name}'], t_veh_deleted:['Đã xoá {name}','Deleted {name}'],
+  // record form
+  rf_new:['Ghi lần bảo dưỡng','Log a service'], rf_edit:['Sửa lần bảo dưỡng','Edit maintenance'], rf_general:['Thông tin chung','General'],
+  rf_vehicle:['Xe','Vehicle'], rf_date:['Ngày bảo dưỡng','Service date'], rf_odo:['Số km lúc bảo dưỡng','Odometer at service'], rf_odo_help:['Số km hiện tại của xe: {km}','Current odometer: {km}'],
+  rf_garage:['Gara','Garage'], rf_garage_ph:['Ví dụ: Honda Head Phát Tiến','e.g. City Honda'], rf_items:['Bạn đã làm những gì?','What was done?'], rf_items_sub:['Bấm chọn nhanh, rồi nhập giá tiền từng việc','Tap to pick, then enter the price of each'],
+  rf_add_item:['Thêm việc khác','Add another item'], c_type:['Việc đã làm','Service'], c_desc:['Mô tả','Description'], c_qty:['SL','Qty'], c_price:['Giá tiền','Price'], c_line:['Thành tiền','Line total'],
+  rf_summary:['Tóm tắt','Summary'], rf_count:['Số việc','Items'], rf_subtotal:['Tạm tính','Subtotal'], rf_total:['Tổng cộng','Total'],
+  rf_rem_note:['Nhắc lịch sẽ tự cập nhật','Reminders will update'], rf_rem_list:['{list} sẽ tính lại mốc từ lần này.','{list} will restart from this service.'], rf_rem_none:['Không có nhắc lịch nào liên quan tới các hạng mục này.','No reminders match these items.'],
+  rf_save:['Lưu lần bảo dưỡng','Save'], rf_choose_type:['Chọn việc đã làm','Choose a service'],
+  e_future:['Ngày không được ở tương lai','Date cannot be in the future'], e_dup_record:['Đã có lần bảo dưỡng cùng xe, ngày và ODO','A service with this vehicle, date and odometer already exists'],
+  e_items:['Chọn ít nhất 1 việc đã làm','Pick at least 1 service'], e_qty:['SL > 0','Qty > 0'], e_price:['Nhập giá tiền','Enter the price'],
+  t_record_saved:['Đã lưu lần bảo dưỡng','Maintenance saved'], t_odo_up:['Số km của xe đã cập nhật thành {km}','Vehicle odometer updated to {km}'],
+  // record detail
+  rd_title:['Chi tiết lần bảo dưỡng','Maintenance details'], rd_receipt:['Phiếu bảo dưỡng','Service receipt'], rd_actions:['Thao tác','Actions'], rd_note:['Ghi chú','Notes'], rd_no_note:['Không có ghi chú.','No notes.'],
+  rd_total_n:['Tổng cộng ({n} việc)','Total ({n} items)'], m_delrec_t:['Xoá lần bảo dưỡng này?','Delete this service?'],
+  m_delrec_b:['Lần bảo dưỡng {d} của {veh} ({n} hạng mục, {total}) sẽ bị xoá vĩnh viễn. Nhắc lịch liên quan sẽ tính lại.','The {d} service for {veh} ({n} items, {total}) will be permanently deleted. Related reminders will be recalculated.'],
+  del_forever:['Xoá vĩnh viễn','Delete permanently'], t_record_deleted:['Đã xoá lần bảo dưỡng','Service deleted'],
+  // reminder form
+  rm_new:['Tạo nhắc nhở','New reminder'], rm_edit:['Sửa nhắc nhở','Edit reminder'], rm_by:['Nhắc theo','Remind by'], rm_by_km:['Theo số km','By distance'], rm_by_mo:['Theo thời gian','By time'], rm_by_both:['Cả hai, cái nào tới trước','Both, whichever first'],
+  rm_km:['Chu kỳ km','Interval (km)'], rm_mo:['Chu kỳ tháng','Interval (months)'], rm_start_date:['Ngày bắt đầu tính','Start date'], rm_start_odo:['Số km bắt đầu tính','Start odometer'],
+  rm_start_help:['Nếu đã có lần bảo dưỡng cùng loại thì mốc gốc là lần gần nhất đó','If a service of this type exists, the latest one is used as the base'],
+  rm_notify_d:['Báo trước','Notify before'], rm_notify_k:['Hoặc trước','Or before'], days:['ngày','days'], months:['tháng','months'],
+  rm_active:['Đang bật','Active'], rm_active_sub:['Tắt nếu tạm thời không muốn nhận nhắc nhở','Turn off to pause notifications'],
+  rm_save:['Lưu nhắc nhở','Save reminder'], rm_preview:['Xem trước','Preview'], rm_recommend:['Khuyến nghị: {txt}','Recommended: {txt}'],
+  rm_sentence:['Nhắc <b>{svc}</b> {rule}. Lần tới khoảng <b>{when}</b>.','Remind <b>{svc}</b> {rule}. Next around <b>{when}</b>.'],
+  rm_rule_km:['sau mỗi {km}','every {km}'], rm_rule_mo:['mỗi {n} tháng','every {n} months'], rm_rule_first:[', mốc nào đến trước',', whichever comes first'],
+  e_interval:['Cần ít nhất một chu kỳ (km hoặc tháng)','Set at least one interval (km or months)'], e_rem_dup:['Xe này đã có nhắc lịch cho loại dịch vụ này','This vehicle already has a reminder for this service'],
+  e_positive:['Nhập một số lớn hơn 0','Enter a number above 0'], e_nonneg:['Nhập một số từ 0 trở lên','Enter a number from 0 up'],
+  t_rem_saved:['Đã lưu nhắc lịch','Reminder saved'], t_rem_deleted:['Đã xoá nhắc lịch','Reminder deleted'], m_delrem_t:['Xoá nhắc lịch này?','Delete this reminder?'], m_delrem_b:['Bạn sẽ không còn được nhắc {svc} cho {veh}.','You will stop getting {svc} reminders for {veh}.'],
+  // stats
+  s_this_year:['Năm {y}','Year {y}'], s_all:['Toàn bộ','All time'], s_all_veh:['Tất cả xe','All vehicles'], s_total:['Tổng chi phí','Total spent'],
+  s_count:['Số lần bảo dưỡng','Services'], s_items_n:['{n} hạng mục','{n} items'], s_avg:['Trung bình mỗi lần','Average per service'], s_top:['Hạng mục tốn nhất','Top cost item'],
+  s_by_type:['Theo loại dịch vụ','By service type'], s_types_n:['{n} loại','{n} types'], s_by_vehicle:['Theo xe','By vehicle'], s_share:['Tỉ trọng','Share'], s_export:['Xuất CSV','Export CSV'],
+  s_empty:['Chưa có dữ liệu trong khoảng này','No data in this range'], t_csv:['Đã tạo file CSV (bản demo)','CSV created (demo)'],
+  // services
+  sv_add:['Thêm loại dịch vụ','Add service type'], sv_edit:['Sửa loại dịch vụ','Edit service type'], sv_name:['Tên dịch vụ','Service name'], sv_applies:['Áp dụng cho','Applies to'],
+  sv_km:['Chu kỳ km','Interval (km)'], sv_mo:['Chu kỳ tháng','Interval (months)'], sv_desc:['Mô tả','Description'], sv_used:['Đã dùng {n} lần','Used {n}×'], sv_unused:['Chưa dùng','Unused'],
+  sv_deactivate:['Ngừng dùng','Deactivate'], sv_activate:['Dùng lại','Reactivate'], e_name_dup:['Tên dịch vụ đã tồn tại','Service name already exists'],
+  t_sv_saved:['Đã lưu loại dịch vụ','Service type saved'], t_sv_off:['Đã ngừng dùng {name}','{name} deactivated'], t_sv_on:['Đã dùng lại {name}','{name} reactivated'], t_sv_deleted:['Đã xoá {name}','Deleted {name}'],
+  m_delsv_t:['Xoá {name}?','Delete {name}?'], m_delsv_b:['Loại dịch vụ chưa được dùng nên xoá được. Loại đã dùng chỉ có thể ngừng dùng.','This type is unused, so it can be deleted. Used types can only be deactivated.'],
+  // AI
+  ai_title:['Mô tả triệu chứng','Describe the symptom'], ai_hint:['Càng cụ thể càng tốt: khi nào xảy ra, âm thanh, mùi, đèn báo…','Be specific: when it happens, sounds, smells, warning lights…'],
+  ai_vehicle:['Xe (không bắt buộc)','Vehicle (optional)'], ai_no_vehicle:['Không chọn xe','No vehicle'], ai_symptom:['Triệu chứng','Symptom'],
+  ai_len:['Từ 10 đến 1000 ký tự','10 to 1000 characters'], ai_examples:['Ví dụ nhanh','Quick examples'], ai_privacy:['Chỉ gửi mô tả lên AI, không gửi thông tin cá nhân','Only the description is sent to AI, no personal data'],
+  ai_run:['Chẩn đoán','Diagnose'], ai_sim:['Giả lập phản hồi của server (để test giao diện)','Simulate the server response (for UI testing)'], ai_sim_ok:['Bình thường','Normal'],
+  ai_result:['Kết quả chẩn đoán','Diagnosis result'], ai_loading:['Đang phân tích…','Analysing…'], ai_loading_sub:['Thường mất 3–8 giây. Kết quả cũng được lưu vào lịch sử.','Usually 3–8 seconds. The result is also saved to history.'],
+  ai_urgency:['Mức độ khẩn cấp','Urgency'], ai_suggestion:['Gợi ý','Suggestion'], ai_service:['Dịch vụ gợi ý','Suggested service'], ai_make_rem:['Tạo nhắc lịch','Create reminder'],
+  ai_need_vehicle:['Chọn xe để tạo nhắc lịch','Pick a vehicle to create a reminder'], ai_disclaimer:['Chỉ mang tính tham khảo','For reference only'],
+  ai_disclaimer_b:['Gợi ý do AI tạo ra, không thay thế kiểm tra của thợ. Nếu phanh hoặc lái có vấn đề, dừng xe ngay.','AI suggestions do not replace a mechanic. If brakes or steering feel wrong, stop driving.'],
+  ai_again:['Chẩn đoán lại','Diagnose again'], ai_see_history:['Xem lịch sử chẩn đoán','See diagnosis history'], ai_idle:['Chưa có kết quả','No result yet'], ai_idle_sub:['Mô tả triệu chứng rồi bấm Chẩn đoán.','Describe the symptom and press Diagnose.'],
+  ai_no_result:['Không có kết quả','No result'], ai_kept:['Mô tả của bạn vẫn được giữ nguyên.','Your description is kept.'], ai_retry:['Thử lại','Try again'],
+  e_short:['Mô tả cần ít nhất 10 ký tự','Description needs at least 10 characters'], e_long:['Mô tả tối đa 1000 ký tự','Description must be at most 1000 characters'],
+  err_NO_KEY:['Tính năng chẩn đoán AI tạm thời không khả dụng.','AI diagnosis is temporarily unavailable.'], err_RATE_LIMITED:['Đã hết lượt chẩn đoán miễn phí, vui lòng thử lại sau ít phút.','Free diagnosis quota used up, please try again in a few minutes.'],
+  err_TIMEOUT:['AI phản hồi quá lâu, vui lòng thử lại.','AI took too long to respond, please try again.'], err_UPSTREAM_ERROR:['Không nhận được kết quả từ AI, vui lòng thử lại.','Could not get a result from AI, please try again.'],
+  errd_NO_KEY:['Mã NO_KEY · 503 — server chưa cấu hình khoá AI. Các chức năng khác vẫn dùng bình thường.','Code NO_KEY · 503 — the server has no AI key. Everything else still works.'],
+  errd_RATE_LIMITED:['Mã RATE_LIMITED · 429 — giới hạn của gói miễn phí.','Code RATE_LIMITED · 429 — free-tier limit.'], errd_TIMEOUT:['Mã TIMEOUT · 504','Code TIMEOUT · 504'], errd_UPSTREAM_ERROR:['Mã UPSTREAM_ERROR · 502','Code UPSTREAM_ERROR · 502'],
+  // AI history
+  h_new:['Chẩn đoán mới','New diagnosis'], h_ok:['Thành công','Succeeded'], h_failed:['Lỗi','Failed'], col_time:['Thời gian','Time'], col_symptom:['Triệu chứng','Symptom'], col_urgency:['Mức độ','Urgency'],
+  h_empty:['Chưa có lần chẩn đoán nào','No diagnoses yet'], h_detail:['Chi tiết chẩn đoán','Diagnosis details'],
+  // auth
+  login_title:['Chào mừng trở lại','Welcome back'], login_sub:['Đăng nhập để xem lịch bảo dưỡng của bạn.','Log in to see your maintenance schedule.'],
+  email:['Email','Email'], password:['Mật khẩu','Password'], forgot:['Quên mật khẩu?','Forgot password?'], remember:['Ghi nhớ đăng nhập','Remember me'],
+  login_btn:['Đăng nhập','Log in'], or_txt:['hoặc','or'], demo_btn:['Dùng thử tài khoản demo','Try the demo account'], no_account:['Chưa có tài khoản?','No account yet?'], register:['Đăng ký','Sign up'],
+  auth_h1:['Không bao giờ quên lịch bảo dưỡng xe nữa.','Never miss a vehicle service again.'],
+  feat1:['Nhắc lịch theo km và thời gian','Reminders by km and time'], feat1_b:['Tự tính mốc tiếp theo sau mỗi lần ghi nhận.','Next due point is calculated after every log.'],
+  feat2:['Biết rõ tiền đi đâu','Know where the money goes'], feat2_b:['Thống kê chi phí theo tháng, theo xe, theo hạng mục.','Costs by month, vehicle and item.'],
+  feat3:['Hỏi AI khi xe có triệu chứng lạ','Ask AI about strange symptoms'], feat3_b:['Gợi ý nguyên nhân và mức độ khẩn cấp.','Likely causes and urgency.'],
+  reg_title:['Tạo tài khoản','Create an account'], reg_sub:['Miễn phí. Không cần thẻ thanh toán.','Free. No card needed.'], full_name:['Họ và tên','Full name'], confirm_pw:['Nhập lại mật khẩu','Confirm password'],
+  agree:['Tôi đồng ý với điều khoản sử dụng','I agree to the terms of use'], reg_btn:['Tạo tài khoản','Create account'], have_account:['Đã có tài khoản?','Already have an account?'],
+  reg_h1:['3 phút để bắt đầu, cả đời xe bền bỉ.','3 minutes to start, years of healthy rides.'], step1:['Thêm xe đầu tiên','Add your first vehicle'], step2:['Ghi lại lần bảo dưỡng gần nhất','Log your latest service'], step3:['Bật nhắc lịch — xong!','Turn on reminders — done!'],
+  pw_strength:['Độ mạnh: {s}','Strength: {s}'], pw_0:['Quá ngắn','Too short'], pw_1:['Yếu','Weak'], pw_2:['Trung bình','Fair'], pw_3:['Mạnh','Strong'], pw_4:['Rất mạnh','Very strong'],
+  e_email:['Email chưa đúng định dạng','Invalid email address'], e_pw_len:['Mật khẩu tối thiểu 6 ký tự','Password must be at least 6 characters'], e_pw_match:['Mật khẩu nhập lại không khớp','Passwords do not match'], e_agree:['Bạn cần đồng ý điều khoản','Please accept the terms'],
+  t_welcome:['Chào mừng, {name}!','Welcome, {name}!'], t_forgot:['Đã gửi link đặt lại mật khẩu (bản demo)','Reset link sent (demo)'], t_logout:['Đã đăng xuất','Logged out'], show_pw:['Hiện mật khẩu','Show password'],
+  copyright:['© 2026 Nhóm Lâm · Giang · Khoa — 72ITDS30103','© 2026 Team Lâm · Giang · Khoa — 72ITDS30103'],
+  // viewer
+  v_phone:['Xem trên điện thoại','Phone preview'], v_reset:['Khôi phục dữ liệu mẫu','Reset sample data'], t_reset:['Đã khôi phục dữ liệu mẫu','Sample data restored'],
+  v_phone_t:['Bản mobile · 390 px','Mobile · 390 px'], v_phone_b:['Cùng một trang, bố cục tự đổi: sidebar → thanh dưới, bảng → thẻ, hộp thoại → bottom sheet. Dữ liệu trong khung này độc lập với trang ngoài.','Same page, adaptive layout: sidebar → bottom bar, tables → cards, dialogs → bottom sheets. Data in this frame is separate from the outer page.'],
+  // design system
+  ds_title:['Sổ Bảo Dưỡng Xe — Design System','Vehicle Maintenance Log — Design System'],
+  ds_sub:['Web app quản lý bảo dưỡng xe · phong cách kính mờ: nền trong 62%, làm nhoè 18px, viền sáng 1px, đặt trên mảng màu trời sáng (Light) hoặc phố đêm (Dark) · Be Vietnam Pro · bo góc thẻ 20, nút tròn · xanh ngọc cho hành động và dữ liệu, hổ phách cho điểm nhấn','Vehicle maintenance web app · frosted glass: 62% fill, 18px blur, 1px light edge, over a morning-sky (Light) or city-night (Dark) colour field · Be Vietnam Pro · card radius 20, round buttons · cyan for actions and data, amber for accent'],
+  ds_back:['Vào bản demo','Open the demo'], ds_toggle_hint:['Đổi sáng/tối để xem mã màu từng bộ','Switch light/dark to see each palette'],
+  ds_colors:['Màu sắc · {theme}','Colours · {theme}'], ds_brand:['Thương hiệu & nền','Brand & surfaces'], ds_status:['Trạng thái nhắc lịch & mức độ AI','Reminder status & AI urgency'],
+  ds_color_rule:['Quy tắc: trạng thái luôn có chữ đi kèm màu để người khó phân biệt màu vẫn đọc được. Mức độ AI dùng lại 3 màu này: Thấp = ok, Trung bình = warn, Cao = bad.','Rule: status always has a text label next to the colour so colour-blind users can read it. AI urgency reuses the same three colours: Low = ok, Medium = warn, High = bad.'],
+  ds_type:['Typography','Typography'], ds_space:['Khoảng cách & bo góc','Spacing & radius'], ds_icons:['Icon (Lucide, 24 px, nét 2)','Icons (Lucide, 24 px, stroke 2)'], ds_layout:['Bố cục','Layout'], ds_comp:['Components','Components'],
+  ds_layout_d:['Desktop ≥ 768 px · sidebar cố định 248 · lề nội dung 40 · khoảng cách 20–24','Desktop ≥ 768 px · fixed 248 sidebar · 40 content padding · 20–24 gaps'],
+  ds_layout_m:['Mobile 390 · lề 16 · bảng → thẻ · hộp thoại → bottom sheet','Mobile 390 · 16 padding · tables → cards · dialogs → bottom sheets'],
+  ds_r6:['6 · biển số, kbd','6 · plate, kbd'], ds_r10:['12 · ô nhập','12 · inputs'], ds_r14:['20 · thẻ kính','20 · glass cards'], ds_r20:['26 · sidebar, hộp thoại','26 · sidebar, dialogs'], ds_r999:['999 · nút, chip, thanh dưới','999 · buttons, chips, bottom bar'],
+  ds_buttons:['Button','Button'], ds_buttons_d:['Primary · Secondary · Ghost · Danger · Soft · Accent (chỉ cho AI) · SM · Disabled · Loading','Primary · Secondary · Ghost · Danger · Soft · Accent (AI only) · SM · Disabled · Loading'],
+  ds_badges:['Badge trạng thái','Status badge'], ds_badges_d:['Dùng ở Tổng quan, Xe, Chi tiết xe, Loại dịch vụ, AI','Used on Dashboard, Vehicles, Vehicle details, Service types, AI'],
+  ds_inputs:['Ô nhập liệu','Inputs'], ds_inputs_d:['Default · Focus · Error · Select · icon · đơn vị · Textarea đếm ký tự','Default · Focus · Error · Select · icon · unit · Textarea with counter'],
+  ds_select:['Lựa chọn','Selection'], ds_select_d:['Segmented · Chip lọc · Switch · Checkbox · Tabs','Segmented · Filter chip · Switch · Checkbox · Tabs'],
+  ds_toggles:['Chuyển ngôn ngữ & sáng/tối','Language & theme toggles'], ds_toggles_d:['Có trên top bar, header mobile, trang đăng nhập · bấm thử','On the top bar, mobile header and login page · try them'],
+  ds_nav:['Điều hướng','Navigation'], ds_nav_d:['Sidebar nav item (desktop) · Bottom nav item (mobile)','Sidebar nav item (desktop) · Bottom nav item (mobile)'],
+  ds_stats:['Stat card','Stat card'], ds_stats_d:['5 tông · dùng ở Tổng quan, Thống kê','5 tones · Dashboard, Statistics'],
+  ds_cards:['Thẻ xe · Dòng nhắc lịch · Thanh tiến độ','Vehicle card · Reminder row · Progress'], ds_cards_d:['Minh hoạ vector đổi màu theo xe','Vector illustration recoloured per vehicle'],
+  ds_feedback:['Phản hồi','Feedback'], ds_feedback_d:['Alert · Toast · Skeleton · Trạng thái rỗng · Dialog','Alert · Toast · Skeleton · Empty state · Dialog'],
+  a_default:['Default','Default'], a_active:['Active','Active'], a_focus:['Focus + icon + đơn vị + gợi ý','Focus + icon + unit + help'], a_error:['Error','Error'], a_select:['Select','Select'], a_textarea:['Textarea · lỗi quá ngắn','Textarea · too short'],
+  a_ai_only:['Accent · chỉ cho AI','Accent · AI only'], a_sm:['Size SM · 32','Size SM · 32'], a_disabled:['Disabled','Disabled'], a_loading:['Loading','Loading'], a_plate:['Biển số','Plate'],
+  a_seg:['Segmented','Segmented'], a_chip:['Chip lọc','Filter chip'], a_switch:['Switch','Switch'], a_check:['Checkbox','Checkbox'], a_tabs:['Tabs','Tabs'],
+  a_theme:['Theme toggle · mục chọn nền trắng + icon cam','Theme toggle · selected = white + orange icon'], a_lang:['Language toggle · VI / EN','Language toggle · VI / EN'],
+  a_count:['Active + số đếm','Active + count'], a_tone:['Tone = {t}','Tone = {t}'], a_vcard:['Thẻ xe · hover nổi lên','Vehicle card · lifts on hover'], a_remrow:['Dòng nhắc lịch','Reminder row'], a_progress:['Progress · ok / warn / bad','Progress · ok / warn / bad'],
+  a_alert:['Alert · warn / bad / info','Alert · warn / bad / info'], a_skel:['Skeleton · AI đang phân tích','Skeleton · AI analysing'], a_toast:['Toast','Toast'], a_empty:['Trạng thái rỗng','Empty state'], a_dialog:['Dialog · mobile = bottom sheet','Dialog · mobile = bottom sheet'],
+  saving:['Đang lưu…','Saving…'], s_db:['Không kết nối được cơ sở dữ liệu, vui lòng thử lại sau ít phút.','Could not connect to the database, please try again shortly.'],
+  c_bg:['Nền trang','Page background'], c_surface:['Kính: thẻ, menu, thanh điều hướng','Glass: cards, menu, nav bars'], c_surface2:['Lớp tô nhạt bên trong kính','Subtle fill inside glass'], c_border:['Đường kẻ, viền thẻ','Dividers, card borders'], c_border_strong:['Viền ô nhập','Input borders'],
+  c_text:['Chữ chính','Main text'], c_text_muted:['Chữ phụ, nhãn','Secondary text'], c_sidebar:['Nền menu trái','Sidebar'], c_sidebar_text:['Chữ menu','Sidebar text'], c_sidebar_active:['Hover menu','Sidebar hover'],
+  c_primary:['Nút chính, link, mục chọn','Primary buttons, links'], c_primary_hover:['Hover nút chính','Primary hover'], c_primary_soft:['Nền nhấn nhẹ','Soft highlight'], c_accent:['Logo, AI, điểm nhấn','Logo, AI, accent'], c_accent_soft:['Nền nhấn cam','Soft orange'],
+  c_ok:['Còn hạn · Thấp','On track · Low'], c_ok_bg:['Nền còn hạn','On-track fill'], c_warn:['Sắp đến hạn · Trung bình','Due soon · Medium'], c_warn_bg:['Nền sắp đến hạn','Due-soon fill'], c_bad:['Quá hạn · Cao · Lỗi · Xoá','Overdue · High · Error · Delete'], c_bad_bg:['Nền quá hạn','Overdue fill'],
+  grp_more:['Khác','More'], bn_more:['Thêm','More'], more_title:['Thêm','More'], dash_status_bad:['Có {n} việc cần làm cho xe của bạn','{n} things need doing for your vehicles'], dash_status_ok:['Xe của bạn đều ổn','All your vehicles are fine'], dash_next:['Việc nên làm trước','Do this first'], task_done:['Tôi đã làm việc này','I did this'], tile_todo:['Việc cần làm','To do'], tile_todo_sub:['Xem danh sách','See the list'], tile_cost:['Chi phí năm {y}','Spent in {y}'], tile_cost_sub:['Xem chi tiết','See details'], tile_last:['Lần bảo dưỡng gần nhất','Last service'], tile_last_sub:['Xem phiếu','See receipt'], my_vehicles:['Xe của bạn','Your vehicles'], veh_next_ok:['Lần tới: {svc}, {when}','Next: {svc}, {when}'], ago_today:['hôm nay','today'], ago_days:['{n} ngày trước','{n} days ago'], ago_months:['{n} tháng trước','{n} months ago'], tasks_title:['Việc cần làm','To do'], tasks_sub:['Việc quá hạn xếp trước. Làm xong thì bấm "Đã làm" để ghi lại, app sẽ tự tính lần tới.','Overdue first. When done, tap "Done" to log it and the app works out the next one.'], help_btn:['Hướng dẫn','Help'], help_title:['Dùng app trong 3 bước','Use the app in 3 steps'], help_1:['Thêm xe: chỉ cần tên gọi và số km hiện tại.','Add a vehicle: just a name and the current odometer.'], help_2:['Mỗi lần đi bảo dưỡng, bấm "Ghi lần bảo dưỡng", chọn những việc đã làm và nhập giá tiền.','After each service, tap "Log a service", pick what was done and enter the price.'], help_3:['App tự nhắc khi tới hạn. Xe có tiếng lạ hay đèn báo thì vào "Hỏi AI về xe".','The app reminds you when things are due. Strange noise or warning light? Use "Ask AI".'], help_ok:['Đã hiểu','Got it'], more_details:['Thêm chi tiết (không bắt buộc)','More details (optional)'], rec_more:['Thêm chi tiết: gara, ghi chú, mô tả, số lượng','More details: garage, notes, description, quantity'], adv_settings:['Cài đặt nâng cao (không bắt buộc)','Advanced settings (optional)'], quick_pick:['Chọn nhanh','Quick pick'], ai_dev:['Dành cho người duyệt thiết kế: giả lập lỗi server','For design reviewers: simulate server errors'], price_ph:['Ví dụ 135.000','e.g. 135,000'], e_price_each:['Nhập giá tiền cho từng việc đã chọn','Enter a price for each service'], ds_simple:['Thành phần cho người dùng phổ thông','Components for everyday users'], ds_simple_d:['Trang chủ gọn, bấm vào để xem chi tiết; biểu mẫu chỉ hiện ô bắt buộc','Lean home screen, tap for details; forms show only required fields'], a_next:['Thẻ "Việc nên làm trước"','"Do this first" card'], a_tile:['Ô số liệu bấm được','Clickable tile'], a_dveh:['Thẻ xe ở Trang chủ','Vehicle card on Home'], a_disc:['Phần gấp gọn','Collapsible section'], a_quick:['Chọn nhanh việc đã làm','Quick pick chips'], a_help:['Hộp hướng dẫn 3 bước','3-step help dialog'],
+  gauge_aria:['Đã dùng {p}% chu kỳ bảo dưỡng','{p}% of the service interval used'], c_mesh:['Mảng màu nền, kính làm nhoè','Background field, blurred by the glass'], c_surface_strong:['Kính đặc: hộp thoại, ô nhập','Dense glass: dialogs, inputs'], c_glass_border:['Viền sáng 1px của kính','1px glass edge highlight'],
+};
+const ui = { lang:'vi', theme:'light' };
+function t(k, vars){ const e=L[k]; let s = e ? e[ui.lang==='vi'?0:1] : k; if(vars) for(const [a,b] of Object.entries(vars)) s=s.split('{'+a+'}').join(b); return s; }
+
+/* ============================ ICONS ============================ */
+const ICONS={
+ dashboard:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+ car:'<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+ motorbike:'<circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M8 17h6l3-6h-5"/><path d="M14 5h3l2 6"/><path d="M5 14l2-3h5"/>',
+ wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+ chart:'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+ sparkles:'<path d="M12 3l-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/>',
+ history:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+ bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+ plus:'<path d="M5 12h14M12 5v14"/>', search:'<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+ moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+ 'chevron-right':'<path d="M9 18l6-6-6-6"/>','chevron-left':'<path d="M15 18l-6-6 6-6"/>','chevron-down':'<path d="M6 9l6 6 6-6"/>',
+ calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>', gauge:'<path d="M12 14l4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+ pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/>',
+ trash:'<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6M14 11v6"/>',
+ x:'<path d="M18 6L6 18M6 6l12 12"/>', alert:'<path d="M21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
+ 'check-circle':'<circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/>', check:'<path d="M20 6L9 17l-5-5"/>',
+ logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>', login:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/>',
+ user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+ lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', eye:'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+ 'eye-off':'<path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><path d="M2 2l20 20"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>',
+ more:'<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',
+ droplet:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+ clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', archive:'<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>',
+ 'trending-up':'<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>', 'map-pin':'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+ info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>', 'arrow-right':'<path d="M5 12h14M12 5l7 7-7 7"/>',
+ refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+ receipt:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
+ tag:'<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/>',
+ 'shield-check':'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9 12l2 2 4-4"/>',
+ phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>', globe:'<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+ download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>', filter:'<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>',
+};
+const ic=(n,s)=>`<svg class="ic${s?' s'+s:''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
+
+/* ============================ ILLUSTRATIONS ============================ */
+const ILLUS={
+ car:c=>`<svg viewBox="0 0 160 96" xmlns="http://www.w3.org/2000/svg"><ellipse cx="80" cy="86" rx="68" ry="6" fill="#0F172A" fill-opacity=".16"/><path d="M18 62c0-6 4-10 10-11l18-3 16-14c4-3 8-5 14-5h26c6 0 11 2 15 6l14 13 14 3c6 1 10 6 10 12v8c0 3-2 5-5 5H23c-3 0-5-2-5-5z" fill="${c}"/><path d="M60 47l12-11c3-2 6-3 9-3h11v14z" fill="#BFDBFE"/><path d="M98 33h6c4 0 7 1 10 4l10 10H98z" fill="#BFDBFE"/><path d="M18 66h126" stroke="#000" stroke-opacity=".15" stroke-width="2"/><circle cx="48" cy="72" r="13" fill="#0F172A"/><circle cx="48" cy="72" r="6" fill="#CBD5E1"/><circle cx="116" cy="72" r="13" fill="#0F172A"/><circle cx="116" cy="72" r="6" fill="#CBD5E1"/><rect x="134" y="55" width="10" height="5" rx="2" fill="#FDE68A"/><rect x="19" y="56" width="7" height="5" rx="2" fill="#F87171"/><path d="M72 54h8" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/></svg>`,
+ scooter:c=>`<svg viewBox="0 0 160 96" xmlns="http://www.w3.org/2000/svg"><ellipse cx="80" cy="86" rx="62" ry="6" fill="#0F172A" fill-opacity=".16"/><path d="M24 66c0-12 8-20 20-20h40c6 0 10 4 12 10l2 10z" fill="${c}"/><path d="M104 64l8-34h8l-4 34z" fill="${c}"/><rect x="88" y="60" width="30" height="8" rx="4" fill="${c}"/><path d="M44 46c0-4 3-6 7-6h30c4 0 6 2 6 6z" fill="#1E293B"/><path d="M106 28h20" stroke="#1E293B" stroke-width="5" stroke-linecap="round"/><path d="M110 62a14 14 0 0 1 28 0" stroke="#1E293B" stroke-width="4" fill="none"/><circle cx="38" cy="72" r="13" fill="#0F172A"/><circle cx="38" cy="72" r="5" fill="#CBD5E1"/><circle cx="124" cy="72" r="13" fill="#0F172A"/><circle cx="124" cy="72" r="5" fill="#CBD5E1"/><circle cx="123" cy="36" r="4" fill="#FDE68A"/><rect x="22" y="55" width="6" height="5" rx="2" fill="#F87171"/><path d="M40 54h30" stroke="#fff" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/></svg>`,
+};
+const illus=(kind,color,w)=>`<span style="display:inline-flex">${ILLUS[kind](color).replace('<svg ',`<svg width="${w}" height="${Math.round(w*.6)}" `)}</span>`;
+const vIllus=(v,w)=>illus(v.type==='CAR'?'car':'scooter', v.color, w);
+const COLORS=['#F97316','#DC2626','#2563EB','#E5E7EB','#1E293B','#16A34A'];
+
+/* ============================ SAMPLE DATA (db/seed.sql) ============================ */
+const SEED = {
+ serviceTypes:[
+  {id:1,name:{vi:'Thay nhớt máy (xe máy)',en:'Engine oil change (motorbike)'},desc:{vi:'Thay dầu động cơ xe máy',en:'Motorbike engine oil'},applies:'MOTORBIKE',km:1500,months:2,active:true},
+  {id:2,name:{vi:'Thay nhớt hộp số (xe tay ga)',en:'Gear oil change (scooter)'},desc:{vi:'Thay dầu láp/hộp số cho xe tay ga',en:'Scooter final-drive oil'},applies:'MOTORBIKE',km:6000,months:6,active:true},
+  {id:3,name:{vi:'Thay dầu động cơ (ô tô)',en:'Engine oil change (car)'},desc:{vi:'Thay dầu máy và lọc dầu',en:'Engine oil and oil filter'},applies:'CAR',km:5000,months:6,active:true},
+  {id:4,name:{vi:'Thay lọc gió',en:'Air filter replacement'},desc:{vi:'Vệ sinh hoặc thay lọc gió động cơ',en:'Clean or replace the engine air filter'},applies:'ALL',km:10000,months:12,active:true},
+  {id:5,name:{vi:'Thay bugi',en:'Spark plug replacement'},desc:{vi:'Thay bugi đánh lửa',en:'Replace spark plugs'},applies:'ALL',km:8000,months:12,active:true},
+  {id:6,name:{vi:'Bảo dưỡng phanh',en:'Brake service'},desc:{vi:'Kiểm tra, thay má phanh/dầu phanh',en:'Check or replace pads and fluid'},applies:'ALL',km:10000,months:12,active:true},
+  {id:7,name:{vi:'Thay lốp',en:'Tyre replacement'},desc:{vi:'Thay lốp xe',en:'Replace tyres'},applies:'ALL',km:30000,months:36,active:true},
+  {id:8,name:{vi:'Thay nước làm mát',en:'Coolant replacement'},desc:{vi:'Xả và thay nước làm mát',en:'Flush and refill coolant'},applies:'CAR',km:40000,months:24,active:true},
+  {id:9,name:{vi:'Thay ắc quy',en:'Battery replacement'},desc:{vi:'Thay bình ắc quy',en:'Replace the battery'},applies:'ALL',km:null,months:24,active:true},
+  {id:10,name:{vi:'Bảo dưỡng định kỳ tổng quát',en:'General periodic service'},desc:{vi:'Gói bảo dưỡng định kỳ theo khuyến nghị hãng',en:'Manufacturer periodic service package'},applies:'ALL',km:10000,months:6,active:true},
+  {id:11,name:{vi:'Vệ sinh nồi / dây curoa',en:'CVT clutch & belt cleaning'},desc:{vi:'Vệ sinh bộ nồi, kiểm tra dây curoa xe tay ga',en:'Clean CVT clutch, check the belt'},applies:'MOTORBIKE',km:8000,months:12,active:true},
+  {id:12,name:{vi:'Sửa chữa khác',en:'Other repairs'},desc:{vi:'Công việc không nằm trong danh mục',en:'Work not in the catalogue'},applies:'ALL',km:null,months:null,active:true},
+ ],
+ vehicles:[
+  {id:1,name:'Vision đi làm',type:'MOTORBIKE',brand:'Honda',model:'Vision',year:2022,plate:'59X1-123.45',odo:12850,purchase:'2022-03-15',color:'#F97316',note:'',archived:false},
+  {id:2,name:'Vios gia đình',type:'CAR',brand:'Toyota',model:'Vios',year:2020,plate:'51H-678.90',odo:45200,purchase:'2020-08-01',color:'#E5E7EB',note:'',archived:false},
+  {id:3,name:'Air Blade',type:'MOTORBIKE',brand:'Honda',model:'Air Blade 125',year:2021,plate:'59P2-456.78',odo:20300,purchase:'2021-05-20',color:'#DC2626',note:'',archived:false},
+ ],
+ records:[
+  {id:1,vehicleId:1,date:'2026-03-10',odo:9800,garage:'Honda Head Phát Tiến',note:'Bảo dưỡng định kỳ',items:[{typeId:1,desc:'Nhớt Honda 0.8L',qty:1,price:120000},{typeId:2,desc:'Nhớt hộp số 120ml',qty:1,price:40000},{typeId:4,desc:'Lọc gió Honda chính hãng',qty:1,price:95000}]},
+  {id:2,vehicleId:1,date:'2026-06-05',odo:11300,garage:'Honda Head Phát Tiến',note:'',items:[{typeId:1,desc:'Nhớt Castrol Power1 0.8L',qty:1,price:135000}]},
+  {id:3,vehicleId:1,date:'2026-08-20',odo:12500,garage:'Honda Head Phát Tiến',note:'Thay nhớt, kiểm tra phanh',items:[{typeId:1,desc:'Nhớt Castrol Power1 0.8L',qty:1,price:135000},{typeId:6,desc:'Má phanh trước',qty:1,price:180000}]},
+  {id:4,vehicleId:2,date:'2026-02-18',odo:40100,garage:'Toyota Lý Thường Kiệt',note:'Bảo dưỡng cấp 40.000 km',items:[{typeId:3,desc:'Dầu Toyota 0W-20',qty:4,price:210000},{typeId:3,desc:'Lọc dầu',qty:1,price:150000},{typeId:4,desc:'Lọc gió động cơ',qty:1,price:320000},{typeId:10,desc:'Công bảo dưỡng cấp 40.000 km',qty:1,price:650000}]},
+  {id:5,vehicleId:2,date:'2026-08-02',odo:44800,garage:'Toyota Lý Thường Kiệt',note:'',items:[{typeId:3,desc:'Dầu Toyota 0W-20',qty:4,price:210000},{typeId:3,desc:'Lọc dầu',qty:1,price:150000}]},
+  {id:6,vehicleId:3,date:'2026-07-12',odo:19800,garage:'Tiệm sửa xe Minh',note:'',items:[{typeId:1,desc:'Nhớt Motul 0.8L',qty:1,price:125000},{typeId:11,desc:'Vệ sinh nồi',qty:1,price:100000}]},
+ ],
+ reminders:[
+  {id:1,vehicleId:1,typeId:1,km:1500,months:2,startDate:'2026-01-01',startOdo:8000,notifyDays:7,notifyKm:300,active:true},
+  {id:2,vehicleId:1,typeId:4,km:10000,months:12,startDate:'2026-01-01',startOdo:8000,notifyDays:7,notifyKm:300,active:true},
+  {id:3,vehicleId:2,typeId:3,km:5000,months:6,startDate:'2026-01-01',startOdo:38000,notifyDays:7,notifyKm:300,active:true},
+  {id:4,vehicleId:2,typeId:10,km:10000,months:6,startDate:'2026-01-01',startOdo:38000,notifyDays:7,notifyKm:300,active:true},
+  {id:5,vehicleId:3,typeId:1,km:1500,months:2,startDate:'2026-01-01',startOdo:18000,notifyDays:7,notifyKm:300,active:true},
+ ],
+ diagnoses:[
+  {id:1,vehicleId:1,symptom:'Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu',status:'OK',urgency:'MEDIUM',typeId:6,error:null,model:'gemini-flash',at:'2026-10-15T09:30',
+   suggestion:{vi:'Má phanh trước có thể đã mòn hoặc bám bẩn. Nên kiểm tra độ dày má phanh và dầu phanh trong tuần này.',en:'The front brake pads may be worn or dirty. Check pad thickness and brake fluid this week.'}},
+  {id:2,vehicleId:2,symptom:'Đèn báo kiểm tra động cơ sáng sau khi đổ xăng',status:'FAILED',urgency:null,typeId:null,error:'RATE_LIMITED',model:'gemini-flash',at:'2026-10-18T20:15',suggestion:null},
+ ],
+};
+let S = structuredClone(SEED);
+
+/* ============================ STATE & HELPERS ============================ */
+const UI = { r:{name:'design',id:null,q:new URLSearchParams()}, routeKey:'', draft:{}, errors:{}, open:{}, loggedIn:true, user:{name:'Bảo Giang',email:'giang@example.com'},
+  vf:'all', q:'', tab:'his', statsRange:'2026', statsVeh:'all', svcFilter:'all', histFilter:'all', bell:false,
+  ai:{text:'Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu', vehicleId:'1', state:'idle', force:'OK', result:null, err:null}, showPw:false };
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const nf=()=>ui.lang==='vi'?'vi-VN':'en-US';
+const money=n=>new Intl.NumberFormat(nf(),{style:'currency',currency:'VND',maximumFractionDigits:0}).format(n);
+const num=n=>Number(n).toLocaleString(nf());
+const km=n=>num(n)+' km';
+const fdate=iso=>ui.lang==='vi'? iso.slice(0,10).split('-').reverse().join('/') : new Date(iso.slice(0,10)+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+const ftime=iso=>fdate(iso)+' '+iso.slice(11,16);
+const veh=id=>S.vehicles.find(v=>v.id===+id);
+const stype=id=>S.serviceTypes.find(s=>s.id===+id);
+const stName=s=>!s?'—':(typeof s.name==='string'?s.name:s.name[ui.lang]);
+const stDesc=s=>!s||!s.desc?'':(typeof s.desc==='string'?s.desc:s.desc[ui.lang]);
+const total=r=>sum(r.items.map(i=>i.qty*i.price));
+const recsOf=vid=>S.records.filter(r=>r.vehicleId===vid).sort((a,b)=>b.date.localeCompare(a.date)||b.odo-a.odo);
+const nextId=a=>Math.max(0,...a.map(x=>x.id))+1;
+const toDate=iso=>new Date(iso+'T00:00:00');
+const isoOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+// Cộng tháng giống Postgres make_interval: 31/01 + 1 tháng = 28/02, không tràn sang tháng 3.
+function addMonths(iso,m){ const d=toDate(iso); const day=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+m); const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); d.setDate(Math.min(day,last)); return isoOf(d); }
+const diffDays=(a,b)=>Math.round((toDate(a)-toDate(b))/864e5);
+const clamp=x=>Math.max(0,Math.min(1,x));
+// Accepts numbers typed with thousand separators ("12.850", "135,000"); N() reads them.
+const N=v=>+String(v??'').replace(/\D/g,'')||0;
+const isInt=(v,min=0)=>{ const s=String(v??'').trim(); return /^[\d.,\s]+$/.test(s)&&/\d/.test(s)&&N(s)>=min; };
+
+// BR-07, BR-08: tính mốc đến hạn và trạng thái giống view v_reminder_status
+function remCalc(rm){
+  const v=veh(rm.vehicleId), type=stype(rm.typeId);
+  const last=recsOf(rm.vehicleId).find(r=>r.items.some(i=>i.typeId===rm.typeId));
+  let baseDate=rm.startDate, baseOdo=rm.startOdo;
+  if(last && last.date>=rm.startDate){ baseDate=last.date; baseOdo=last.odo; }
+  const nextDate=rm.months?addMonths(baseDate,rm.months):null, nextKm=rm.km?baseOdo+rm.km:null;
+  const days=nextDate!=null?diffDays(nextDate,TODAY_ISO):null, kmLeft=nextKm!=null?nextKm-v.odo:null;
+  let st='OK';
+  if(!rm.active||v.archived) st='INACTIVE';
+  else if((days!=null&&days<0)||(kmLeft!=null&&kmLeft<0)) st='OVERDUE';
+  else if((days!=null&&days<=rm.notifyDays)||(kmLeft!=null&&kmLeft<=rm.notifyKm)) st='DUE_SOON';
+  const pTime=nextDate?clamp(diffDays(TODAY_ISO,baseDate)/Math.max(1,diffDays(nextDate,baseDate))):null;
+  const pKm=nextKm?clamp((v.odo-baseOdo)/rm.km):null;
+  return {...rm,v,type,baseDate,baseOdo,nextDate,nextKm,days,kmLeft,st,pTime,pKm};
+}
+const RANK={OVERDUE:0,DUE_SOON:1,OK:2,INACTIVE:3};
+const allRem=()=>S.reminders.filter(r=>veh(r.vehicleId)).map(remCalc);
+const attention=()=>allRem().filter(r=>r.st==='OVERDUE'||r.st==='DUE_SOON').sort((a,b)=>RANK[a.st]-RANK[b.st]||(a.days??1e9)-(b.days??1e9));
+function remDetail(r){
+  // Overdue: say only what is overdue. "Quá 66 ngày · còn 4.900 km" confuses people.
+  const over=r.st==='OVERDUE';
+  const parts=[];
+  if(r.days!=null&&!(over&&r.days>=0)) parts.push(r.days<0?t('overdue_days',{n:-r.days}):r.days===0?t('due_today'):t('days_left',{n:r.days}));
+  if(r.kmLeft!=null&&!(over&&r.kmLeft>=0)) parts.push(r.kmLeft<0?t('km_over',{n:km(-r.kmLeft)}):t('km_left',{n:km(r.kmLeft)}));
+  return parts.join(' · ');
+}
+const ST_TONE={OK:'ok',DUE_SOON:'warn',OVERDUE:'bad',INACTIVE:'neutral',NONE:'neutral'};
+const stBadge=st=>`<span class="badge b-${ST_TONE[st]}">${t('st_'+st)}</span>`;
+function vehStatus(v){ const rs=allRem().filter(r=>r.vehicleId===v.id&&r.st!=='INACTIVE'); if(v.archived) return 'INACTIVE'; if(!rs.length) return 'NONE'; return rs.sort((a,b)=>RANK[a.st]-RANK[b.st])[0].st; }
+function ruleText(km_,mo){ const a=[]; if(km_) a.push(t('every_km',{km:km(km_)})); if(mo) a.push(t('every_mo',{n:mo})); return a.join(' '+t('or')+' ')||'—'; }
+function typesForVehicle(v,includeId){ return S.serviceTypes.filter(s=>(s.active||s.id===+includeId)&&(!v||s.applies==='ALL'||s.applies===v.type)); }
+
+/* ============================ PERSIST (chỉ ngôn ngữ & giao diện) ============================ */
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){ return null; } }
+
+/* ============================ SHELL ============================ */
+const NAV=[['dashboard','dashboard'],['vehicles','car'],['stats','chart'],['ai','sparkles']];
+const NAV_MORE=[['services','wrench'],['ai-history','history']]; // used less often: kept out of the main menu
+const NAV_OF={vehicle:'vehicles','vehicle-new':'vehicles','vehicle-edit':'vehicles','record-new':'vehicles','record-edit':'vehicles',record:'vehicles','reminder-new':'vehicles','reminder-edit':'vehicles'};
+const themeToggle=()=>`<div class="toggle" role="group" aria-label="Theme"><button class="${ui.theme==='light'?'on':''}" data-act="theme" data-v="light" aria-label="${t('light')}" title="${t('light')}">${ic('sun')}</button><button class="${ui.theme==='dark'?'on':''}" data-act="theme" data-v="dark" aria-label="${t('dark')}" title="${t('dark')}">${ic('moon')}</button></div>`;
+const langToggle=()=>`<div class="toggle lang" role="group" aria-label="${t('lang_label')}"><button class="${ui.lang==='vi'?'on':''}" data-act="lang" data-v="vi">VI</button><button class="${ui.lang==='en'?'on':''}" data-act="lang" data-v="en">EN</button></div>`;
+function sidebar(active){
+  const over=attention().filter(r=>r.st==='OVERDUE').length, nActive=S.vehicles.filter(v=>!v.archived).length;
+  const initials=UI.user.name.split(/\s+/).map(w=>w[0]).slice(-2).join('').toUpperCase();
+  return `<aside class="sidebar">
+    <div class="logo"><div class="mark">${ic('wrench','22')}</div><div><b>${t('app_name')}</b><small>${t('app_sub')}</small></div></div>
+    <div class="t-overline nav-label">${t('menu')}</div>
+    ${NAV.map(([k,i])=>`<button class="nav-item ${active===k?'on':''}" data-go="${k}">${ic(i)}${t('nav_'+k.replace('-','_'))}${k==='dashboard'&&over?`<span class="cnt">${over}</span>`:''}</button>`).join('')}
+    <div class="t-overline nav-label" style="margin-top:14px">${t('grp_more')}</div>
+    ${NAV_MORE.map(([k,i])=>`<button class="nav-item ${active===k?'on':''}" data-go="${k}">${ic(i)}${t('nav_'+k.replace('-','_'))}</button>`).join('')}
+    <button class="nav-item" data-act="help">${ic('info')}${t('help_btn')}</button>
+    <div class="sb-user"><div class="avatar">${esc(initials)}</div><div class="grow"><b>${esc(UI.user.name)}</b><span class="t-caption">${t('owner_line',{n:nActive})}</span></div><button class="icon-btn plain" data-act="logout" title="${t('logout')}" aria-label="${t('logout')}">${ic('logout','18')}</button></div>
+  </aside>`;
+}
+function bellPop(){
+  const items=attention();
+  return `<div class="pop" role="dialog" aria-label="${t('notif')}"><div class="row" style="padding:8px 10px"><b class="grow">${t('notif')}</b><span class="badge b-bad nodot">${items.length}</span></div>
+    ${items.length?items.map(r=>`<div class="pi" data-go="vehicle/${r.vehicleId}" data-tab="rem"><div class="chipico tone-${ST_TONE[r.st]}" style="width:36px;height:36px">${ic(r.st==='OVERDUE'?'alert':'clock','18')}</div><div class="grow col" style="gap:0"><b style="font-weight:500">${esc(stName(r.type))}</b><span class="t-caption muted">${esc(r.v.name)} · ${remDetail(r)}</span></div></div>`).join(''):`<p class="t-small muted" style="padding:10px">${t('notif_empty')}</p>`}</div>`;
+}
+function topbar(m){
+  const n=attention().length;
+  return `<div class="topbar">
+    <div class="grow"><div class="t-caption muted">${m.crumb||''}</div><h1 class="t-h1">${m.title}</h1></div>
+    <label class="control search">${ic('search','18')}<input data-act="search" value="${esc(UI.q)}" placeholder="${t('search_ph')}" aria-label="${t('search_ph')}"><span class="kbd">Enter</span></label>
+    <button class="icon-btn" data-act="help" title="${t('help_btn')}" aria-label="${t('help_btn')}">${ic('info')}</button>
+    ${langToggle()}${themeToggle()}
+    <button class="icon-btn" data-act="bell" aria-label="${t('notif')}" aria-expanded="${UI.bell}">${ic('bell')}${n?`<span class="dot">${n}</span>`:''}</button>
+    ${UI.bell?bellPop():''}
+  </div>`;
+}
+function mheader(m){
+  const n=attention().length;
+  return `<header class="mheader">${m.back?`<button class="icon-btn" data-go="${m.back}" aria-label="${t('back')}">${ic('chevron-left')}</button>`:`<div class="mark">${ic('wrench','18')}</div>`}
+    <b class="t-h3 grow">${m.mtitle||m.title}</b>${langToggle()}${themeToggle()}
+    <button class="icon-btn" data-act="bell" aria-label="${t('notif')}">${ic('bell','18')}${n?`<span class="dot">${n}</span>`:''}</button>${UI.bell?bellPop():''}</header>`;
+}
+function bnav(active){
+  const items=[...NAV,['more','more']];
+  const on=['services','ai-history','more'].includes(active)?'more':active;
+  return `<nav class="bnav">${items.map(([k,i])=>`<button class="${on===k?'on':''}" data-go="${k}"><span>${ic(i,'22')}</span>${t('bn_'+k)}</button>`).join('')}</nav>`;
+}
+function shell(o){
+  const active=NAV_OF[UI.r.name]||UI.r.name;
+  return `<div class="app">${sidebar(active)}<div style="min-width:0">${mheader(o)}<main class="main">${topbar(o)}<section class="screen${UI.animate?' enter':''}">${o.html}</section></main></div>${bnav(active)}</div>`;
+}
+const notFound=()=>({title:t('not_found'),html:`<div class="card empty"><div class="art">${ic('search','24')}</div><b>${t('not_found')}</b><span class="muted t-small">${t('not_found_body')}</span><button class="btn primary sm" data-go="dashboard">${t('nav_dashboard')}</button></div>`});
+
+/* ============================ FORM HELPERS ============================ */
+const D=()=>UI.draft, E=()=>UI.errors;
+const fld=(label,inner,o={})=>`<div class="field ${o.cls||''}">${label!=null?`<label>${label}${o.req?' <span class="req">*</span>':''}</label>`:''}${inner}${o.err?`<span class="help err">${o.err}</span>`:o.help?`<span class="help">${o.help}</span>`:''}</div>`;
+const inp=(key,o={})=>`<div class="control${o.err?' error':''}">${o.icon?ic(o.icon,'18'):''}<input type="${o.type||'text'}" data-d="${key}" value="${esc(D()[key]??'')}" placeholder="${esc(o.ph||'')}"${o.max?` max="${o.max}"`:''}${o.mode?` inputmode="${o.mode}"`:''}${o.aria?` aria-label="${esc(o.aria)}"`:''}>${o.suffix?`<span class="suffix">${o.suffix}</span>`:''}</div>`;
+const sel=(key,opts,o={})=>`<div class="control${o.err?' error':''}">${o.icon?ic(o.icon,'18'):''}<select data-d="${key}"${o.rerender?' data-rerender="1"':''}${o.aria?` aria-label="${esc(o.aria)}"`:''}>${opts.map(([v,l])=>`<option value="${esc(v)}"${String(D()[key])===String(v)?' selected':''}>${esc(l)}</option>`).join('')}</select>${ic('chevron-down','18')}</div>`;
+const seg=(key,opts)=>`<div class="seg" role="group">${opts.map(([v,l,i])=>`<button type="button" class="${String(D()[key])===String(v)?'on':''}" data-act="seg" data-key="${key}" data-v="${v}">${i?ic(i,'18'):''}${l}</button>`).join('')}</div>`;
+
+/* ============================ SCREENS ============================ */
+const SCREENS={};
+
+SCREENS.dashboard=()=>{
+  // Home answers two questions only: "does any vehicle need something?" and "how much have I spent?".
+  // Everything else is one tap away (tiles, vehicle cards).
+  const att=attention(), first=att[0], yr=TODAY.getFullYear();
+  const recY=S.records.filter(r=>r.date.startsWith(String(yr)));
+  const act=S.vehicles.filter(v=>!v.archived);
+  const last=[...S.records].sort((a,b)=>b.date.localeCompare(a.date)||b.odo-a.odo)[0];
+  const bar=`<div class="dash-bar"><span class="dash-status ${att.length?'bad':'ok'}">${ic(att.length?'alert':'check-circle','18')}${att.length?t('dash_status_bad',{n:att.length}):t('dash_status_ok')}</span><span class="grow"></span><button class="btn secondary" data-go="record-new">${ic('plus')}${t('btn_log')}</button></div>`;
+  const next=first?`<div class="card next-card ${first.st==='DUE_SOON'?'warn':''}"><div class="thumb">${vIllus(first.v,110)}</div>
+      <div class="grow col" style="gap:4px"><span class="t-overline muted">${t('dash_next')}</span><b class="t-h2">${esc(stName(first.type))}</b><span class="muted">${esc(first.v.name)} · <span class="fg-${ST_TONE[first.st]}">${remDetail(first)}</span></span></div>
+      <button class="btn primary big" data-go="record-new?vehicle=${first.vehicleId}&type=${first.typeId}">${ic('check')}${t('task_done')}</button></div>`:'';
+  const tile=(attrs,tone,icon,label,value,more)=>`<button class="card tile" ${attrs}><span class="t-small muted">${label}</span><b class="t-numl ${tone==='bad'||tone==='ok'?'fg-'+tone:''}">${value}</b><span class="tile-more">${more}${ic('chevron-right','16')}</span></button>`;
+  const tiles=`<div class="tiles">
+    ${tile('data-act="tasks"',att.length?'bad':'ok',att.length?'alert':'check-circle',t('tile_todo'),att.length,t('tile_todo_sub'))}
+    ${tile('data-go="stats"','accent','receipt',t('tile_cost',{y:yr}),money(sum(recY.map(total))),t('tile_cost_sub'))}
+    ${last?tile(`data-go="record/${last.id}"`,'primary','wrench',t('tile_last'),ago(last.date),esc(veh(last.vehicleId).name)+' · '+t('tile_last_sub')):''}</div>`;
+  const vehicles=`<div class="section-h"><h3 class="t-h3 grow">${t('my_vehicles')}</h3><button class="link" data-go="vehicles">${t('view_all')}${ic('chevron-right','16')}</button></div>
+    <div class="dveh-list">${act.map(dashVehicle).join('')}<button class="card vcard add" style="min-height:116px" data-go="vehicle-new"><div class="chipico tone-primary">${ic('plus','24')}</div><b style="color:var(--text)">${t('add_vehicle_new')}</b></button></div>`;
+  return {title:t('greet',{name:esc(UI.user.name.split(' ').slice(-1)[0])}),crumb:new Date(TODAY).toLocaleDateString(ui.lang==='vi'?'vi-VN':'en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),mtitle:t('app_name'),
+    html:bar+next+tiles+vehicles};
+};
+// "hôm nay", "3 ngày trước", "2 tháng trước" reads faster than a date for recent events.
+function ago(iso){ const d=diffDays(TODAY_ISO,iso); return d<=0?t('ago_today'):d<60?t('ago_days',{n:d}):t('ago_months',{n:Math.round(d/30)}); }
+function dashVehicle(v){
+  const rs=allRem().filter(r=>r.vehicleId===v.id&&r.st!=='INACTIVE').sort((a,b)=>RANK[a.st]-RANK[b.st]||(a.days??1e9)-(b.days??1e9));
+  const top=rs[0], bad=top&&top.st!=='OK';
+  const line=!top?t('st_NONE'):bad?`${esc(stName(top.type))} · ${remDetail(top)}`:t('veh_next_ok',{svc:esc(stName(top.type)).toLowerCase(),when:top.nextDate?fdate(top.nextDate):km(top.nextKm)});
+  return `<button class="card dveh" data-go="vehicle/${v.id}${bad?'?tab=rem':''}"><div class="thumb">${vIllus(v,120)}</div>
+    <div class="col grow" style="gap:4px"><div class="row" style="gap:8px"><b class="t-h3 grow">${esc(v.name)}</b>${top?stBadge(top.st):''}</div>
+    <span class="t-small muted">${v.plate?esc(v.plate)+' · ':''}${km(v.odo)}</span><span class="t-small ${bad?'fg-'+ST_TONE[top.st]:'muted'}">${line}</span></div>${gauge(top)}</button>`;
+}
+// How much of the nearest service interval is used, drawn like the needle on a car's dashboard.
+function gauge(r){
+  if(!r) return '';
+  const p=r.st==='OVERDUE'?1:Math.max(r.pTime??0,r.pKm??0), C=2*Math.PI*27, tone=ST_TONE[r.st];
+  const label=r.st==='OVERDUE'?'!':Math.round(p*100)+'%';
+  return `<div class="gauge" role="img" aria-label="${t('gauge_aria',{p:Math.round(p*100)})}"><svg width="64" height="64" viewBox="0 0 64 64"><circle class="track" cx="32" cy="32" r="27"/><circle class="val" cx="32" cy="32" r="27" stroke="var(--${tone==='neutral'?'border-strong':tone})" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-p)).toFixed(1)}"/></svg><b class="fg-${tone}">${label}</b></div>`;
+}
+function tasksModal(){
+  const att=attention();
+  openModal(`<div class="row"><b class="t-h2 grow">${t('tasks_title')}</b><button class="icon-btn plain" data-act="close-modal" aria-label="${t('close')}">${ic('x')}</button></div>
+    <p class="t-small muted">${t('tasks_sub')}</p>
+    <div>${att.length?att.map(r=>`<div class="lrow task"><div class="thumb" style="width:56px;height:40px">${vIllus(r.v,50)}</div><div class="grow col" style="gap:2px"><b style="font-weight:500">${esc(stName(r.type))}</b><span class="t-caption muted">${esc(r.v.name)} · <span class="fg-${ST_TONE[r.st]}">${remDetail(r)}</span></span></div><button class="btn primary sm" data-go="record-new?vehicle=${r.vehicleId}&type=${r.typeId}">${ic('check')}${t('log_short')}</button></div>`).join(''):`<div class="empty">${ic('check-circle','24')}<b>${t('attention_empty')}</b></div>`}</div>`);
+}
+function helpModal(){
+  openModal(`<div class="mic tone-primary">${ic('info','22')}</div><b class="t-h2">${t('help_title')}</b>
+    <ol class="steps">${[1,2,3].map(i=>`<li><span class="stepnum">${i}</span><span>${t('help_'+i)}</span></li>`).join('')}</ol>
+    <div class="acts"><button class="btn primary" data-act="close-modal">${t('help_ok')}</button></div>`);
+}
+SCREENS.more=()=>({title:t('more_title'),crumb:t('home')+'  /  '+t('more_title'),html:`<div class="card" style="padding:8px">
+  ${NAV_MORE.map(([k,i])=>`<button class="menu-row" data-go="${k}">${ic(i)}<span class="grow">${t('nav_'+k.replace('-','_'))}</span>${ic('chevron-right','18')}</button>`).join('')}
+  <button class="menu-row" data-act="help">${ic('info')}<span class="grow">${t('help_btn')}</span>${ic('chevron-right','18')}</button>
+  <button class="menu-row" data-act="logout">${ic('logout')}<span class="grow">${t('logout')}</span></button></div>`});
+// Collapsible block that keeps its open/closed state across re-renders (UI.open is reset on page change).
+const disc=(name,label,inner)=>`<details class="disc" data-disc="${name}"${UI.open[name]?' open':''}><summary>${ic('chevron-down','18')}${label}</summary><div class="disc-body">${inner}</div></details>`;
+const statCard=(tone,icon,label,value,sub)=>`<div class="card stat"><span class="t-small muted">${label}</span><div class="t-numl">${value}</div><span class="t-caption fg-${tone}">${sub}</span></div>`;
+const itemsSummary=r=>[...new Set(r.items.map(i=>stName(stype(i.typeId))))].join(' · ');
+function remRow(r){ return `<div class="lrow"><div class="thumb" style="width:64px;height:44px">${vIllus(r.v,56)}</div><div class="grow col" style="gap:2px"><span class="t">${esc(stName(r.type))}</span><span class="t-caption muted">${esc(r.v.name)} · ${remDetail(r)}</span></div>${stBadge(r.st)}<button class="btn secondary sm" data-go="record-new?vehicle=${r.vehicleId}&type=${r.typeId}">${ic('check')}${t('log_short')}</button></div>`; }
+function monthLabel(m){ return ui.lang==='vi'?'T'+(m+1):new Date(2026,m,1).toLocaleDateString('en-GB',{month:'short'}); }
+function bars(months,h){ const max=Math.max(1,...months.map(x=>x[1])); return `<div class="bars" style="height:${h}px">${months.map(([m,v])=>`<div class="b"><div class="bar ${v===0?'zero':v<max?'lo':''}" data-v="${v?money(v):'0'}" style="height:${v?Math.max(8,Math.round((h-36)*v/max)):6}px" aria-label="${monthLabel(m)}: ${money(v)}"></div><span class="t-caption muted">${monthLabel(m)}</span></div>`).join('')}</div>`; }
+
+SCREENS.vehicles=()=>{
+  const q=UI.q.trim().toLowerCase();
+  const counts={all:S.vehicles.filter(v=>!v.archived).length,MOTORBIKE:S.vehicles.filter(v=>!v.archived&&v.type==='MOTORBIKE').length,CAR:S.vehicles.filter(v=>!v.archived&&v.type==='CAR').length,archived:S.vehicles.filter(v=>v.archived).length};
+  const list=S.vehicles.filter(v=>UI.vf==='archived'?v.archived:!v.archived&&(UI.vf==='all'||v.type===UI.vf)).filter(v=>!q||v.name.toLowerCase().includes(q)||(v.plate||'').toLowerCase().includes(q));
+  const chip=(k,label,icon)=>`<button class="chip ${UI.vf===k?'on':''}" data-act="vf" data-v="${k}">${icon?ic(icon,'16'):''}${label} <span class="count">${counts[k]}</span></button>`;
+  return {title:t('nav_vehicles'),crumb:t('home')+'  /  '+t('nav_vehicles'),html:`
+    <div class="bar"><div class="chips grow">${chip('all',t('f_all'))}${chip('MOTORBIKE',t('vt_MOTORBIKE'),'motorbike')}${chip('CAR',t('vt_CAR'),'car')}${chip('archived',t('archived'),'archive')}</div>
+      <label class="control" style="height:40px;width:240px">${ic('search','18')}<input data-act="search-local" value="${esc(UI.q)}" placeholder="${t('search_ph')}" aria-label="${t('search_ph')}"></label>
+      <button class="btn primary" data-go="vehicle-new">${ic('plus')}${t('add_vehicle')}</button></div>
+    ${list.length||UI.vf!=='archived'?`<div class="grid-3">${list.map(vehicleCard).join('')}${UI.vf==='archived'?'':`<button class="card vcard add" data-go="vehicle-new"><div class="chipico tone-primary">${ic('plus','24')}</div><b style="color:var(--text)">${t('add_vehicle_new')}</b><span class="t-small">${t('add_vehicle_sub')}</span></button>`}</div>`:''}
+    ${!list.length?`<div class="card empty"><div class="art">${illus('scooter','#94A3B8',84)}</div><b>${t('veh_empty')}</b><span class="t-small muted">${t('veh_empty_sub')}</span></div>`:''}`};
+};
+function vehicleCard(v){
+  const rs=recsOf(v.id), st=vehStatus(v);
+  return `<button class="card vcard ${v.archived?'arch':''}" data-go="vehicle/${v.id}"><div class="pic"><span class="badge b-info nodot type">${t('vt_'+v.type)}</span>${v.archived?`<span class="badge b-neutral">${t('archived')}</span>`:stBadge(st)}${vIllus(v,210)}</div>
+    <div class="body"><div class="row"><div class="grow"><b class="t-h3">${esc(v.name)}</b><div class="t-small muted">${esc([v.brand,v.model].filter(Boolean).join(' '))}${v.year?' · '+v.year:''}</div></div>${v.plate?`<span class="plate">${esc(v.plate)}</span>`:''}</div>
+    <div class="meta"><div><small>${t('m_odo')}</small><b class="num">${km(v.odo)}</b></div><div><small>${t('m_last')}</small><b>${rs[0]?fdate(rs[0].date):'—'}</b></div><div><small>${t('m_spent')}</small><b class="num">${money(sum(rs.map(total)))}</b></div><div><small>${t('m_count')}</small><b>${t('times',{n:rs.length})}</b></div></div></div></button>`;
+}
+
+SCREENS['vehicle-new']=SCREENS['vehicle-edit']=r=>{
+  const editing=r.name==='vehicle-edit'; if(editing&&!veh(r.id)) return notFound();
+  const d=D(), e=E();
+  return {title:editing?t('vf_edit'):t('vf_new'),crumb:t('nav_vehicles')+'  /  '+(editing?esc(veh(r.id).name):t('add_vehicle')),back:editing?`vehicle/${r.id}`:'vehicles',html:`
+  <form class="split" data-form="vehicle" novalidate>
+    <div class="card col" style="gap:20px">
+      <div><h3 class="t-h3">${t('vf_info')}</h3><span class="t-caption muted">${t('required_note')}</span></div>
+      ${fld(t('vf_type'),seg('type',[['MOTORBIKE',t('vt_MOTORBIKE'),'motorbike'],['CAR',t('vt_CAR'),'car'],['OTHER',t('vt_OTHER'),'more']]),{req:true})}
+      <div class="grid-2 form">
+        ${fld(t('vf_name'),inp('name',{ph:t('vf_name_ph'),err:e.name}),{req:true,err:e.name})}
+        ${fld(t('vf_odo'),inp('odo',{icon:'gauge',mode:'numeric',suffix:'km',err:e.odo}),{req:true,err:e.odo,help:t('vf_odo_help')})}
+      </div>
+      ${disc('veh',t('more_details'),`<div class="grid-2 form">
+        ${fld(t('vf_plate'),inp('plate',{ph:'59X1-123.45',err:e.plate}),{err:e.plate,help:t('vf_plate_help')})}
+        ${fld(t('vf_brand'),inp('brand',{ph:'Honda'}))}
+        ${fld(t('vf_model'),inp('model',{ph:'Wave Alpha'}))}
+        ${fld(t('vf_year'),inp('year',{mode:'numeric',ph:'2020',err:e.year}),{err:e.year})}
+        ${fld(t('vf_purchase'),inp('purchase',{type:'date',max:TODAY_ISO}))}
+        ${fld(t('vf_color'),`<div class="row" style="height:48px;gap:8px">${COLORS.map(c=>`<button type="button" data-act="seg" data-key="color" data-v="${c}" aria-label="${c}" style="width:30px;height:30px;border-radius:50%;background:${c};border:2px solid ${d.color===c?'var(--primary)':'var(--border)'};box-shadow:inset 0 0 0 2px var(--surface);cursor:pointer"></button>`).join('')}</div>`)}
+      </div>
+      ${fld(t('vf_note'),`<textarea class="area" style="min-height:80px" data-d="note" placeholder="${t('vf_note_ph')}">${esc(d.note)}</textarea>`)}`)}
+<div class="row" style="justify-content:flex-end"><button type="button" class="btn secondary" data-go="${editing?`vehicle/${r.id}`:'vehicles'}">${t('cancel')}</button><button class="btn primary" type="submit">${ic('check')}${t('vf_save')}</button></div>
+    </div>
+    <div class="card col hide-m" style="gap:14px">
+      <span class="t-overline muted">${t('vf_preview')}</span>
+      <div class="thumb" id="vfPrev" style="height:170px;width:100%">${illus(d.type==='CAR'?'car':'scooter',d.color,220)}</div>
+      <div><b class="t-h3" id="vfPrevName">${esc(d.name||'—')}</b><div class="t-small muted" id="vfPrevSub">${esc([d.brand,d.model].filter(Boolean).join(' '))}${d.year?' · '+esc(d.year):''}</div></div>
+      <div class="row wrap"><span class="plate" id="vfPrevPlate">${esc(d.plate||'—')}</span><span class="badge b-info nodot">${t('vt_'+d.type)}</span></div>
+      <div class="alert info">${ic('info','18')}<div><b>${t('vf_tip')}</b><p>${t('vf_tip_body')}</p></div></div>
+    </div>
+  </form>`};
+};
+
+SCREENS.vehicle=r=>{
+  const v=veh(r.id); if(!v) return notFound();
+  const rs=recsOf(v.id), rems=allRem().filter(x=>x.vehicleId===v.id), over=rems.filter(x=>x.st==='OVERDUE').length;
+  const tab=UI.tab;
+  const head=`<div class="card" style="padding:0;overflow:hidden">
+    <div class="row vd-head" style="gap:24px;padding:24px">
+      <div class="thumb" style="width:240px;height:150px;background:radial-gradient(120% 90% at 50% 100%,var(--surface-2),var(--surface))">${vIllus(v,220)}</div>
+      <div class="col grow" style="gap:10px">
+        <div class="row wrap" style="gap:10px"><h2 class="t-h1">${esc(v.name)}</h2>${v.archived?`<span class="badge b-neutral">${t('archived')}</span>`:over?`<span class="badge b-bad">${t('vd_over_badge',{n:over})}</span>`:`<span class="badge b-ok">${t('vd_ok_badge')}</span>`}</div>
+        <span class="muted">${esc([v.brand,v.model].filter(Boolean).join(' '))}${v.year?' · '+v.year:''} · ${t('vt_'+v.type)}</span>
+        <div class="row wrap" style="gap:10px">${v.plate?`<span class="plate">${esc(v.plate)}</span>`:''}<span class="badge b-neutral nodot">${ic('gauge','16')}${km(v.odo)}</span>${v.purchase?`<span class="badge b-neutral nodot">${ic('calendar','16')}${t('vd_bought',{d:fdate(v.purchase)})}</span>`:''}</div>
+      </div>
+      <div class="row wrap" style="gap:10px">
+        ${v.archived?`<button class="btn secondary" data-act="restore-vehicle" data-id="${v.id}">${ic('refresh')}${t('vd_restore')}</button>`:rs.length?`<button class="btn secondary" data-act="ask-archive" data-id="${v.id}">${ic('archive')}${t('vd_archive')}</button>`:`<button class="btn danger-ghost" data-act="ask-del-vehicle" data-id="${v.id}">${ic('trash')}${t('del')}</button>`}
+        <button class="btn secondary" data-go="vehicle-edit/${v.id}">${ic('pencil')}${t('edit')}</button>
+        ${v.archived?'':`<button class="btn primary" data-go="record-new?vehicle=${v.id}">${ic('plus')}${t('btn_log')}</button>`}
+      </div>
+    </div>
+    <div class="kpis"><div><div class="t-caption muted">${t('vd_total')}</div><b class="t-h3 num">${money(sum(rs.map(total)))}</b></div><div><div class="t-caption muted">${t('vd_count')}</div><b class="t-h3">${t('times',{n:rs.length})}</b></div><div><div class="t-caption muted">${t('vd_last')}</div><b class="t-h3">${rs[0]?fdate(rs[0].date):'—'}</b></div><div><div class="t-caption muted">${t('vd_odo')}</div><b class="t-h3 num">${km(v.odo)}</b></div></div>
+  </div>`;
+  const tabs=`<div class="tabs" role="tablist">${[['info',t('tab_info')],['his',t('tab_his'),rs.length],['rem',t('tab_rem'),rems.length]].map(([k,l,c])=>`<button role="tab" aria-selected="${tab===k}" class="${tab===k?'on':''}" data-act="tab" data-v="${k}">${l}${c!=null?` <span class="cnt">${c}</span>`:''}</button>`).join('')}</div>`;
+  let pane='';
+  if(tab==='info') pane=`<div class="card"><div class="grid-2" style="gap:18px 32px">${[[t('vf_name'),esc(v.name)],[t('vf_type'),t('vt_'+v.type)],[t('vf_brand')+' · '+t('vf_model'),esc([v.brand,v.model].filter(Boolean).join(' ')||'—')],[t('vf_year'),v.year||'—'],[t('vf_plate'),esc(v.plate||'—')],[t('vf_odo'),km(v.odo)],[t('vf_purchase'),v.purchase?fdate(v.purchase):'—'],[t('status'),v.archived?`<span class="badge b-neutral">${t('archived')}</span>`:`<span class="badge b-ok">${t('in_use')}</span>`],[t('vf_note'),esc(v.note||'—')]].map(([a,b])=>`<div class="col"><span class="t-caption muted">${a}</span><b style="font-weight:500">${b}</b></div>`).join('')}</div></div>`;
+  if(tab==='his') pane=`<div class="card">${rs.length?`<div class="tl">${rs.map(x=>`<div class="tl-item"><span class="tl-line"></span><div class="tl-dot">${ic('wrench','16')}</div><button class="card" style="padding:16px;cursor:pointer;text-align:left;width:100%" data-go="record/${x.id}"><div class="row wrap"><div class="grow"><b>${fdate(x.date)} · ${km(x.odo)}</b><div class="t-small muted">${esc(x.garage||'—')} · ${t('n_items',{n:x.items.length})}${x.note?` · “${esc(x.note)}”`:''}</div></div><div class="row wrap" style="gap:6px">${[...new Set(x.items.map(i=>i.typeId))].map(id=>`<span class="badge b-info nodot">${esc(stName(stype(id)))}</span>`).join('')}</div><b class="num">${money(total(x))}</b>${ic('chevron-right','18')}</div></button></div>`).join('')}</div>`:`<div class="empty"><div class="art">${ic('wrench','24')}</div><b>${t('his_empty')}</b>${v.archived?'':`<button class="btn primary sm" data-go="record-new?vehicle=${v.id}">${ic('plus')}${t('btn_log')}</button>`}</div>`}</div>`;
+  if(tab==='rem') pane=`<div class="col" style="gap:16px"><div class="row wrap"><span class="grow muted t-small">${t('rem_hint')}</span>${v.archived?'':`<button class="btn primary sm" data-go="reminder-new/${v.id}">${ic('plus')}${t('rem_add')}</button>`}</div>
+    ${rems.length?`<div class="grid-2">${rems.sort((a,b)=>RANK[a.st]-RANK[b.st]).map(remCard).join('')}</div>`:`<div class="card empty"><div class="art">${ic('bell','24')}</div><b>${t('rem_empty')}</b><span class="t-small muted">${t('rem_empty_sub')}</span></div>`}</div>`;
+  return {title:esc(v.name),crumb:t('nav_vehicles')+'  /  '+esc(v.name),back:'vehicles',html:head+tabs+pane};
+};
+function remCard(r){
+  const tone=ST_TONE[r.st];
+  const prog=(label,p,val)=>p==null?'':`<div class="col" style="gap:6px"><div class="row t-caption"><span class="grow muted">${label}</span><b>${val}</b></div><div class="progress ${tone}"><span style="width:${Math.round(p*100)}%"></span></div></div>`;
+  return `<div class="card col" style="gap:14px${r.st==='OVERDUE'?';border-color:color-mix(in srgb,var(--bad) 40%,var(--border))':''}">
+    <div class="row"><div class="chipico tone-${tone}">${ic(r.typeId===1||r.typeId===3?'droplet':'wrench')}</div><div class="grow"><b>${esc(stName(r.type))}</b><div class="t-caption muted">${ruleText(r.km,r.months)}</div></div>${stBadge(r.st)}</div>
+    ${prog(t('rem_time'),r.pTime,r.days==null?'':(r.days<0?t('overdue_days',{n:-r.days}):t('days_left',{n:r.days}))+` (${fdate(r.nextDate)})`)}
+    ${prog(t('rem_dist'),r.pKm,r.nextKm==null?'':`${km(Math.max(0,r.v.odo-r.baseOdo))} / ${km(r.km)}`)}
+    <div class="row"><button class="btn primary sm grow" data-go="record-new?vehicle=${r.vehicleId}&type=${r.typeId}" ${r.v.archived?'disabled':''}>${ic('check')}${t('rem_done')}</button><button class="btn secondary sm" data-go="reminder-edit/${r.id}">${ic('pencil')}${t('edit')}</button></div></div>`;
+}
+
+SCREENS['record-new']=SCREENS['record-edit']=r=>{
+  const editing=r.name==='record-edit'; if(editing&&!S.records.find(x=>x.id===r.id)) return notFound();
+  const d=D(), e=E(), v=veh(d.vehicleId), more=!!UI.open.rec;
+  const vehicles=S.vehicles.filter(x=>!x.archived||x.id===+d.vehicleId);
+  const types=typesForVehicle(v);
+  const tot=sum(d.items.map(i=>N(i.qty)*N(i.price)));
+  const picked=new Set(d.items.map(i=>+i.typeId).filter(Boolean));
+  const affected=[...picked].map(id=>S.reminders.find(x=>x.vehicleId===+d.vehicleId&&x.typeId===id)).filter(Boolean).map(x=>stName(stype(x.typeId)));
+  const rowHtml=(it,i)=>`<div class="item-row">
+      <div class="f-type"><div class="control${e['it'+i+'type']?' error':''}"><select data-item="${i}" data-f="typeId" aria-label="${t('c_type')}"><option value="">${t('rf_choose_type')}</option>${types.concat(it.typeId&&!types.find(x=>x.id===+it.typeId)?[stype(it.typeId)]:[]).map(s=>`<option value="${s.id}"${+it.typeId===s.id?' selected':''}>${esc(stName(s))}</option>`).join('')}</select>${ic('chevron-down','18')}</div></div>
+      <div class="f-desc"><div class="control"><input data-item="${i}" data-f="desc" value="${esc(it.desc)}" placeholder="${t('c_desc')}" aria-label="${t('c_desc')}"></div></div>
+      <div class="field f-qty"><div class="control${e['it'+i+'qty']?' error':''}"><input data-item="${i}" data-f="qty" value="${esc(it.qty)}" inputmode="numeric" aria-label="${t('c_qty')}"></div></div>
+      <div class="field f-price"><div class="control${e['it'+i+'price']?' error':''}"><input data-item="${i}" data-f="price" value="${esc(it.price)}" inputmode="numeric" placeholder="${t('price_ph')}" aria-label="${t('c_price')}"><span class="suffix">₫</span></div></div>
+      <div class="lt num" data-line="${i}">${money(N(it.qty)*N(it.price))}</div>
+      <button type="button" class="icon-btn plain del" data-act="del-item" data-i="${i}" aria-label="${t('del')}" ${d.items.length<2?'disabled':''}>${ic('trash','18')}</button></div>`;
+  const back=editing?`record/${r.id}`:(v?`vehicle/${v.id}`:'dashboard');
+  return {title:editing?t('rf_edit'):t('rf_new'),crumb:(v?esc(v.name):'')+'  /  '+(editing?t('rf_edit'):t('rf_new')),back,html:`
+  <form class="split" data-form="record" novalidate>
+    <div class="col" style="gap:20px">
+      <div class="card col" style="gap:18px">
+        <div class="grid-3 rec-top">
+          ${fld(t('rf_vehicle'),sel('vehicleId',vehicles.map(x=>[x.id,`${x.name}${x.plate?' · '+x.plate:''}`]),{icon:v&&v.type==='CAR'?'car':'motorbike',rerender:true}),{req:true})}
+          ${fld(t('rf_date'),inp('date',{type:'date',max:TODAY_ISO,err:e.date}),{req:true,err:e.date})}
+          ${fld(t('rf_odo'),inp('odo',{icon:'gauge',mode:'numeric',suffix:'km',err:e.odo}),{req:true,err:e.odo,help:v?t('rf_odo_help',{km:km(v.odo)}):''})}
+        </div>
+      </div>
+      <div class="card col" style="gap:14px">
+        <div><h3 class="t-h3">${t('rf_items')}</h3><span class="t-caption muted">${t('rf_items_sub')}</span></div>
+        <div class="chips">${types.filter(s=>s.km||s.months).slice(0,8).map(s=>`<button type="button" class="chip big ${picked.has(s.id)?'on':''}" data-act="quick" data-id="${s.id}" aria-pressed="${picked.has(s.id)}">${ic(picked.has(s.id)?'check':'plus','16')}${esc(stName(s))}</button>`).join('')}</div>
+        ${more?`<div class="item-head"><span>${t('c_type')}</span><span>${t('c_desc')}</span><span>${t('c_qty')}</span><span>${t('c_price')}</span><span style="text-align:right">${t('c_line')}</span><span></span></div>`:''}
+        <div class="items${more?'':' simple'}">${d.items.map(rowHtml).join('')}</div>
+        ${e.items?`<span class="help err">${e.items}</span>`:''}
+        <button type="button" class="btn ghost sm" style="align-self:flex-start" data-act="add-item">${ic('plus')}${t('rf_add_item')}</button>
+      </div>
+      ${disc('rec',t('rec_more'),`<div class="grid-2 form">${fld(t('rf_garage'),inp('garage',{icon:'map-pin',ph:t('rf_garage_ph')}))}</div>${fld(t('rd_note'),`<textarea class="area" style="min-height:80px" data-d="note">${esc(d.note)}</textarea>`)}`)}
+    </div>
+    <div class="card sum" style="position:sticky;top:20px">
+      <h3 class="t-h3">${t('rf_summary')}</h3>
+      ${v?`<div class="row box2"><div class="thumb" style="width:64px;height:44px;background:var(--surface)">${vIllus(v,58)}</div><div class="grow"><b>${esc(v.name)}</b><div class="t-caption muted">${esc(v.plate||'')} · ${km(v.odo)}</div></div></div>`:''}
+      <div class="li"><span class="muted">${t('rf_count')}</span><b id="sumCount">${picked.size}</b></div>
+      <div class="divider"></div>
+      <div class="li" style="align-items:baseline"><span class="t-h3">${t('rf_total')}</span><span class="t-numl" id="sumTotal">${money(tot)}</span></div>
+      <span id="sumSub" hidden></span>
+      <div class="alert info">${ic('bell','18')}<div><b>${t('rf_rem_note')}</b><p>${affected.length?t('rf_rem_list',{list:esc(affected.join(', '))}):t('rf_rem_none')}</p></div></div>
+      ${e.dup?`<div class="alert bad">${ic('alert','18')}<div><p>${e.dup}</p></div></div>`:''}
+      <button class="btn primary big block" type="submit">${ic('check')}${t('rf_save')}</button>
+      <button type="button" class="btn secondary block" data-go="${back}">${t('cancel')}</button>
+    </div>
+  </form>`};
+};
+
+SCREENS.record=r=>{
+  const x=S.records.find(z=>z.id===r.id); if(!x) return notFound();
+  const v=veh(x.vehicleId);
+  return {title:t('rd_title'),crumb:esc(v.name)+'  /  '+fdate(x.date),back:`vehicle/${v.id}`,html:`
+  <div class="row wrap" style="align-items:flex-start;gap:20px">
+    <div class="receipt"><div class="card" style="border-radius:var(--radius-card) var(--radius-card) 0 0;border-bottom:0;padding:28px">
+      <div class="row" style="align-items:flex-start"><div class="grow"><span class="t-overline muted">${t('rd_receipt')}</span><h2 class="t-h2" style="margin-top:4px">${esc(x.note||itemsSummary(x))}</h2><div class="t-small muted">${esc(v.name)}${v.plate?' · '+esc(v.plate):''}</div></div><div class="chipico tone-primary" style="width:52px;height:52px;border-radius:14px">${ic('receipt','24')}</div></div>
+      <div class="grid-3" style="margin:22px 0;gap:12px"><div class="box2"><div class="t-caption muted">${t('rf_date')}</div><b>${fdate(x.date)}</b></div><div class="box2"><div class="t-caption muted">${t('rf_odo')}</div><b>${km(x.odo)}</b></div><div class="box2"><div class="t-caption muted">${t('rf_garage')}</div><b>${esc(x.garage||'—')}</b></div></div>
+      <table class="tbl"><thead><tr><th>${t('col_items')}</th><th class="r">${t('c_qty')}</th><th class="r">${t('c_price')}</th><th class="r">${t('c_line')}</th></tr></thead><tbody>
+      ${x.items.map(i=>`<tr><td class="first" data-l=""><b style="font-weight:500">${esc(i.desc||stName(stype(i.typeId)))}</b><span class="sub">${esc(stName(stype(i.typeId)))}</span></td><td class="r" data-l="${t('c_qty')}">${num(i.qty)}</td><td class="r num" data-l="${t('c_price')}">${money(i.price)}</td><td class="r num strong" data-l="${t('c_line')}">${money(i.qty*i.price)}</td></tr>`).join('')}</tbody></table>
+      <div class="row" style="margin-top:18px;padding-top:16px;border-top:1px dashed var(--border-strong)"><span class="muted grow">${t('rd_total_n',{n:x.items.length})}</span><span class="t-numl">${money(total(x))}</span></div>
+    </div><div class="zig"></div></div>
+    <div class="col" style="gap:12px;min-width:240px;flex:1">
+      <div class="card col" style="gap:10px"><b>${t('rd_actions')}</b><button class="btn secondary block" data-go="record-edit/${x.id}">${ic('pencil')}${t('rf_edit')}</button><button class="btn danger-ghost block" data-act="ask-del-record" data-id="${x.id}">${ic('trash')}${t('del')}</button></div>
+      <div class="card col" style="gap:8px"><b>${t('rd_note')}</b><p class="t-small muted">${esc(x.note)||t('rd_no_note')}</p></div>
+    </div>
+  </div>`};
+};
+
+SCREENS['reminder-new']=SCREENS['reminder-edit']=r=>{
+  const editing=r.name==='reminder-edit'; if(editing&&!S.reminders.find(x=>x.id===r.id)) return notFound();
+  const d=D(), e=E(), v=veh(d.vehicleId); if(!v) return notFound();
+  const types=typesForVehicle(v,d.typeId), st=stype(d.typeId);
+  const showKm=d.mode!=='mo', showMo=d.mode!=='km';
+  const prev=previewRem();
+  return {title:editing?t('rm_edit'):t('rm_new'),crumb:esc(v.name)+'  /  '+t('tab_rem'),back:`vehicle/${v.id}`,html:`
+  <form class="split" data-form="reminder" novalidate>
+    <div class="card col" style="gap:20px">
+      <div class="grid-2 form">
+        ${fld(t('rf_vehicle'),`<div class="control">${ic(v.type==='CAR'?'car':'motorbike','18')}<input value="${esc(v.name)}${v.plate?' · '+esc(v.plate):''}" disabled aria-label="${t('rf_vehicle')}"></div>`)}
+        ${fld(t('c_type'),sel('typeId',types.map(s=>[s.id,stName(s)]),{icon:'wrench',rerender:true,err:e.typeId}),{req:true,err:e.typeId,help:st?t('rm_recommend',{txt:ruleText(st.km,st.months)}):''})}
+      </div>
+      ${fld(t('rm_by'),seg('mode',[['km',t('rm_by_km')],['mo',t('rm_by_mo')],['both',t('rm_by_both')]]),{err:e.interval})}
+      <div class="grid-2 form">
+        ${showKm?fld(t('rm_km'),inp('km',{icon:'gauge',mode:'numeric',suffix:'km',err:e.km}),{err:e.km}):''}
+        ${showMo?fld(t('rm_mo'),inp('months',{icon:'calendar',mode:'numeric',suffix:t('months'),err:e.months}),{err:e.months}):''}
+      </div>
+      ${disc('rem',t('adv_settings'),`<div class="grid-2 form">
+        ${fld(t('rm_start_date'),inp('startDate',{type:'date',max:TODAY_ISO,icon:'calendar'}),{help:t('rm_start_help')})}
+        ${fld(t('rm_start_odo'),inp('startOdo',{icon:'gauge',mode:'numeric',suffix:'km',err:e.startOdo}),{err:e.startOdo})}
+        ${fld(t('rm_notify_d'),inp('notifyDays',{mode:'numeric',suffix:t('days'),err:e.notifyDays}),{err:e.notifyDays})}
+        ${fld(t('rm_notify_k'),inp('notifyKm',{mode:'numeric',suffix:'km',err:e.notifyKm}),{err:e.notifyKm})}
+      </div>`)}
+      <div class="row box2"><div class="grow"><b>${t('rm_active')}</b><div class="t-caption muted">${t('rm_active_sub')}</div></div><button type="button" class="switch ${d.active?'on':''}" data-act="seg" data-key="active" data-v="${d.active?'':'1'}" role="switch" aria-checked="${!!d.active}" aria-label="${t('rm_active')}"></button></div>
+      <div class="row wrap" style="justify-content:flex-end">${editing?`<button type="button" class="btn danger-ghost" data-act="ask-del-rem" data-id="${r.id}" style="margin-right:auto">${ic('trash')}${t('del')}</button>`:''}<button type="button" class="btn secondary" data-go="vehicle/${v.id}" data-tab="rem">${t('cancel')}</button><button class="btn primary" type="submit">${ic('check')}${t('rm_save')}</button></div>
+    </div>
+    <div class="card col" style="gap:14px" id="remPrev">${prev}</div>
+  </form>`};
+};
+function previewRem(){
+  const d=D(), v=veh(d.vehicleId), st=stype(d.typeId);
+  const kmV=d.mode!=='mo'&&isInt(d.km,1)?N(d.km):null, moV=d.mode!=='km'&&isInt(d.months,1)?N(d.months):null;
+  if(!st||(!kmV&&!moV)) return `<span class="t-overline muted">${t('rm_preview')}</span><div class="empty" style="padding:20px">${ic('bell','24')}<span class="t-small muted">${t('e_interval')}</span></div>`;
+  const r=remCalc({id:0,vehicleId:v.id,typeId:st.id,km:kmV,months:moV,startDate:d.startDate||TODAY_ISO,startOdo:N(d.startOdo),notifyDays:N(d.notifyDays),notifyKm:N(d.notifyKm),active:!!d.active});
+  const rule=[kmV?t('rm_rule_km',{km:km(kmV)}):'',moV?t('rm_rule_mo',{n:moV}):''].filter(Boolean).join(' '+t('or')+' ')+(kmV&&moV?t('rm_rule_first'):'');
+  const when=[r.nextKm!=null?km(r.nextKm):'',r.nextDate?fdate(r.nextDate):''].filter(Boolean).join(' '+t('or')+' ');
+  return `<span class="t-overline muted">${t('rm_preview')}</span>
+    <div class="row"><div class="chipico tone-${ST_TONE[r.st]}">${ic('bell')}</div><div class="grow"><b>${esc(stName(st))}</b><div class="t-caption muted">${esc(v.name)}</div></div>${stBadge(r.st)}</div>
+    <p class="t-small" style="padding:14px;border-radius:12px;background:var(--primary-soft)">${t('rm_sentence',{svc:esc(stName(st).toLowerCase()),rule,when})}</p>
+    ${r.pKm!=null?`<div class="col" style="gap:6px"><div class="row t-caption"><span class="grow muted">${t('rem_dist')}</span><b>${km(Math.max(0,v.odo-r.baseOdo))} / ${km(kmV)}</b></div><div class="progress ${ST_TONE[r.st]}"><span style="width:${Math.round(r.pKm*100)}%"></span></div></div>`:''}
+    ${r.pTime!=null?`<div class="col" style="gap:6px"><div class="row t-caption"><span class="grow muted">${t('rem_time')}</span><b>${remDetail({...r,kmLeft:null})}</b></div><div class="progress ${ST_TONE[r.st]}"><span style="width:${Math.round(r.pTime*100)}%"></span></div></div>`:''}`;
+}
+
+SCREENS.stats=()=>{
+  const recs=S.records.filter(r=>(UI.statsRange==='all'||r.date.startsWith(UI.statsRange))&&(UI.statsVeh==='all'||r.vehicleId===+UI.statsVeh));
+  const tot=sum(recs.map(total)), nItems=sum(recs.map(r=>r.items.length));
+  const byType={}; recs.forEach(r=>r.items.forEach(i=>byType[i.typeId]=(byType[i.typeId]||0)+i.qty*i.price));
+  const types=Object.entries(byType).sort((a,b)=>b[1]-a[1]);
+  const PAL=['#0891B2','#F59E0B','#10B981','#0EA5E9','#F43F5E','#84CC16','#94A3B8','#14B8A6','#EAB308','#64748B','#FB7185','#22D3EE'];
+  let acc=0; const grad=types.length?'conic-gradient('+types.map(([,v],i)=>{const a=acc;acc+=v/tot*100;return `${PAL[i%PAL.length]} ${a}% ${acc}%`;}).join(',')+')':'var(--surface-2)';
+  const months=[...Array(12).keys()].map(m=>[m,sum(recs.filter(r=>+r.date.slice(5,7)===m+1).map(total))]).slice(0,UI.statsRange==='2026'?TODAY.getMonth()+1:12);
+  const byVeh=S.vehicles.map(v=>{const rs=recs.filter(r=>r.vehicleId===v.id);return {v,n:rs.length,sum:sum(rs.map(total))};}).filter(x=>x.n).sort((a,b)=>b.sum-a.sum);
+  const top=types[0];
+  return {title:t('nav_stats'),crumb:t('home')+'  /  '+t('nav_stats'),mtitle:t('bn_stats'),html:`
+    <div class="bar"><div class="seg grow" style="flex:0 1 auto">${[['2026',t('s_this_year',{y:2026})],['all',t('s_all')]].map(([k,l])=>`<button class="${UI.statsRange===k?'on':''}" data-act="stats-range" data-v="${k}">${l}</button>`).join('')}</div><span class="grow"></span>
+      <label class="control" style="height:40px;width:220px">${ic('car','18')}<select data-act="stats-veh" aria-label="${t('rf_vehicle')}"><option value="all">${t('s_all_veh')}</option>${S.vehicles.map(v=>`<option value="${v.id}"${UI.statsVeh==String(v.id)?' selected':''}>${esc(v.name)}</option>`).join('')}</select>${ic('chevron-down','18')}</label>
+      <button class="btn secondary" data-act="csv">${ic('download')}${t('s_export')}</button></div>
+    <div class="grid-4">${statCard('accent','receipt',t('s_total'),money(tot),t('s_items_n',{n:nItems}))}${statCard('primary','wrench',t('s_count'),recs.length,t('s_types_n',{n:types.length}))}${statCard('ok','trending-up',t('s_avg'),money(recs.length?Math.round(tot/recs.length):0),byVeh[0]?esc(byVeh[0].v.name)+' · '+Math.round(byVeh[0].sum/Math.max(1,tot)*100)+'%':'—')}
+      <div class="card stat"><span class="t-small muted">${t('s_top')}</span><div class="t-h3" style="line-height:34px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${top?esc(stName(stype(top[0]))):'—'}</div><span class="t-caption fg-warn">${top?money(top[1])+' · '+Math.round(top[1]/tot*100)+'%':''}</span></div></div>
+    ${recs.length?`<div class="split"><div class="card"><div class="card-h"><div class="grow"><h3 class="t-h3">${t('cost_by_month')}</h3><span class="t-caption muted">${t('cost_by_month_sub',{y:UI.statsRange==='all'?t('s_all'):UI.statsRange})}</span></div></div>${bars(months,240)}</div>
+      <div class="card"><div class="card-h"><h3 class="t-h3 grow">${t('s_by_type')}</h3></div><div class="row wrap" style="gap:20px"><div class="donut" style="background:${grad}"><div class="c"><div><b class="t-h3 num">${money(tot)}</b><div class="t-caption muted">${t('s_types_n',{n:types.length})}</div></div></div></div>
+      <div class="legend">${types.map(([id,v],i)=>`<div class="li"><span class="sw" style="background:${PAL[i%PAL.length]}"></span><span class="grow">${esc(stName(stype(id)))}</span><b class="num">${Math.round(v/tot*1000)/10}%</b></div>`).join('')}</div></div></div></div>
+    <div class="card"><div class="card-h"><h3 class="t-h3 grow">${t('s_by_vehicle')}</h3></div><table class="tbl"><thead><tr><th>${t('rf_vehicle')}</th><th class="r">${t('s_count')}</th><th>${t('s_share')}</th><th class="r">${t('s_total')}</th></tr></thead><tbody>
+      ${byVeh.map(x=>{const p=Math.round(x.sum/tot*100);return `<tr class="click" data-go="vehicle/${x.v.id}"><td class="first" data-l=""><div class="row"><div class="thumb" style="width:52px;height:36px">${vIllus(x.v,46)}</div><div class="col" style="gap:0"><b style="font-weight:500">${esc(x.v.name)}</b><span class="t-caption muted">${esc(x.v.plate||'')}</span></div></div></td><td class="r" data-l="${t('s_count')}">${x.n}</td><td data-l="${t('s_share')}"><div class="row" style="gap:10px;min-width:140px"><div class="progress grow"><span style="width:${p}%"></span></div><span class="t-caption muted">${p}%</span></div></td><td class="r strong num" data-l="${t('s_total')}">${money(x.sum)}</td></tr>`;}).join('')}</tbody></table></div>`
+    :`<div class="card empty"><div class="art">${ic('chart','24')}</div><b>${t('s_empty')}</b></div>`}`};
+};
+
+SCREENS.services=()=>{
+  const used=id=>S.records.reduce((n,r)=>n+r.items.filter(i=>i.typeId===id).length,0)+S.reminders.filter(x=>x.typeId===id).length;
+  const f=UI.svcFilter;
+  const list=S.serviceTypes.filter(s=>f==='all'||(f==='active'?s.active:f==='inactive'?!s.active:(s.applies===f||s.applies==='ALL')));
+  const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-act="svc-filter" data-v="${k}">${l}</button>`;
+  return {title:t('nav_services'),crumb:t('home')+'  /  '+t('nav_services'),html:`
+    <div class="bar"><div class="chips grow">${chip('all',t('f_all')+` <span class="count">${S.serviceTypes.length}</span>`)}${chip('MOTORBIKE',t('vt_MOTORBIKE'))}${chip('CAR',t('vt_CAR'))}${chip('active',t('active'))}${chip('inactive',t('inactive'))}</div>
+      <button class="btn primary" data-act="svc-modal">${ic('plus')}${t('sv_add')}</button></div>
+    <div class="card" style="padding:8px 8px 4px"><table class="tbl"><thead><tr><th>${t('sv_name')}</th><th>${t('sv_applies')}</th><th class="r">${t('sv_km')}</th><th class="r">${t('sv_mo')}</th><th>${t('status')}</th><th class="r"></th></tr></thead><tbody>
+    ${list.map(s=>{const u=used(s.id);return `<tr><td class="first" data-l=""><b style="font-weight:500">${esc(stName(s))}</b><span class="sub">${esc(stDesc(s))}${u?' · '+t('sv_used',{n:u}):' · '+t('sv_unused')}</span></td>
+      <td data-l="${t('sv_applies')}"><span class="badge nodot ${s.applies==='CAR'?'b-info':s.applies==='MOTORBIKE'?'b-accent':'b-neutral'}">${s.applies==='ALL'?t('ap_ALL'):t('vt_'+s.applies)}</span></td>
+      <td class="r num" data-l="${t('sv_km')}">${s.km?km(s.km):'—'}</td><td class="r num" data-l="${t('sv_mo')}">${s.months?s.months+' '+t('months'):'—'}</td>
+      <td data-l="${t('status')}"><span class="badge ${s.active?'b-ok':'b-neutral'}">${s.active?t('active'):t('inactive')}</span></td>
+      <td class="r" data-l=""><div class="row" style="gap:4px;justify-content:flex-end"><button class="btn ghost sm" data-act="svc-modal" data-id="${s.id}">${ic('pencil')}${t('edit')}</button>
+        ${u?`<button class="btn ghost sm" data-act="svc-toggle" data-id="${s.id}">${s.active?t('sv_deactivate'):t('sv_activate')}</button>`:`<button class="btn ghost sm" style="color:var(--bad)" data-act="ask-del-svc" data-id="${s.id}">${ic('trash')}${t('del')}</button>`}</div></td></tr>`;}).join('')}</tbody></table></div>`};
+};
+
+SCREENS.ai=()=>{
+  const a=UI.ai, n=a.text.length, err=a.err;
+  const ex=ui.lang==='vi'?['Xe khó nổ máy buổi sáng','Đèn check engine sáng','Có mùi khét khi chạy lâu','Xe rung mạnh ở tốc độ cao']:['Hard to start in the morning','Check-engine light is on','Burning smell on long rides','Strong vibration at high speed'];
+  return {title:t('nav_ai'),crumb:t('home')+'  /  '+t('nav_ai'),html:`
+  <div class="split">
+    <div class="col" style="gap:20px">
+      <div class="card col" style="gap:16px">
+        <div class="row"><div class="chipico tone-accent">${ic('sparkles')}</div><div class="grow"><h3 class="t-h3">${t('ai_title')}</h3><span class="t-caption muted">${t('ai_hint')}</span></div></div>
+        <div class="field"><label>${t('ai_vehicle')}</label><div class="control">${ic('car','18')}<select data-act="ai-veh" aria-label="${t('ai_vehicle')}"><option value="">${t('ai_no_vehicle')}</option>${S.vehicles.filter(v=>!v.archived).map(v=>`<option value="${v.id}"${a.vehicleId==String(v.id)?' selected':''}>${esc(v.name)}${v.plate?' · '+esc(v.plate):''}</option>`).join('')}</select>${ic('chevron-down','18')}</div></div>
+        <div class="field"><label>${t('ai_symptom')} <span class="req">*</span></label><textarea class="area${err?' error':''}" data-act="ai-text" maxlength="1000" aria-describedby="aiHelp">${esc(a.text)}</textarea>
+          <div class="row"><span class="help grow ${err?'err':''}" id="aiHelp">${err||t('ai_len')}</span><span class="help num" id="aiCount">${n}/1000</span></div></div>
+        <div class="col" style="gap:8px"><span class="t-caption muted">${t('ai_examples')}</span><div class="chips">${ex.map(x=>`<button class="chip" style="height:30px;font-size:12px" data-act="ai-ex" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>
+        <div class="row wrap"><span class="t-caption muted grow">${ic('shield-check','16')} ${t('ai_privacy')}</span><button class="btn accent" data-act="ai-run" ${a.state==='loading'?'disabled':''}>${a.state==='loading'?'<span class="spin"></span>':ic('sparkles')}${t('ai_run')}</button></div>
+      </div>
+      ${disc('aisim',t('ai_dev'),`<div class="chips">${['OK','NO_KEY','RATE_LIMITED','TIMEOUT','UPSTREAM_ERROR'].map(k=>`<button class="chip ${a.force===k?'on':''}" data-act="ai-force" data-v="${k}">${k==='OK'?t('ai_sim_ok'):{NO_KEY:'503',RATE_LIMITED:'429',TIMEOUT:'504',UPSTREAM_ERROR:'502'}[k]+' · '+k}</button>`).join('')}</div>`)}
+    </div>
+    <div class="card col" style="gap:16px" aria-live="polite">${aiPanel()}</div>
+  </div>`};
+};
+function aiPanel(){
+  const a=UI.ai;
+  if(a.state==='loading') return `<div class="row"><span class="badge b-accent nodot">${ic('sparkles','16')}${t('ai_loading')}</span></div><div class="skel" style="height:70px;border-radius:12px"></div><div class="skel" style="height:12px;width:40%"></div><div class="skel" style="height:12px"></div><div class="skel" style="height:12px;width:90%"></div><div class="skel" style="height:64px;border-radius:12px"></div><span class="t-caption muted">${t('ai_loading_sub')}</span>`;
+  const d=a.result;
+  if(!d) return `<div class="empty"><div class="art" style="color:var(--accent)">${ic('sparkles','24')}</div><b>${t('ai_idle')}</b><span class="t-small muted">${t('ai_idle_sub')}</span></div>`;
+  if(d.status==='FAILED'){ const tone=d.error==='RATE_LIMITED'||d.error==='TIMEOUT'?'warn':'bad', icn=tone==='warn'?'clock':'alert';
+    return `<div class="row"><span class="badge b-${tone}">${t('ai_no_result')}</span></div><div class="alert ${tone}">${ic(icn,'18')}<div><b>${t('err_'+d.error)}</b><p>${t('errd_'+d.error)}</p></div></div>
+      <div class="empty" style="padding:20px"><div class="art" style="color:var(--${tone})">${ic(icn,'24')}</div><span class="t-small muted">${t('ai_kept')}</span>${d.error!=='NO_KEY'?`<button class="btn secondary sm" data-act="ai-run">${ic('refresh')}${t('ai_retry')}</button>`:''}</div>`; }
+  const tone={LOW:'ok',MEDIUM:'warn',HIGH:'bad'}[d.urgency], lvl={LOW:1,MEDIUM:2,HIGH:3}[d.urgency], st=stype(d.typeId);
+  return `<div class="row"><span class="badge b-accent nodot">${ic('sparkles','16')}${t('ai_result')}</span><span class="grow"></span><span class="t-caption muted">${esc(d.model)} · ${ftime(d.at)}</span></div>
+    <div class="urg" style="background:var(--${tone}-bg)"><div class="chipico" style="background:var(--surface);color:var(--${tone})">${ic('alert')}</div><div class="grow"><div class="t-caption fg-${tone}">${t('ai_urgency')}</div><b class="t-h3">${t('ug_'+d.urgency)} — ${t('ug_'+d.urgency+'_d')}</b></div><div class="meter fg-${tone}">${[1,2,3].map(i=>`<i class="${i<=lvl?'on':''}"></i>`).join('')}</div></div>
+    <div class="col" style="gap:6px"><span class="t-overline muted">${t('ai_suggestion')}</span><p>${esc(d.suggestion[ui.lang])}</p></div>
+    <div class="row wrap" style="padding:14px;border-radius:12px;border:1px solid var(--border)"><div class="chipico tone-primary">${ic('wrench')}</div><div class="grow"><div class="t-caption muted">${t('ai_service')}</div><b>${esc(stName(st))}</b></div>
+      ${d.vehicleId?`<button class="btn primary sm" data-act="ai-make-rem">${ic('bell')}${t('ai_make_rem')}</button>`:`<span class="t-caption muted">${t('ai_need_vehicle')}</span>`}</div>
+    <div class="alert info">${ic('info','18')}<div><b>${t('ai_disclaimer')}</b><p>${t('ai_disclaimer_b')}</p></div></div>
+    <div class="row wrap"><button class="link grow" data-go="ai-history">${ic('history','16')} ${t('ai_see_history')}</button><button class="btn secondary sm" data-act="ai-run">${ic('refresh')}${t('ai_again')}</button></div>`;
+}
+// Giả lập AI bằng từ khoá (bản thật gọi Gemini từ server).
+function mockAi(text){
+  const s=text.toLowerCase();
+  const R=[
+   [/phanh|brake/, 'MEDIUM',6,'Má phanh có thể đã mòn hoặc bám bẩn. Nên kiểm tra độ dày má phanh và dầu phanh trong tuần này.','Brake pads may be worn or dirty. Check pad thickness and brake fluid this week.'],
+   [/khói|khét|cháy|smoke|burn/, 'HIGH',12,'Mùi khét hoặc khói có thể do rò dầu lên ống xả hoặc chập điện. Dừng xe và kiểm tra ngay, không nên chạy tiếp.','A burning smell or smoke may come from an oil leak on the exhaust or an electrical short. Stop and get it checked now.'],
+   [/nổ máy|khó nổ|đề|start/, 'LOW',5,'Bugi yếu hoặc ắc quy sụt áp thường gây khó nổ buổi sáng. Kiểm tra bugi và điện áp ắc quy khi tiện.','A weak spark plug or low battery voltage often causes hard morning starts. Check both when convenient.'],
+   [/rung|vibrat/, 'MEDIUM',7,'Rung ở tốc độ cao thường do lốp mòn không đều hoặc mất cân bằng. Nên cân bằng động và kiểm tra lốp.','Vibration at speed is usually uneven tyre wear or imbalance. Get the wheels balanced and tyres checked.'],
+   [/đèn|check engine|light/, 'MEDIUM',10,'Đèn kiểm tra động cơ có thể do nắp xăng chưa kín hoặc cảm biến lỗi. Đọc mã lỗi tại gara trong vài ngày tới.','The check-engine light may be a loose fuel cap or a faulty sensor. Have the code read at a garage soon.'],
+  ];
+  const m=R.find(x=>x[0].test(s))||[null,'LOW',12,'Chưa đủ thông tin để kết luận. Hãy mô tả thêm thời điểm, âm thanh hoặc đèn báo; nếu triệu chứng kéo dài nên mang xe tới gara.','Not enough detail to conclude. Describe when it happens, sounds or warning lights; if it persists, visit a garage.'];
+  return {urgency:m[1],typeId:m[2],suggestion:{vi:m[3],en:m[4]}};
+}
+
+SCREENS['ai-history']=()=>{
+  const f=UI.histFilter;
+  const list=[...S.diagnoses].sort((a,b)=>b.at.localeCompare(a.at)).filter(d=>f==='all'||(f==='ok'?d.status==='OK':d.status==='FAILED'));
+  const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-act="hist-filter" data-v="${k}">${l}</button>`;
+  return {title:t('nav_ai_history'),crumb:t('nav_ai')+'  /  '+t('nav_ai_history'),html:`
+    <div class="bar"><div class="chips grow">${chip('all',t('f_all')+` <span class="count">${S.diagnoses.length}</span>`)}${chip('ok',t('h_ok'))}${chip('failed',t('h_failed'))}</div><button class="btn accent" data-go="ai">${ic('sparkles')}${t('h_new')}</button></div>
+    <div class="card" style="padding:8px 8px 4px">${list.length?`<table class="tbl"><thead><tr><th>${t('col_time')}</th><th>${t('rf_vehicle')}</th><th>${t('col_symptom')}</th><th>${t('col_urgency')}</th><th>${t('status')}</th></tr></thead><tbody>
+    ${list.map(d=>`<tr class="click" data-act="hist-detail" data-id="${d.id}"><td class="first" data-l="">${ftime(d.at)}</td><td data-l="${t('rf_vehicle')}">${d.vehicleId&&veh(d.vehicleId)?esc(veh(d.vehicleId).name):'—'}</td><td data-l="${t('col_symptom')}" style="max-width:380px">${esc(d.symptom)}</td><td data-l="${t('col_urgency')}">${d.urgency?`<span class="badge b-${{LOW:'ok',MEDIUM:'warn',HIGH:'bad'}[d.urgency]}">${t('ug_'+d.urgency)}</span>`:'<span class="muted">—</span>'}</td><td data-l="${t('status')}">${d.status==='OK'?`<span class="badge nodot b-neutral">${t('h_ok')}</span>`:`<span class="badge nodot b-bad">${t('h_failed')} · ${d.error}</span>`}</td></tr>`).join('')}</tbody></table>`:`<div class="empty"><div class="art">${ic('history','24')}</div><b>${t('h_empty')}</b></div>`}</div>`};
+};
+
+/* ---------- full pages ---------- */
+function authArt(kind){
+  const reg=kind==='register';
+  return `<div class="auth-art"><div class="glow"></div><div class="road"></div>
+    <div class="logo" style="padding:0"><div class="mark">${ic('wrench','22')}</div><div><b>${t('app_name')}</b><small style="color:#C7D2FE">${t('app_sub')}</small></div></div>
+    <div class="col"><h1 class="t-display" style="font-size:40px;line-height:48px;max-width:460px">${reg?t('reg_h1'):t('auth_h1')}</h1>
+      <div class="scene">${reg?illus('scooter','#DC2626',200)+illus('car','#60A5FA',290):illus('car','#F8FAFC',300)+illus('scooter','#F97316',200)}</div>
+      <div class="col feats" style="gap:14px">${reg?[t('step1'),t('step2'),t('step3')].map(s=>`<div class="feat"><div class="chipico">${ic('check','18')}</div><b style="line-height:36px">${s}</b></div>`).join(''):[['bell','feat1'],['chart','feat2'],['sparkles','feat3']].map(([i,k])=>`<div class="feat"><div class="chipico">${ic(i,'18')}</div><div><b>${t(k)}</b><div class="t-small" style="opacity:.75">${t(k+'_b')}</div></div></div>`).join('')}</div></div>
+    <div class="t-caption foot" style="opacity:.6">${t('copyright')}</div></div>`;
+}
+SCREENS.login=()=>{ const d=D(), e=E(); return {full:true,html:`<div class="auth">${authArt('login')}<div class="auth-form"><form class="box" data-form="login" novalidate>
+  <div class="row" style="justify-content:flex-end;gap:8px">${langToggle()}${themeToggle()}</div>
+  <div><h2 class="t-h1">${t('login_title')}</h2><p class="muted">${t('login_sub')}</p></div>
+  ${fld(t('email'),inp('email',{type:'email',icon:'mail',ph:'giang@example.com',err:e.email}),{err:e.email})}
+  <div class="field"><div class="row"><label class="grow">${t('password')}</label><button type="button" class="link t-caption" data-act="forgot">${t('forgot')}</button></div>
+    <div class="control${e.password?' error':''}">${ic('lock','18')}<input type="${UI.showPw?'text':'password'}" data-d="password" value="${esc(d.password)}" aria-label="${t('password')}"><button type="button" class="icon-btn plain" style="width:28px;height:28px" data-act="pw-eye" aria-label="${t('show_pw')}">${ic(UI.showPw?'eye-off':'eye','18')}</button></div>${e.password?`<span class="help err">${e.password}</span>`:''}</div>
+  <label class="check"><input type="checkbox" data-d="remember" ${d.remember?'checked':''}>${t('remember')}</label>
+  <button class="btn primary block" style="height:46px" type="submit">${ic('login')}${t('login_btn')}</button>
+  <div class="or">${t('or_txt')}</div>
+  <button type="button" class="btn secondary block" data-act="demo-login">${ic('user')}${t('demo_btn')}</button>
+  <p class="t-small muted" style="text-align:center">${t('no_account')} <a data-go="register" style="font-weight:600">${t('register')}</a></p>
+</form></div></div>`}; };
+SCREENS.register=()=>{ const d=D(), e=E(), s=pwScore(d.password); return {full:true,html:`<div class="auth">${authArt('register')}<div class="auth-form"><form class="box" data-form="register" novalidate>
+  <div class="row"><button type="button" class="link grow" data-go="login">${ic('chevron-left','16')}${t('login_btn')}</button>${langToggle()}${themeToggle()}</div>
+  <div><h2 class="t-h1">${t('reg_title')}</h2><p class="muted">${t('reg_sub')}</p></div>
+  ${fld(t('full_name'),inp('name',{icon:'user',err:e.name}),{err:e.name})}
+  ${fld(t('email'),inp('email',{type:'email',icon:'mail',err:e.email}),{err:e.email})}
+  <div class="field"><label>${t('password')}</label><div class="control${e.password?' error':''}">${ic('lock','18')}<input type="password" data-d="password" value="${esc(d.password)}" aria-label="${t('password')}"></div>
+    <div class="strength s${s}" id="pwBar"><i></i><i></i><i></i><i></i></div><span class="help ${e.password?'err':''}" id="pwTxt">${e.password||t('pw_strength',{s:t('pw_'+s)})}</span></div>
+  ${fld(t('confirm_pw'),`<div class="control${e.confirm?' error':''}">${ic('lock','18')}<input type="password" data-d="confirm" value="${esc(d.confirm)}" aria-label="${t('confirm_pw')}"></div>`,{err:e.confirm})}
+  <label class="check"><input type="checkbox" data-d="agree" ${d.agree?'checked':''}>${t('agree')}</label>${e.agree?`<span class="help err">${e.agree}</span>`:''}
+  <button class="btn primary block" style="height:46px" type="submit">${t('reg_btn')}</button>
+  <p class="t-small muted" style="text-align:center">${t('have_account')} <a data-go="login" style="font-weight:600">${t('login_btn')}</a></p>
+</form></div></div>`}; };
+function pwScore(p){ p=p||''; if(p.length<6) return 0; let s=1; if(p.length>=10) s++; if(/\d/.test(p)&&/[a-zA-Z]/.test(p)) s++; if(/[^a-zA-Z0-9]/.test(p)) s++; return Math.min(4,s); }
+
+SCREENS.design=()=>{
+  const cs=getComputedStyle(document.documentElement);
+  const swg=a=>a.map(([n,k])=>`<div class="sw"><div class="c" style="background:var(--${n})"></div><b>${n}</b><code>${cs.getPropertyValue('--'+n).trim()}</code><small>${t(k)}</small></div>`).join('');
+  const brand=[['bg','c_bg'],['mesh-1','c_mesh'],['mesh-2','c_mesh'],['mesh-3','c_mesh'],['mesh-4','c_mesh'],['surface','c_surface'],['surface-strong','c_surface_strong'],['surface-2','c_surface2'],['glass-border','c_glass_border'],['border','c_border'],['text','c_text'],['text-muted','c_text_muted'],['primary','c_primary'],['primary-hover','c_primary_hover'],['primary-soft','c_primary_soft'],['accent','c_accent'],['accent-soft','c_accent_soft']];
+  const status=[['ok','c_ok'],['ok-bg','c_ok_bg'],['warn','c_warn'],['warn-bg','c_warn_bg'],['bad','c_bad'],['bad-bg','c_bad_bg']];
+  const types=[['Display','t-display',t('auth_h1'),'32 · ExtraBold · 40'],['Heading / H1','t-h1',t('nav_dashboard'),'26 · Bold · 34'],['Heading / H2','t-h2',t('rf_new'),'20 · SemiBold · 28'],['Heading / H3','t-h3',t('attention'),'16 · SemiBold · 24'],['Body','t-body',t('promo_body'),'14 · Regular · 22'],['Body / Medium','t-body" style="font-weight:500',t('btn_log'),'14 · Medium · 22'],['Small','t-small',t('ai_hint'),'13 · Regular · 20'],['Caption','t-caption',t('vf_odo_help'),'12 · Medium · 16'],['Overline','t-overline',t('menu'),'11 · SemiBold · +0.6 · UPPER'],['Number / Large','t-numl',money(3880000),'28 · Bold · tabular']];
+  const v=S.vehicles[0], rem=attention();
+  const A=(inner,label,w)=>`<div class="anno"${w?` style="width:${w}"`:''}>${inner}<small>${label}</small></div>`;
+  const cn=(k,d)=>`<div class="cname"><b>${t(k)}</b><span>${t(d)}</span></div>`;
+  return {full:true,html:`<div class="ds">
+  <div class="ds-top"><button class="btn secondary sm" data-go="dashboard">${ic('arrow-right')}${t('ds_back')}</button><span class="grow"></span><span class="t-caption muted">${t('ds_toggle_hint')}</span>${langToggle()}${themeToggle()}</div>
+  <div class="ds-sheet">
+    <div class="col" style="gap:6px"><h1 class="t-h1">${t('ds_title')}</h1><p class="t-small muted">${t('ds_sub')}</p></div>
+    <div class="ds-sec"><span class="t-overline">${t('ds_colors',{theme:ui.theme==='dark'?'Dark':'Light'})}</span><div class="ds-grp">${t('ds_brand')}</div><div class="sw-grid">${swg(brand)}</div><div class="ds-grp">${t('ds_status')}</div><div class="sw-grid">${swg(status)}</div><p class="ds-note">${t('ds_color_rule')}</p></div>
+    <div class="ds-sec"><span class="t-overline">${t('ds_type')}</span><div>${types.map(([l,c,s,sp])=>`<div class="type-row"><span class="lab">${l}</span><span class="${c}">${s}</span><span class="spec">${sp}</span></div>`).join('')}</div></div>
+    <div class="ds-sec"><span class="t-overline">${t('ds_space')}</span><div class="sp-row">${[4,8,12,16,20,24,32,40].map(n=>`<div class="sp"><i style="width:${n}px;height:${n}px"></i>${n}</div>`).join('')}</div>
+      <div class="rd-row">${[['6','ds_r6'],['12','ds_r10'],['20','ds_r14'],['26','ds_r20'],['999','ds_r999']].map(([r,k])=>`<div class="rd"><i style="border-radius:${r}px${r==='999'?';width:96px':''}"></i>${t(k)}</div>`).join('')}</div></div>
+    <div class="ds-sec"><span class="t-overline">${t('ds_icons')}</span><div class="ico-grid">${Object.keys(ICONS).map(n=>`<div class="ico-cell">${ic(n)}<span>${n}</span></div>`).join('')}</div></div>
+    <div class="ds-sec"><span class="t-overline">${t('ds_layout')}</span><div class="wire">
+      ${A(`<div class="desk"><div class="s"><i style="height:16px;width:16px;background:var(--accent)"></i><i class="on"></i><i></i><i></i><i></i><i></i><span style="margin-top:auto">Sidebar 248</span></div><div class="c"><div class="blk" style="height:28px">Top bar · ${t('search_ph')} · VI/EN · ☀/☾</div><div class="blk" style="height:54px">Hero</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><div class="blk" style="height:40px">Stat</div><div class="blk">Stat</div><div class="blk">Stat</div><div class="blk">Stat</div></div><div style="display:grid;grid-template-columns:1.6fr 1fr;gap:6px;flex:1"><div class="blk">Content</div><div class="blk">Aside 360</div></div></div></div>`,t('ds_layout_d'))}
+      ${A(`<div class="mob"><div class="blk" style="height:34px;border-radius:0">Header · VI/EN · ☀/☾</div><div style="padding:8px;display:flex;flex-direction:column;gap:6px;flex:1"><div class="blk" style="height:50px">Hero</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="blk" style="height:36px">Stat</div><div class="blk">Stat</div></div><div class="blk" style="flex:1">Cards</div></div><div class="blk" style="height:40px;border-radius:0">Bottom nav · 5</div></div>`,t('ds_layout_m'))}
+    </div></div>
+    <div class="ds-sec"><span class="t-overline">${t('ds_comp')}</span>
+      ${cn('ds_buttons','ds_buttons_d')}
+      <div class="cset">${A(`<button class="btn primary">${ic('plus')}${t('add_vehicle')}</button>`,'Primary')}${A(`<button class="btn secondary">${t('cancel')}</button>`,'Secondary')}${A(`<button class="btn ghost">${ic('arrow-right')}${t('view_all')}</button>`,'Ghost')}${A(`<button class="btn danger">${ic('trash')}${t('del')}</button>`,'Danger')}${A(`<button class="btn soft">${ic('plus')}${t('rf_add_item')}</button>`,'Soft')}${A(`<button class="btn accent">${ic('sparkles')}${t('ai_run')}</button>`,t('a_ai_only'))}${A(`<button class="btn primary sm">${ic('check')}${t('log_short')}</button>`,t('a_sm'))}${A(`<button class="btn primary" disabled>${t('save')}</button>`,t('a_disabled'))}${A(`<button class="btn primary"><span class="spin"></span>${t('saving')}</button>`,t('a_loading'))}</div>
+      ${cn('ds_badges','ds_badges_d')}
+      <div class="cset">${A(stBadge('OK'),'ok')}${A(stBadge('DUE_SOON'),'warn')}${A(stBadge('OVERDUE'),'bad')}${A(`<span class="badge b-neutral">${t('inactive')}</span>`,'neutral')}${A(`<span class="badge b-info nodot">${t('vt_CAR')}</span>`,'info')}${A(`<span class="badge b-accent">AI</span>`,'accent')}${A(`<span class="badge b-warn">${t('ug_MEDIUM')}</span>`,t('ai_urgency'))}${A(`<span class="plate">51H-678.90</span>`,t('a_plate'))}</div>
+      ${cn('ds_inputs','ds_inputs_d')}
+      <div class="cset">${A(`<div class="field" style="width:100%"><label>${t('vf_name')}</label><div class="control"><input value="Vision đi làm"></div></div>`,t('a_default'),'240px')}${A(`<div class="field" style="width:100%"><label>${t('vf_odo')}</label><div class="control focus">${ic('gauge','18')}<input value="${num(12850)}"><span class="suffix">km</span></div><span class="help">${t('vf_odo_help')}</span></div>`,t('a_focus'),'240px')}${A(`<div class="field" style="width:100%"><label>${t('vf_plate')}</label><div class="control error"><input value="59X1-123.45"></div><span class="help err">${t('e_plate_dup',{veh:'Vision đi làm'})}</span></div>`,t('a_error'),'240px')}${A(`<div class="field" style="width:100%"><label>${t('vf_brand')}</label><div class="control"><select><option>Honda</option><option>Toyota</option></select>${ic('chevron-down','18')}</div></div>`,t('a_select'),'240px')}${A(`<div class="field" style="width:100%"><label>${t('ai_symptom')}</label><textarea class="area error" style="min-height:70px">Kêu rít</textarea><div class="row"><span class="help err grow">${t('e_short')}</span><span class="help">7/1000</span></div></div>`,t('a_textarea'),'300px')}</div>
+      ${cn('ds_select','ds_select_d')}
+      <div class="cset">${A(`<div class="seg"><button class="on">${ic('motorbike','18')}${t('vt_MOTORBIKE')}</button><button>${ic('car','18')}${t('vt_CAR')}</button></div>`,t('a_seg'))}${A(`<div class="chips"><button class="chip on">${t('f_all')} <span class="count">3</span></button><button class="chip">${t('vt_MOTORBIKE')}</button></div>`,t('a_chip'))}${A(`<button class="switch on" data-act="ds-switch" role="switch" aria-label="switch"></button>`,t('a_switch'))}${A(`<label class="check"><input type="checkbox" checked>${t('remember')}</label>`,t('a_check'))}${A(`<div class="tabs" style="width:100%"><button class="on">${t('tab_his')} <span class="cnt">2</span></button><button>${t('tab_rem')}</button></div>`,t('a_tabs'),'320px')}</div>
+      ${cn('ds_toggles','ds_toggles_d')}
+      <div class="cset">${A(themeToggle(),t('a_theme'))}${A(langToggle(),t('a_lang'))}</div>
+      ${cn('ds_nav','ds_nav_d')}
+      <div class="cset dark">${A(`<button class="nav-item">${ic('car')}${t('nav_vehicles')}</button>`,t('a_default'),'210px')}${A(`<button class="nav-item on">${ic('dashboard')}${t('nav_dashboard')}<span class="cnt">3</span></button>`,t('a_count'),'210px')}</div>
+      <div class="cset">${A(`<div class="col" style="align-items:center;gap:4px;color:var(--text-muted);font-size:12px;width:68px"><span style="padding:4px 14px;border-radius:999px">${ic('car','22')}</span>${t('bn_vehicles')}</div>`,t('a_default'))}${A(`<div class="col" style="align-items:center;gap:4px;color:var(--primary);font-size:12px;width:68px"><span style="padding:4px 14px;border-radius:999px;background:var(--primary-soft)">${ic('dashboard','22')}</span>${t('bn_dashboard')}</div>`,t('a_active'))}</div>
+      ${cn('ds_stats','ds_stats_d')}
+      <div class="cset">${[['primary','car',t('k_vehicles'),'3'],['bad','alert',t('k_overdue'),'3'],['warn','clock',t('k_soon'),'1'],['accent','receipt',t('s_total'),money(3880000)],['ok','check-circle',t('st_OK'),'2']].map(([tn,i,l,val])=>A(statCard(tn,i,l,val,t('a_tone',{t:tn})).replace('card stat','card stat" style="width:100%'),t('a_tone',{t:tn}),'210px')).join('')}</div>
+      ${cn('ds_cards','ds_cards_d')}
+      <div class="cset">${v?A(vehicleCard(v).replace(/data-go="[^"]*"/,''),t('a_vcard'),'300px'):''}<div class="anno" style="flex:1;min-width:280px;max-width:560px"><div class="card" style="padding:4px 16px;width:100%">${rem.slice(0,2).map(remRow).join('').replace(/data-go="[^"]*"/g,'')||'—'}</div><small>${t('a_remrow')}</small><div class="col" style="gap:10px;width:100%;margin-top:12px"><div class="progress ok"><span style="width:40%"></span></div><div class="progress warn"><span style="width:88%"></span></div><div class="progress bad"><span style="width:100%"></span></div></div><small>${t('a_progress')}</small></div></div>
+      ${cn('ds_simple','ds_simple_d')}
+      <div class="cset">
+        ${A(`<div class="card next-card" style="width:100%"><div class="grow col" style="gap:4px"><span class="t-overline muted">${t('dash_next')}</span><b class="t-h2">${esc(stName(stype(1)))}</b><span class="muted">Air Blade · <span class="fg-bad">${t('overdue_days',{n:41})}</span></span></div><button class="btn primary big">${ic('check')}${t('task_done')}</button></div>`,t('a_next'),'100%')}
+        ${A(`<button class="card tile" style="width:100%"><div class="row" style="gap:10px"><div class="chipico tone-bad" style="width:36px;height:36px">${ic('alert','18')}</div><span class="t-small muted">${t('tile_todo')}</span></div><b class="t-numl">3</b><span class="tile-more">${t('tile_todo_sub')}${ic('chevron-right','16')}</span></button>`,t('a_tile'),'240px')}
+        ${v?A(dashVehicle(v).replace(/data-go="[^"]*"/,''),t('a_dveh'),'380px'):''}
+        ${A(`<div class="chips"><button class="chip big on">${ic('check','16')}${esc(stName(stype(1)))}</button><button class="chip big">${ic('plus','16')}${esc(stName(stype(4)))}</button></div>`,t('a_quick'))}
+        ${A(`<details class="disc" style="width:100%" open><summary>${ic('chevron-down','18')}${t('more_details')}</summary><div class="disc-body"><span class="t-small muted">${t('vf_plate')} · ${t('vf_brand')} · ${t('vf_year')} …</span></div></details>`,t('a_disc'),'320px')}
+        ${A(`<div class="card col" style="gap:12px;width:100%"><b class="t-h3">${t('help_title')}</b><ol class="steps">${[1,2,3].map(i=>`<li><span class="stepnum">${i}</span><span class="t-small">${t('help_'+i)}</span></li>`).join('')}</ol></div>`,t('a_help'),'380px')}
+      </div>
+      ${cn('ds_feedback','ds_feedback_d')}
+      <div class="cset">${A(`<div class="alert warn" style="width:100%">${ic('clock','18')}<div><b>${t('err_RATE_LIMITED')}</b><p>${t('errd_RATE_LIMITED')}</p></div></div><div class="alert bad" style="width:100%">${ic('x','18')}<div><b>DB_UNAVAILABLE</b><p>${t('s_db')}</p></div></div><div class="alert info" style="width:100%">${ic('info','18')}<div><b>${t('vf_tip')}</b><p>${t('vf_tip_body')}</p></div></div>`,t('a_alert'),'320px')}
+        <div class="anno" style="width:260px"><div class="card col" style="gap:10px;width:100%"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:10px"></div><div class="skel" style="height:10px;width:85%"></div><div class="skel" style="height:36px;margin-top:6px"></div></div><small>${t('a_skel')}</small><div style="margin-top:10px;background:var(--text);color:var(--surface);padding:12px 16px;border-radius:12px;display:flex;gap:10px;align-items:center;font-weight:500"><span style="color:var(--ok)">${ic('check-circle','18')}</span>${t('t_record_saved')}</div><small>${t('a_toast')}</small><button class="btn secondary sm" data-act="ds-toast">${t('a_toast')} ▶</button></div>
+        ${A(`<div class="card empty" style="width:100%"><div class="art">${illus('scooter','#94A3B8',84)}</div><b>${t('veh_empty')}</b><span class="t-small muted">${t('veh_empty_sub')}</span><button class="btn primary sm">${ic('plus')}${t('add_vehicle')}</button></div>`,t('a_empty'),'260px')}
+        ${A(`<div class="modal" style="box-shadow:var(--shadow);padding:18px"><div class="mic tone-bad">${ic('trash')}</div><div><b class="t-h3">${t('m_delrec_t')}</b><p class="t-small muted">${t('t_record_deleted')}</p></div><div class="acts"><button class="btn secondary sm">${t('cancel')}</button><button class="btn danger sm">${t('del')}</button></div></div><button class="btn secondary sm" data-act="ds-modal">${t('a_dialog')} ▶</button>`,t('a_dialog'),'300px')}</div>
+    </div>
+  </div></div>`};
+};
+
+/* ============================ DRAFTS (khởi tạo form khi vào route) ============================ */
+function initDraft(r){
+  const q=r.q; UI.draft={}; UI.errors={};
+  if(r.name==='vehicle-new') UI.draft={type:'MOTORBIKE',name:'',plate:'',brand:'',model:'',year:'',odo:'0',purchase:'',color:'#F97316',note:''};
+  if(r.name==='vehicle-edit'){ const v=veh(r.id); if(v) UI.draft={...v,year:v.year??'',odo:String(v.odo),plate:v.plate||'',purchase:v.purchase||''}; }
+  if(r.name==='vehicle-edit') UI.open.veh=true;
+  if(r.name==='record-edit') UI.open.rec=true;
+  if(r.name==='record-new'){ const v=veh(q.get('vehicle'))||S.vehicles.find(x=>!x.archived); const type=+q.get('type')||''; const st=stype(type);
+    UI.draft={vehicleId:v?v.id:'',date:TODAY_ISO,odo:v?String(v.odo):'',garage:v?(recsOf(v.id)[0]||{}).garage||'':'',note:'',items:[{typeId:type,desc:'',qty:'1',price:''}]}; if(st) UI.draft.items[0].desc=''; }
+  if(r.name==='record-edit'){ const x=S.records.find(z=>z.id===r.id); if(x) UI.draft={...x,odo:String(x.odo),items:x.items.map(i=>({...i,qty:String(i.qty),price:String(i.price)}))}; }
+  if(r.name==='reminder-new'){ const v=veh(r.id); if(v){ const used=S.reminders.filter(x=>x.vehicleId===v.id).map(x=>x.typeId); const types=typesForVehicle(v); const st=stype(+q.get('type'))||types.find(s=>!used.includes(s.id)&&(s.km||s.months))||types[0];
+    UI.draft={vehicleId:v.id,typeId:st?st.id:'',mode:st&&st.km&&st.months?'both':st&&st.km?'km':'mo',km:st&&st.km?String(st.km):'',months:st&&st.months?String(st.months):'',startDate:TODAY_ISO,startOdo:String(v.odo),notifyDays:'7',notifyKm:'300',active:true}; } }
+  if(r.name==='reminder-edit'){ const x=S.reminders.find(z=>z.id===r.id); if(x) UI.draft={...x,mode:x.km&&x.months?'both':x.km?'km':'mo',km:x.km?String(x.km):'',months:x.months?String(x.months):'',startOdo:String(x.startOdo),notifyDays:String(x.notifyDays),notifyKm:String(x.notifyKm)}; }
+  if(r.name==='login') UI.draft={email:'',password:'',remember:true};
+  if(r.name==='register') UI.draft={name:'',email:'',password:'',confirm:'',agree:false};
+  if(r.name==='vehicle') UI.tab=q.get('tab')||'his';
+}
+
+/* ============================ SUBMIT / VALIDATION ============================ */
+function submitVehicle(){
+  const d=D(), e={}, editing=UI.r.name==='vehicle-edit', orig=editing?veh(UI.r.id):null;
+  const name=d.name.trim(), plate=d.plate.trim();
+  if(!name) e.name=t('e_required'); else if(name.length>100) e.name=t('e_too_long',{n:100});
+  const dup=plate&&S.vehicles.find(v=>v.id!==(orig&&orig.id)&&(v.plate||'').toLowerCase()===plate.toLowerCase());
+  if(dup) e.plate=t('e_plate_dup',{veh:esc(dup.name)});
+  if(!isInt(d.odo)) e.odo=t('e_odo'); else if(orig&&N(d.odo)<orig.odo) e.odo=t('e_odo_down',{km:km(orig.odo)});
+  if(String(d.year).trim()&&(!isInt(d.year)||+d.year<1950||+d.year>TODAY.getFullYear()+1)) e.year=t('e_year',{y:TODAY.getFullYear()+1});
+  if(e.plate||e.year) UI.open.veh=true; // the field with the error must be visible
+  if(Object.keys(e).length){ UI.errors=e; render(); return; }
+  const data={name,type:d.type,brand:d.brand.trim(),model:d.model.trim(),year:String(d.year).trim()?N(d.year):null,plate,odo:N(d.odo),purchase:d.purchase||'',color:d.color,note:d.note.trim()};
+  if(orig){ Object.assign(orig,data); toast(t('t_vehicle_saved')); go(`vehicle/${orig.id}`); }
+  else { const v={id:nextId(S.vehicles),archived:false,...data}; S.vehicles.push(v); toast(t('t_vehicle_added',{name:esc(v.name)})); go(`vehicle/${v.id}`); }
+}
+function submitRecord(){
+  const d=D(), e={}, editing=UI.r.name==='record-edit';
+  if(!d.date) e.date=t('e_required'); else if(d.date>TODAY_ISO) e.date=t('e_future');
+  if(!isInt(d.odo)) e.odo=t('e_odo');
+  const valid=d.items.filter(i=>i.typeId);
+  if(!valid.length) e.items=t('e_items');
+  d.items.forEach((i,k)=>{ if(i.typeId||i.desc||N(i.price)){ if(!i.typeId) e['it'+k+'type']=1; if(!isInt(i.qty,1)) e['it'+k+'qty']=1; if(!isInt(i.price)) e['it'+k+'price']=1; } });
+  if(Object.keys(e).some(k=>/^it\d+qty$/.test(k))) UI.open.rec=true; // qty is only shown in the details view
+  const kinds=new Set(Object.keys(e).filter(k=>/^it\d+/.test(k)).map(k=>k.replace(/^it\d+/,'')));
+  if(kinds.size) e.items=e.items||[...kinds].map(k=>({type:t('rf_choose_type'),qty:t('e_qty'),price:t('e_price_each')})[k]).join(' · ');
+  if(!e.date&&!e.odo&&S.records.find(r=>r.id!==(editing?UI.r.id:0)&&r.vehicleId===+d.vehicleId&&r.date===d.date&&r.odo===N(d.odo))) e.dup=t('e_dup_record');
+  if(Object.keys(e).length){ UI.errors=e; render(); return; }
+  const items=d.items.filter(i=>i.typeId).map(i=>({typeId:+i.typeId,desc:i.desc.trim(),qty:N(i.qty),price:N(i.price)}));
+  const data={vehicleId:+d.vehicleId,date:d.date,odo:N(d.odo),garage:d.garage.trim(),note:d.note.trim(),items};
+  let id; if(editing){ Object.assign(S.records.find(r=>r.id===UI.r.id),data); id=UI.r.id; } else { id=nextId(S.records); S.records.push({id,...data}); }
+  const v=veh(data.vehicleId); let msg=t('t_record_saved');
+  if(data.odo>v.odo){ v.odo=data.odo; msg+=' · '+t('t_odo_up',{km:km(v.odo)}); } // BR-02
+  toast(msg); go(`record/${id}`);
+}
+function submitReminder(){
+  const d=D(), e={}, editing=UI.r.name==='reminder-edit';
+  const kmV=d.mode!=='mo'?d.km:'', moV=d.mode!=='km'?d.months:'';
+  if(!d.typeId) e.typeId=t('e_required');
+  if(String(kmV).trim()&&!isInt(kmV,1)) e.km=t('e_positive');
+  if(String(moV).trim()&&!isInt(moV,1)) e.months=t('e_positive');
+  if(!String(kmV).trim()&&!String(moV).trim()) e.interval=t('e_interval');
+  if(!isInt(d.startOdo)) e.startOdo=t('e_nonneg');
+  if(!isInt(d.notifyDays)) e.notifyDays=t('e_nonneg');
+  if(!isInt(d.notifyKm)) e.notifyKm=t('e_nonneg');
+  if(e.startOdo||e.notifyDays||e.notifyKm) UI.open.rem=true;
+  if(d.typeId&&S.reminders.find(x=>x.id!==(editing?UI.r.id:0)&&x.vehicleId===+d.vehicleId&&x.typeId===+d.typeId)) e.typeId=t('e_rem_dup');
+  if(Object.keys(e).length){ UI.errors=e; render(); return; }
+  const data={vehicleId:+d.vehicleId,typeId:+d.typeId,km:String(kmV).trim()?N(kmV):null,months:String(moV).trim()?N(moV):null,startDate:d.startDate||TODAY_ISO,startOdo:N(d.startOdo),notifyDays:N(d.notifyDays),notifyKm:N(d.notifyKm),active:!!d.active};
+  if(editing) Object.assign(S.reminders.find(x=>x.id===UI.r.id),data); else S.reminders.push({id:nextId(S.reminders),...data});
+  toast(t('t_rem_saved')); go(`vehicle/${data.vehicleId}?tab=rem`);
+}
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function submitLogin(){
+  const d=D(), e={};
+  if(!EMAIL_RE.test(d.email.trim())) e.email=t('e_email');
+  if((d.password||'').length<6) e.password=t('e_pw_len');
+  if(Object.keys(e).length){ UI.errors=e; render(); return; }
+  UI.loggedIn=true; if(d.email.trim()!==UI.user.email) UI.user={name:d.email.split('@')[0],email:d.email.trim()};
+  toast(t('t_welcome',{name:esc(UI.user.name)})); go('dashboard');
+}
+function submitRegister(){
+  const d=D(), e={};
+  if(!d.name.trim()) e.name=t('e_required');
+  if(!EMAIL_RE.test(d.email.trim())) e.email=t('e_email');
+  if((d.password||'').length<6) e.password=t('e_pw_len');
+  if(d.confirm!==d.password) e.confirm=t('e_pw_match');
+  if(!d.agree) e.agree=t('e_agree');
+  if(Object.keys(e).length){ UI.errors=e; render(); return; }
+  UI.loggedIn=true; UI.user={name:d.name.trim(),email:d.email.trim()};
+  toast(t('t_welcome',{name:esc(UI.user.name)})); go('dashboard');
+}
+
+/* ============================ MODALS ============================ */
+function openModal(html){ $('#modal').innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}</div>`; $('#modal').classList.add('on'); const f=$('#modal').querySelector('input,select,textarea,button'); if(f) f.focus(); }
+function closeModal(){ $('#modal').classList.remove('on'); $('#modal').innerHTML=''; }
+function confirmModal({tone,icon,title,body,ok,okClass='danger',act,id}){
+  openModal(`<div class="mic tone-${tone}">${ic(icon,'22')}</div><div class="col"><b class="t-h2">${title}</b><p class="muted">${body}</p></div><div class="acts"><button class="btn secondary" data-act="close-modal">${t('cancel')}</button><button class="btn ${okClass}" data-act="${act}" data-id="${id}">${ic(icon)}${ok}</button></div>`);
+}
+function svcModal(id){
+  const s=id?stype(id):null;
+  UI.svc={name:s?stName(s):'',applies:s?s.applies:'ALL',km:s&&s.km?String(s.km):'',months:s&&s.months?String(s.months):'',desc:s?stDesc(s):'',id:s?s.id:null,err:{}};
+  renderSvcModal();
+}
+function renderSvcModal(){
+  const m=UI.svc, e=m.err;
+  openModal(`<form data-form="svc" class="col" style="gap:16px" novalidate><div class="row"><b class="t-h2 grow">${m.id?t('sv_edit'):t('sv_add')}</b><button type="button" class="icon-btn plain" data-act="close-modal" aria-label="${t('close')}">${ic('x')}</button></div>
+    <div class="field"><label>${t('sv_name')} <span class="req">*</span></label><div class="control${e.name?' error':''}"><input data-svc="name" value="${esc(m.name)}" aria-label="${t('sv_name')}"></div>${e.name?`<span class="help err">${e.name}</span>`:''}</div>
+    <div class="field"><span class="lbl">${t('sv_applies')}</span><div class="seg">${['MOTORBIKE','CAR','ALL'].map(k=>`<button type="button" class="${m.applies===k?'on':''}" data-act="svc-applies" data-v="${k}">${k==='ALL'?t('ap_ALL'):t('vt_'+k)}</button>`).join('')}</div></div>
+    <div class="grid-2"><div class="field"><label>${t('sv_km')}</label><div class="control${e.km?' error':''}"><input data-svc="km" value="${esc(m.km)}" inputmode="numeric" aria-label="${t('sv_km')}"><span class="suffix">km</span></div>${e.km?`<span class="help err">${e.km}</span>`:''}</div>
+      <div class="field"><label>${t('sv_mo')}</label><div class="control${e.months?' error':''}"><input data-svc="months" value="${esc(m.months)}" inputmode="numeric" aria-label="${t('sv_mo')}"><span class="suffix">${t('months')}</span></div>${e.months?`<span class="help err">${e.months}</span>`:''}</div></div>
+    <div class="field"><label>${t('sv_desc')}</label><textarea class="area" style="min-height:70px" data-svc="desc">${esc(m.desc)}</textarea></div>
+    <div class="acts"><button type="button" class="btn secondary" data-act="close-modal">${t('cancel')}</button><button class="btn primary" type="submit">${ic('check')}${t('save')}</button></div></form>`);
+}
+function submitSvc(){
+  const m=UI.svc, e={}, name=m.name.trim();
+  if(!name) e.name=t('e_required');
+  else if(S.serviceTypes.find(s=>s.id!==m.id&&[s.name,s.name.vi,s.name.en].some(n=>typeof n==='string'&&n.toLowerCase()===name.toLowerCase()))) e.name=t('e_name_dup');
+  if(m.km.trim()&&!isInt(m.km,1)) e.km=t('e_positive');
+  if(m.months.trim()&&!isInt(m.months,1)) e.months=t('e_positive');
+  if(Object.keys(e).length){ m.err=e; renderSvcModal(); return; }
+  const data={applies:m.applies,km:m.km.trim()?+m.km:null,months:m.months.trim()?+m.months:null};
+  if(m.id){ const s=stype(m.id); Object.assign(s,data); if(name!==stName(s)) s.name=name; if(m.desc.trim()!==stDesc(s)) s.desc=m.desc.trim(); }
+  else S.serviceTypes.push({id:nextId(S.serviceTypes),name,desc:m.desc.trim(),active:true,...data});
+  closeModal(); toast(t('t_sv_saved')); render();
+}
+
+/* ============================ ROUTER & RENDER ============================ */
+function parse(){ const h=location.hash.replace(/^#\/?/,''); const [path,qs]=h.split('?'); const [name,id]=(path||'').split('/'); return {name:name||'design',id:id?+id:null,q:new URLSearchParams(qs||'')}; }
+function go(path){ if(location.hash==='#/'+path) onRoute(true); else location.hash='#/'+path; }
+function onRoute(force){
+  const r=parse(); if(!SCREENS[r.name]) r.name='dashboard';
+  const key=r.name+'/'+(r.id??'')+'?'+r.q;
+  if(key!==UI.routeKey||force){ UI.routeKey=key; UI.r=r; UI.open={}; initDraft(r); UI.bell=false; UI.animate=true; window.scrollTo(0,0); }
+  render(); UI.animate=false; // chỉ chạy hiệu ứng khi đổi trang, không chạy khi gõ phím hay đổi ngôn ngữ
+}
+function render(){
+  document.documentElement.lang=ui.lang; document.title=(ui.lang==='vi'?'Sổ Bảo Dưỡng Xe':'Vehicle Maintenance Log')+' – UI Design';
+  const out=SCREENS[UI.r.name](UI.r);
+  const active=document.activeElement, sel=active&&active.dataset&&(active.dataset.d||active.dataset.act||active.dataset.item!=null);
+  const keepId=active&&active.matches&&active.matches('input,textarea')?{d:active.dataset.d,act:active.dataset.act,pos:active.selectionStart}:null;
+  $('#root').innerHTML=out.full?out.html:shell(out);
+  if(keepId){ const el=document.querySelector(keepId.d?`[data-d="${keepId.d}"]`:`[data-act="${keepId.act}"]`); if(el&&el.matches('input,textarea')){ el.focus(); try{ el.setSelectionRange(keepId.pos,keepId.pos); }catch(e){} } }
+  renderViewer();
+}
+function renderViewer(){
+  $('#viewer').innerHTML=`<button class="phone-btn" data-act="phone">${ic('phone','18')}<span class="vl">${t('v_phone')}</span></button><button data-go="design" title="Design System">${ic('tag','18')}<span class="vl">Design System</span></button><button data-act="reset" title="${t('v_reset')}">${ic('refresh','18')}<span class="vl">${t('v_reset')}</span></button>`;
+  $('#phoneSide').innerHTML=`<b class="t-h2">${t('v_phone_t')}</b><p class="t-small" style="opacity:.8">${t('v_phone_b')}</p><button class="btn" data-act="phone-close">${ic('x')}${t('close')}</button>`;
+}
+let toastT;
+function toast(msg,bad){ const el=$('#toast'); el.className='toast on'+(bad?' bad':''); el.innerHTML=`${ic(bad?'alert':'check-circle','18')}<span>${msg}</span>`; clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),2400); }
+
+/* ============================ THEME & LANGUAGE ============================ */
+function setTheme(v,silent){ ui.theme=v; document.documentElement.dataset.theme=v; store('vml-theme',v); if(!silent) sync({theme:v}); render(); }
+function setLang(v,silent){ ui.lang=v; store('vml-lang',v); if(!silent) sync({lang:v}); render(); }
+function sync(msg){ const fr=$('#phoneFrame'); if(fr.contentWindow&&$('#phoneBg').classList.contains('on')) fr.contentWindow.postMessage(msg,'*'); if(window.parent!==window) window.parent.postMessage(msg,'*'); }
+window.addEventListener('message',e=>{ if(!e.data) return; if(e.data.theme) setTheme(e.data.theme,true); if(e.data.lang) setLang(e.data.lang,true); });
+
+/* ============================ EVENTS ============================ */
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');
+  const a=e.target.closest('[data-act]');
+  if(a&&!a.disabled){
+    const act=a.dataset.act, v=a.dataset.v, id=+a.dataset.id;
+    const H={
+      theme:()=>setTheme(v), lang:()=>setLang(v),
+      bell:()=>{ UI.bell=!UI.bell; render(); },
+      tasks:tasksModal, help:helpModal,
+      logout:()=>{ UI.loggedIn=false; toast(t('t_logout')); go('login'); },
+      vf:()=>{ UI.vf=v; render(); },
+      tab:()=>{ UI.tab=v; render(); },
+      seg:()=>{ D()[a.dataset.key]=a.dataset.key==='active'?!!v:v; if(a.dataset.key==='mode'){} render(); },
+      'add-item':()=>{ D().items.push({typeId:'',desc:'',qty:'1',price:''}); render(); },
+      quick:()=>{ const items=D().items, i=items.findIndex(x=>+x.typeId===id);
+        if(i>=0){ if(items.length>1) items.splice(i,1); else items[0]={typeId:'',desc:'',qty:'1',price:''}; }
+        else { const blank=items.findIndex(x=>!x.typeId&&!x.desc&&!N(x.price)), it={typeId:id,desc:'',qty:'1',price:''}; if(blank>=0) items[blank]=it; else items.push(it); }
+        render(); },
+      'del-item':()=>{ D().items.splice(+a.dataset.i,1); render(); },
+      'ask-archive':()=>{ const x=veh(id); confirmModal({tone:'warn',icon:'archive',title:t('m_archive_t',{name:esc(x.name)}),body:t('m_archive_b'),ok:t('vd_archive'),okClass:'primary',act:'archive-vehicle',id}); },
+      'archive-vehicle':()=>{ const x=veh(id); x.archived=true; closeModal(); toast(t('t_archived',{name:esc(x.name)})); render(); },
+      'restore-vehicle':()=>{ const x=veh(id); x.archived=false; toast(t('t_restored',{name:esc(x.name)})); render(); },
+      'ask-del-vehicle':()=>{ const x=veh(id); confirmModal({tone:'bad',icon:'trash',title:t('m_delveh_t',{name:esc(x.name)}),body:t('m_delveh_b'),ok:t('del_forever'),act:'del-vehicle',id}); },
+      'del-vehicle':()=>{ const x=veh(id); S.vehicles=S.vehicles.filter(z=>z.id!==id); S.reminders=S.reminders.filter(z=>z.vehicleId!==id); closeModal(); toast(t('t_veh_deleted',{name:esc(x.name)})); go('vehicles'); },
+      'ask-del-record':()=>{ const x=S.records.find(z=>z.id===id), vv=veh(x.vehicleId); confirmModal({tone:'bad',icon:'trash',title:t('m_delrec_t'),body:t('m_delrec_b',{d:fdate(x.date),veh:esc(vv.name),n:x.items.length,total:money(total(x))}),ok:t('del_forever'),act:'del-record',id}); },
+      'del-record':()=>{ const x=S.records.find(z=>z.id===id); S.records=S.records.filter(z=>z.id!==id); closeModal(); toast(t('t_record_deleted')); go(`vehicle/${x.vehicleId}`); },
+      'ask-del-rem':()=>{ const x=S.reminders.find(z=>z.id===id); confirmModal({tone:'bad',icon:'trash',title:t('m_delrem_t'),body:t('m_delrem_b',{svc:esc(stName(stype(x.typeId))),veh:esc(veh(x.vehicleId).name)}),ok:t('del'),act:'del-rem',id}); },
+      'del-rem':()=>{ const x=S.reminders.find(z=>z.id===id); S.reminders=S.reminders.filter(z=>z.id!==id); closeModal(); toast(t('t_rem_deleted')); go(`vehicle/${x.vehicleId}?tab=rem`); },
+      'close-modal':closeModal,
+      'stats-range':()=>{ UI.statsRange=v; render(); },
+      csv:()=>toast(t('t_csv')),
+      'svc-filter':()=>{ UI.svcFilter=v; render(); },
+      'svc-modal':()=>svcModal(id||null),
+      'svc-applies':()=>{ UI.svc.applies=v; renderSvcModal(); },
+      'svc-toggle':()=>{ const s=stype(id); s.active=!s.active; toast(t(s.active?'t_sv_on':'t_sv_off',{name:esc(stName(s))})); render(); },
+      'ask-del-svc':()=>{ const s=stype(id); confirmModal({tone:'bad',icon:'trash',title:t('m_delsv_t',{name:esc(stName(s))}),body:t('m_delsv_b'),ok:t('del'),act:'del-svc',id}); },
+      'del-svc':()=>{ const s=stype(id); S.serviceTypes=S.serviceTypes.filter(z=>z.id!==id); closeModal(); toast(t('t_sv_deleted',{name:esc(stName(s))})); render(); },
+      'ai-ex':()=>{ UI.ai.text=v; UI.ai.err=null; render(); },
+      'ai-force':()=>{ UI.ai.force=v; render(); },
+      'ai-run':runAi,
+      'ai-make-rem':()=>{ const d=UI.ai.result; const exists=S.reminders.find(x=>x.vehicleId===d.vehicleId&&x.typeId===d.typeId); go(exists?`reminder-edit/${exists.id}`:`reminder-new/${d.vehicleId}?type=${d.typeId}`); },
+      'hist-filter':()=>{ UI.histFilter=v; render(); },
+      'hist-detail':()=>{ const d=S.diagnoses.find(z=>z.id===id); openModal(`<div class="row"><b class="t-h2 grow">${t('h_detail')}</b><button class="icon-btn plain" data-act="close-modal" aria-label="${t('close')}">${ic('x')}</button></div><div class="box2"><div class="t-caption muted">${ftime(d.at)} · ${d.vehicleId&&veh(d.vehicleId)?esc(veh(d.vehicleId).name):'—'}</div><p>${esc(d.symptom)}</p></div>${d.status==='OK'?`<div class="row"><span class="badge b-${{LOW:'ok',MEDIUM:'warn',HIGH:'bad'}[d.urgency]}">${t('ug_'+d.urgency)}</span><span class="badge b-info nodot">${esc(stName(stype(d.typeId)))}</span></div><p>${esc(d.suggestion[ui.lang])}</p>`:`<div class="alert bad">${ic('alert','18')}<div><b>${t('err_'+d.error)}</b><p>${t('errd_'+d.error)}</p></div></div>`}<div class="acts"><button class="btn secondary" data-act="close-modal">${t('close')}</button></div>`); },
+      'pw-eye':()=>{ UI.showPw=!UI.showPw; render(); },
+      forgot:()=>toast(t('t_forgot')),
+      'demo-login':()=>{ UI.loggedIn=true; UI.user={name:'Bảo Giang',email:'giang@example.com'}; toast(t('t_welcome',{name:'Bảo Giang'})); go('dashboard'); },
+      phone:()=>{ const fr=$('#phoneFrame'); fr.src=location.href.split('#')[0].split('?')[0]+`?embed=1&theme=${ui.theme}&lang=${ui.lang}`+(location.hash||'#/dashboard').replace('#/design','#/dashboard'); $('#phoneBg').classList.add('on'); },
+      'phone-close':()=>$('#phoneBg').classList.remove('on'),
+      reset:()=>{ S=structuredClone(SEED); UI.ai.result=null; UI.ai.state='idle'; toast(t('t_reset')); onRoute(true); },
+      'ds-switch':()=>a.classList.toggle('on'),
+      'ds-toast':()=>toast(t('t_record_saved')),
+      'ds-modal':()=>confirmModal({tone:'bad',icon:'trash',title:t('m_delrec_t'),body:t('m_delrec_b',{d:fdate('2026-02-18'),veh:'Vios gia đình',n:4,total:money(1960000)}),ok:t('del_forever'),act:'close-modal',id:0}),
+    };
+    if(H[act]){ e.preventDefault(); H[act](); return; }
+  }
+  if(g&&!g.disabled){ e.preventDefault(); if(g.dataset.tab) UI.tab=g.dataset.tab; const path=g.dataset.go+(g.dataset.tab&&!g.dataset.go.includes('?')?`?tab=${g.dataset.tab}`:''); closeModal(); go(path); return; }
+  if(UI.bell&&!e.target.closest('.pop')){ UI.bell=false; render(); }
+});
+// <details> toggle does not bubble: listen in the capture phase. Guard avoids a render loop when render() re-creates an open <details>.
+document.addEventListener('toggle',e=>{ const d=e.target; if(!d.dataset||!d.dataset.disc) return; const n=d.dataset.disc; if(!!UI.open[n]===d.open) return; UI.open[n]=d.open; if(n==='rec') render(); },true);
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
+$('#phoneBg').addEventListener('click',e=>{ if(e.target.id==='phoneBg') $('#phoneBg').classList.remove('on'); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal(); $('#phoneBg').classList.remove('on'); if(UI.bell){ UI.bell=false; render(); } } });
+
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.d!=null){ D()[el.dataset.d]=el.type==='checkbox'?el.checked:el.value; liveUpdate(el.dataset.d); return; }
+  if(el.dataset.item!=null){ D().items[+el.dataset.item][el.dataset.f]=el.value; recalcRecord(); return; }
+  if(el.dataset.svc){ UI.svc[el.dataset.svc]=el.value; return; }
+  const act=el.dataset.act;
+  if(act==='ai-text'){ UI.ai.text=el.value; $('#aiCount').textContent=el.value.length+'/1000'; if(UI.ai.err&&el.value.trim().length>=10){ UI.ai.err=null; el.classList.remove('error'); $('#aiHelp').textContent=t('ai_len'); $('#aiHelp').classList.remove('err'); } }
+  if(act==='search-local'){ UI.q=el.value; render(); }
+});
+document.addEventListener('change',e=>{
+  const el=e.target, act=el.dataset.act;
+  if(el.dataset.rerender){ D()[el.dataset.d]=el.value; if(UI.r.name.startsWith('reminder')&&el.dataset.d==='typeId'){ const st=stype(el.value); if(st){ D().km=st.km?String(st.km):''; D().months=st.months?String(st.months):''; D().mode=st.km&&st.months?'both':st.km?'km':'mo'; } } if(UI.r.name.startsWith('record')&&el.dataset.d==='vehicleId'){ const v=veh(el.value); D().odo=String(v.odo); } render(); }
+  if(el.dataset.item!=null&&el.dataset.f==='typeId'){ render(); }
+  if(act==='stats-veh'){ UI.statsVeh=el.value; render(); }
+  if(act==='ai-veh'){ UI.ai.vehicleId=el.value; }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.dataset.act==='search'){ UI.q=e.target.value; UI.vf='all'; go('vehicles'); } });
+document.addEventListener('submit',e=>{
+  const f=e.target.dataset.form; if(!f) return; e.preventDefault();
+  ({vehicle:submitVehicle,record:submitRecord,reminder:submitReminder,login:submitLogin,register:submitRegister,svc:submitSvc})[f]();
+});
+function liveUpdate(key){
+  const n=UI.r.name, d=D();
+  if(n.startsWith('vehicle-')){ const p=$('#vfPrevName'); if(p){ p.textContent=d.name||'—'; $('#vfPrevSub').textContent=[d.brand,d.model].filter(Boolean).join(' ')+(d.year?' · '+d.year:''); $('#vfPrevPlate').textContent=d.plate||'—'; } }
+  if(n.startsWith('reminder')){ const p=$('#remPrev'); if(p) p.innerHTML=previewRem(); }
+  if(n==='register'&&key==='password'){ const s=pwScore(d.password); $('#pwBar').className='strength s'+s; $('#pwTxt').textContent=t('pw_strength',{s:t('pw_'+s)}); $('#pwTxt').classList.remove('err'); }
+}
+function recalcRecord(){
+  const d=D(); let tot=0;
+  d.items.forEach((it,i)=>{ const v=N(it.qty)*N(it.price); tot+=v; const el=document.querySelector(`[data-line="${i}"]`); if(el) el.textContent=money(v); });
+  $('#sumSub').textContent=money(tot); $('#sumTotal').textContent=money(tot);
+}
+function runAi(){
+  const a=UI.ai, len=a.text.trim().length;
+  if(len<10){ a.err=t('e_short'); render(); return; }
+  if(len>1000){ a.err=t('e_long'); render(); return; }
+  a.err=null; a.state='loading'; render();
+  setTimeout(()=>{
+    const base={id:nextId(S.diagnoses),vehicleId:a.vehicleId?+a.vehicleId:null,symptom:a.text.trim(),model:'gemini-flash',at:TODAY_ISO+'T'+new Date().toTimeString().slice(0,5)};
+    const d=a.force==='OK'?{...base,status:'OK',error:null,...mockAi(a.text)}:{...base,status:'FAILED',error:a.force,urgency:null,typeId:null,suggestion:null};
+    S.diagnoses.push(d); a.result=d; a.state='done';
+    if(UI.r.name==='ai') render();
+  },1200);
+}
+
+/* ============================ START ============================ */
+const P=new URLSearchParams(location.search);
+if(P.has('embed')) document.body.classList.add('embed');
+ui.theme=P.get('theme')||store('vml-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+ui.lang=P.get('lang')||store('vml-lang')||'vi';
+document.documentElement.dataset.theme=ui.theme;
+window.addEventListener('hashchange',()=>onRoute());
+onRoute();
+</script>
+</body>
+</html>
