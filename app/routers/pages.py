@@ -25,12 +25,31 @@ def diagnosis_history_page(request: Request):
     return templates.TemplateResponse(request, "ai_history.html", {"active": "lich-su-ai"})
 
 
+# Vehicles (M2, Lâm). {vehicle_id:int}: "/xe/moi" is the add form, never a vehicle id.
+@router.get("/xe")
+def vehicles_page(request: Request):
+    return templates.TemplateResponse(request, "vehicles.html", {"active": "xe"})
+
+
+@router.get("/xe/moi")
+def vehicle_add_page(request: Request):
+    return templates.TemplateResponse(request, "vehicle_form.html", {"active": "xe", "vehicle_id": None})
+
+
+@router.get("/xe/{vehicle_id:int}")
+def vehicle_detail_page(request: Request, vehicle_id: int):
+    return templates.TemplateResponse(request, "vehicle_detail.html", {"active": "xe", "vehicle_id": vehicle_id})
+
+
+@router.get("/xe/{vehicle_id:int}/sua")
+def vehicle_edit_page(request: Request, vehicle_id: int):
+    return templates.TemplateResponse(request, "vehicle_form.html", {"active": "xe", "vehicle_id": vehicle_id})
+
+
 # Screens built by teammates (docs/PHAN-CONG.md §2.1). Until then the link opens a page that says who
 # builds it, so links from the home screen never end on a 404.
 # path -> (menu key, title, screen in ui-design.html, owner)
 UPCOMING = {
-    "/xe": ("xe", "Xe của tôi", "Xe của tôi", "Lâm"),
-    "/xe/{vehicle_id}": ("xe", "Chi tiết xe", "Chi tiết xe", "Lâm"),
     "/bao-duong/moi": ("xe", "Ghi lần bảo dưỡng", "Ghi lần bảo dưỡng", "Lâm"),
     "/bao-duong/{record_id}": ("xe", "Chi tiết lần bảo dưỡng", "Chi tiết lần bảo dưỡng", "Lâm"),
     "/thong-ke": ("thong-ke", "Chi phí", "Chi phí", "Khoa"),
