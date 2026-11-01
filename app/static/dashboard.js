@@ -1,76 +1,123 @@
-// S01 Dashboard (FR-16): one call to GET /api/stats/dashboard, then fill the cards.
+// S01 Trang chủ (FR-16): one call to GET /api/stats/dashboard, then fill the blocks.
 
-// "quá 2 ngày", "còn 5 ngày · còn 1.150 km": for an overdue reminder only the overdue part is shown.
-function reminderDetail(reminder) {
-  const parts = [];
-  if (reminder.days_left !== null) {
-    const days = reminder.days_left;
-    parts.push(days < 0 ? `quá ${-days} ngày` : days === 0 ? "đến hạn hôm nay" : `còn ${days} ngày`);
-  }
-  if (reminder.km_left !== null) {
-    const km = reminder.km_left;
-    parts.push(km < 0 ? `quá ${formatNumber(-km)} km` : km === 0 ? "đến hạn theo km" : `còn ${formatNumber(km)} km`);
-  }
-  const due = parts.filter((part) => !part.startsWith("còn"));
-  return (reminder.status === "OVERDUE" && due.length ? due : parts).join(" · ");
+// Link to the screen where a done service is logged (Lâm, M3), with the vehicle and service prefilled.
+function logServiceUrl(reminder) {
+  return `/bao-duong/moi?xe=${reminder.vehicle_id}&loai=${reminder.service_type_id}`;
 }
 
-function renderAttention(reminders) {
-  const list = document.getElementById("attention-list");
+function renderStatus(reminders) {
+  const status = document.getElementById("dash-status");
+  const bad = reminders.length > 0;
+  status.className = `dash-status ${bad ? "bad" : "ok"}`;
+  status.replaceChildren(
+    icon(bad ? "alert" : "check-circle"),
+    el("span", "", bad ? `Có ${reminders.length} việc cần làm cho xe của bạn` : "Xe của bạn đều ổn"),
+  );
+}
+
+function renderNext(reminders, vehicles) {
+  const card = document.getElementById("next-card");
+  const first = reminders[0];
+  card.hidden = !first;
+  if (!first) return;
+  const vehicle = vehicles.find((v) => v.id === first.vehicle_id);
+  document.getElementById("next-thumb").replaceChildren(vehicleDrawing(vehicle ? vehicle.vehicle_type : "OTHER", 110));
+  document.getElementById("next-title").textContent = first.service_type_name;
+  const tone = first.status === "OVERDUE" ? "text-bad" : "text-warn";
+  document.getElementById("next-detail").replaceChildren(`${first.vehicle_name} · `, el("span", tone, reminderDetail(first)));
+  document.getElementById("next-action").href = logServiceUrl(first);
+}
+
+function renderTiles(data) {
+  const todo = document.getElementById("stat-todo");
+  todo.textContent = data.attention_reminders.length;
+  todo.className = `tile-value ${data.attention_reminders.length ? "text-bad" : "text-ok"}`;
+  document.getElementById("stat-cost-label").textContent = `Chi phí năm ${new Date().getFullYear()}`;
+  document.getElementById("stat-cost").textContent = formatMoney(data.cost_this_year);
+
+  const last = data.recent_records[0];
+  document.getElementById("stat-last").textContent = last ? formatAgo(last.service_date) : "Chưa có";
+  document.getElementById("stat-last-more").textContent = last ? `${last.vehicle_name} · Xem phiếu` : "Ghi lần đầu tiên";
+  document.getElementById("tile-last").href = last ? `/bao-duong/${last.record_id}` : "/bao-duong/moi";
+}
+
+function vehicleLine(vehicle) {
+  const r = vehicle.reminder;
+  if (!r) return el("span", "row-sub", "Chưa có nhắc bảo dưỡng");
+  if (r.status === "OK") {
+    const when = r.next_due_date ? formatDate(r.next_due_date) : `${formatNumber(r.next_due_odometer)} km`;
+    return el("span", "row-sub", `Lần tới: ${r.service_type_name.toLowerCase()}, ${when}`);
+  }
+  const tone = r.status === "OVERDUE" ? "text-bad" : "text-warn";
+  return el("span", `row-sub ${tone}`, `${r.service_type_name} · ${reminderDetail(r)}`);
+}
+
+function renderVehicles(vehicles) {
+  const list = document.getElementById("vehicle-list");
+  const cards = vehicles.map((v) => {
+    const r = v.reminder;
+    const card = el(
+      "a",
+      "card vehicle-card",
+      el("div", "thumb", vehicleDrawing(v.vehicle_type, 110)),
+      el(
+        "div",
+        "vehicle-main",
+        el("span", "vehicle-name", v.name), // no badge: the gauge and the coloured line already say it
+        el("span", "row-sub", `${v.license_plate ? v.license_plate + " · " : ""}${formatNumber(v.current_odometer)} km`),
+        vehicleLine(v),
+      ),
+      r ? gauge(r.progress, r.status) : null,
+    );
+    card.href = `/xe/${v.id}`;
+    return card;
+  });
+  const add = el("a", "card vehicle-card vehicle-add", icon("plus"), "Thêm xe mới");
+  add.href = "/xe";
+  list.replaceChildren(...cards, add);
+}
+
+function renderTodo(reminders) {
+  const list = document.getElementById("todo-list");
   if (!reminders.length) {
-    list.replaceChildren(el("li", "row muted", "Không có nhắc lịch nào cần chú ý."));
+    list.replaceChildren(el("li", "row muted", "Không có việc nào cần làm. Xe của bạn đều ổn."));
     return;
   }
   list.replaceChildren(
-    ...reminders.map((r) =>
-      el(
+    ...reminders.map((r) => {
+      const done = el("a", "btn btn-primary btn-sm", icon("check"), "Đã làm");
+      done.href = logServiceUrl(r);
+      const tone = r.status === "OVERDUE" ? "text-bad" : "text-warn";
+      return el(
         "li",
         "row",
-        el("div", "", el("p", "row-title", r.vehicle_name), el("p", "row-sub", `${r.service_type_name} · ${reminderDetail(r)}`)),
-        statusBadge(r.status),
-      ),
-    ),
+        el("div", "row-main", el("p", "row-title", r.service_type_name), el("p", "row-sub", `${r.vehicle_name} · `, el("span", tone, reminderDetail(r)))),
+        done,
+      );
+    }),
   );
 }
 
-function renderRecent(records) {
-  const list = document.getElementById("recent-list");
-  if (!records.length) {
-    list.replaceChildren(el("li", "row muted", "Chưa có lần bảo dưỡng nào."));
-    return;
-  }
-  list.replaceChildren(
-    ...records.map((r) =>
-      el(
-        "li",
-        "row",
-        el(
-          "div",
-          "",
-          el("p", "row-title", `${formatDate(r.service_date)} · ${r.vehicle_name}`),
-          el("p", "row-sub", r.items_summary || `${r.item_count} hạng mục`),
-        ),
-        el("span", "row-amount", formatMoney(r.total_cost)),
-      ),
-    ),
-  );
-}
+document.getElementById("today").textContent = new Date().toLocaleDateString("vi-VN", {
+  weekday: "long",
+  day: "numeric",
+  month: "numeric",
+  year: "numeric",
+});
+document.getElementById("tile-todo").addEventListener("click", () => document.getElementById("todo-dialog").showModal());
 
 async function loadDashboard() {
   try {
     const data = await fetchJson("/api/stats/dashboard");
-    const reminders = data.attention_reminders;
-    document.getElementById("stat-vehicles").textContent = data.vehicle_count;
-    document.getElementById("stat-overdue").textContent = reminders.filter((r) => r.status === "OVERDUE").length;
-    document.getElementById("stat-due-soon").textContent = reminders.filter((r) => r.status === "DUE_SOON").length;
-    document.getElementById("stat-cost").textContent = formatMoney(data.cost_this_month);
-    renderAttention(reminders);
-    renderRecent(data.recent_records);
+    renderStatus(data.attention_reminders);
+    renderNext(data.attention_reminders, data.vehicles);
+    renderTiles(data);
+    renderVehicles(data.vehicles);
+    renderTodo(data.attention_reminders);
   } catch (error) {
     showError(error.message);
-    for (const id of ["attention-list", "recent-list"]) {
-      document.getElementById(id).replaceChildren(el("li", "row muted", "Không tải được dữ liệu."));
-    }
+    document.getElementById("dash-status").replaceChildren(icon("alert"), el("span", "", "Không tải được dữ liệu"));
+    document.getElementById("vehicle-list").replaceChildren(el("p", "muted", "Không tải được danh sách xe."));
   }
 }
 

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Các lần đã hỏi AI{% endblock %}
+{% block heading %}Các lần đã hỏi AI{% endblock %}
+
+{% block content %}
+<div class="history-bar">
+  <div class="chips" role="group" aria-label="Lọc theo kết quả">
+    <button class="chip" type="button" data-filter="all" aria-pressed="true">Tất cả</button>
+    <button class="chip" type="button" data-filter="OK" aria-pressed="false">Có kết quả</button>
+    <button class="chip" type="button" data-filter="FAILED" aria-pressed="false">Bị lỗi</button>
+  </div>
+  <a class="btn btn-primary" href="/chan-doan"><svg class="ic"><use href="#i-sparkles"></use></svg>Hỏi AI lần mới</a>
+</div>
+
+<section class="history-list" id="history-list" aria-live="polite">
+  <p class="muted">Đang tải…</p>
+</section>
+{% endblock %}
+
+{% block screen %}S11 · Các lần đã hỏi AI · FR-21{% endblock %}
+
+{% block scripts %}<script src="/static/ai_history.js?v={{ request.app.version }}"></script>{% endblock %}

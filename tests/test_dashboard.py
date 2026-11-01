@@ -21,6 +21,25 @@ ATTENTION = [
     },
 ]
 
+VEHICLES = [
+    {"id": 1, "name": "Vision đi làm", "vehicle_type": "MOTORBIKE", "license_plate": "59X1-123.45", "current_odometer": 12850},
+    {"id": 2, "name": "Vios gia đình", "vehicle_type": "CAR", "license_plate": "51H-678.90", "current_odometer": 45200},
+    {"id": 3, "name": "Air Blade", "vehicle_type": "MOTORBIKE", "license_plate": None, "current_odometer": 20300},
+]
+
+# rows of v_reminder_status as the home screen's vehicle cards read them
+REMINDERS = [
+    {"vehicle_id": 1, "service_type_name": "Thay lọc gió", "status": "OK", "days_left": 138, "km_left": 6950,
+     "next_due_date": date(2027, 3, 10), "next_due_odometer": 19800, "base_date": date(2026, 3, 10),
+     "base_odometer": 9800, "current_odometer": 12850, "interval_km": 10000},
+    {"vehicle_id": 1, "service_type_name": "Thay nhớt máy (xe máy)", "status": "OVERDUE", "days_left": -3, "km_left": 1150,
+     "next_due_date": date(2026, 10, 20), "next_due_odometer": 14000, "base_date": date(2026, 8, 20),
+     "base_odometer": 12500, "current_odometer": 12850, "interval_km": 1500},
+    {"vehicle_id": 2, "service_type_name": "Thay dầu động cơ (ô tô)", "status": "OK", "days_left": 102, "km_left": 4600,
+     "next_due_date": date(2027, 2, 2), "next_due_odometer": 49800, "base_date": date(2026, 8, 2),
+     "base_odometer": 44800, "current_odometer": 45200, "interval_km": 5000},
+]
+
 RECENT = [
     {
         "record_id": 3, "vehicle_id": 1, "vehicle_name": "Vision đi làm",
@@ -43,10 +62,16 @@ class FakeCursor:
     def fetchone(self):
         if "count(*) AS n" in self.query:
             return {"n": 3}
+        if "date_trunc('year'" in self.query:
+            return {"total": Decimal(3880000)}
         return {"total": Decimal(0)}
 
     def fetchall(self):
-        return ATTENTION if "v_reminder_status" in self.query else RECENT
+        if "FROM vehicles" in self.query:
+            return VEHICLES
+        if "v_reminder_status" in self.query:
+            return ATTENTION if "status <> 'OK'" in self.query else REMINDERS
+        return RECENT
 
 
 class FakeConnection:
@@ -74,6 +99,21 @@ def test_dashboard_api(monkeypatch):
     assert body["attention_reminders"][0]["days_left"] == -2
     assert body["recent_records"][0]["vehicle_name"] == "Vision đi làm"
     assert Decimal(body["recent_records"][0]["total_cost"]) == 315000
+    assert Decimal(body["cost_this_year"]) == 3880000
+
+
+def test_each_vehicle_card_shows_its_most_urgent_reminder(monkeypatch):
+    monkeypatch.setattr(db.pool, "connection", fake_connection)
+    vision, vios, air_blade = client.get("/api/stats/dashboard").json()["vehicles"]
+    # Vision has an OK and an overdue reminder: the overdue one wins, and its gauge is full
+    assert vision["reminder"]["service_type_name"] == "Thay nhớt máy (xe máy)"
+    assert vision["reminder"]["status"] == "OVERDUE"
+    assert vision["reminder"]["progress"] == 1.0
+    # Vios: 400 of 5000 km and 82 of 184 days used, so the larger share (time) counts
+    assert vios["reminder"]["progress"] == round(82 / 184, 3)
+    # Air Blade has no reminder: the card still shows, without a gauge
+    assert air_blade["reminder"] is None
+    assert air_blade["license_plate"] is None
 
 
 def test_dashboard_api_returns_error_out_when_database_is_down(monkeypatch):
@@ -88,19 +128,20 @@ def test_dashboard_page_needs_no_database(monkeypatch):
     r = client.get("/")
     assert r.status_code == 200
     assert "text/html" in r.headers["content-type"]
-    assert "Nhắc lịch cần chú ý" in r.text
+    assert "Việc nên làm trước" in r.text
+    assert "Xe của bạn" in r.text
     assert f"v{APP_VERSION}" in r.text
 
 
 def test_upcoming_pages_exist():
-    for path in ["/xe", "/loai-dich-vu", "/thong-ke"]:
+    for path in ["/xe", "/xe/1", "/bao-duong/moi", "/bao-duong/3", "/thong-ke", "/loai-dich-vu", "/them"]:
         r = client.get(path)
         assert r.status_code == 200, path
         assert "đang được xây dựng" in r.text
 
 
 def test_static_files_are_served():
-    for path in ["/static/style.css", "/static/app.js", "/static/dashboard.js"]:
+    for path in ["/static/style.css", "/static/app.js", "/static/dashboard.js", "/static/ai_history.js"]:
         assert client.get(path).status_code == 200, path
 
 

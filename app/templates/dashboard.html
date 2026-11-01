@@ -1,47 +1,63 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
-{% block heading %}Dashboard{% endblock %}
-{% block actions %}<a class="btn btn-primary" href="/xe">+ Ghi nhận bảo dưỡng</a>{% endblock %}
+{% block title %}Trang chủ{% endblock %}
+{% block subheading %}<p class="page-sub" id="today"></p>{% endblock %}
+{% block heading %}Trang chủ{% endblock %}
 
 {% block content %}
-<section class="stats" aria-label="Tổng quan">
-  <div class="card stat">
-    <p class="stat-label">Số xe đang dùng</p>
-    <p class="stat-value" id="stat-vehicles">–</p>
+{# Home answers two questions: "does a vehicle need something?" and "how much have I spent?".
+   Everything else is one tap away. dashboard.js fills the blocks from /api/stats/dashboard. #}
+<div class="dash-bar">
+  <span class="dash-status" id="dash-status"><svg class="ic"><use href="#i-check-circle"></use></svg><span>Đang tải…</span></span>
+  <a class="btn btn-secondary" href="/bao-duong/moi"><svg class="ic"><use href="#i-plus"></use></svg>Ghi lần bảo dưỡng</a>
+</div>
+
+<section class="card next-card" id="next-card" aria-labelledby="next-title" hidden>
+  <div class="thumb" id="next-thumb"></div>
+  <div class="next-main">
+    <p class="next-label">Việc nên làm trước</p>
+    <h2 class="next-title" id="next-title"></h2>
+    <p class="muted" id="next-detail"></p>
   </div>
-  <div class="card stat">
-    <p class="stat-label">Quá hạn</p>
-    <p class="stat-value text-bad" id="stat-overdue">–</p>
+  <a class="btn btn-primary btn-big" id="next-action" href="/bao-duong/moi"><svg class="ic"><use href="#i-check"></use></svg>Tôi đã làm việc này</a>
+</section>
+
+<section class="tiles" aria-label="Tổng quan">
+  <button class="card tile" type="button" id="tile-todo">
+    <span class="tile-label">Việc cần làm</span>
+    <span class="tile-value" id="stat-todo">–</span>
+    <span class="tile-more">Xem danh sách<svg class="ic"><use href="#i-chevron-right"></use></svg></span>
+  </button>
+  <a class="card tile" href="/thong-ke">
+    <span class="tile-label" id="stat-cost-label">Chi phí năm nay</span>
+    <span class="tile-value" id="stat-cost">–</span>
+    <span class="tile-more">Xem chi tiết<svg class="ic"><use href="#i-chevron-right"></use></svg></span>
+  </a>
+  <a class="card tile" id="tile-last" href="/xe">
+    <span class="tile-label">Lần bảo dưỡng gần nhất</span>
+    <span class="tile-value" id="stat-last">–</span>
+    <span class="tile-more"><span id="stat-last-more">Xem phiếu</span><svg class="ic"><use href="#i-chevron-right"></use></svg></span>
+  </a>
+</section>
+
+<section aria-labelledby="vehicles-title">
+  <div class="section-head">
+    <h2 id="vehicles-title">Xe của bạn</h2>
+    <a href="/xe">Xem tất cả<svg class="ic"><use href="#i-chevron-right"></use></svg></a>
   </div>
-  <div class="card stat">
-    <p class="stat-label">Sắp đến hạn</p>
-    <p class="stat-value text-warn" id="stat-due-soon">–</p>
-  </div>
-  <div class="card stat">
-    <p class="stat-label">Chi phí tháng này</p>
-    <p class="stat-value" id="stat-cost">–</p>
+  <div class="vehicle-list" id="vehicle-list" style="margin-top:16px">
+    <p class="muted">Đang tải…</p>
   </div>
 </section>
 
-<section class="columns">
-  <div class="card">
-    <h2 class="card-title">Nhắc lịch cần chú ý</h2>
-    <ul class="rows" id="attention-list">
-      <li class="row muted">Đang tải…</li>
-    </ul>
-    <a class="card-link" href="/xe">Xem tất cả nhắc lịch →</a>
-  </div>
-
-  <div class="card">
-    <h2 class="card-title">5 lần bảo dưỡng gần nhất</h2>
-    <ul class="rows" id="recent-list">
-      <li class="row muted">Đang tải…</li>
-    </ul>
-  </div>
-</section>
+<dialog class="dialog" id="todo-dialog" aria-labelledby="todo-title"><div class="dialog-body">
+  <h2 id="todo-title">Việc cần làm</h2>
+  <p class="muted">Việc quá hạn xếp trước. Làm xong thì bấm "Đã làm" để ghi lại, app sẽ tự tính lần tới.</p>
+  <ul class="rows" id="todo-list"></ul>
+  <form method="dialog" class="dialog-actions"><button class="btn btn-secondary">Đóng</button></form>
+</div></dialog>
 {% endblock %}
 
-{% block screen %}S01 · Dashboard · FR-16{% endblock %}
+{% block screen %}S01 · Trang chủ · FR-16{% endblock %}
 
 {% block scripts %}<script src="/static/dashboard.js?v={{ request.app.version }}"></script>{% endblock %}
