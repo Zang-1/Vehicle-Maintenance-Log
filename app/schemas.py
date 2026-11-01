@@ -4,7 +4,7 @@ Each module adds its own models here (VehicleIn/Out for M2, RecordIn for M3, ...
 in its own pull request.
 """
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated
@@ -80,11 +80,34 @@ class DashboardRecord(RecordSummary):
     items_summary: str | None
 
 
+class VehicleReminderSummary(BaseModel):
+    """The one reminder a home-screen vehicle card shows: the most urgent, else the next one due."""
+
+    service_type_name: str
+    status: ReminderStatus
+    days_left: int | None
+    km_left: int | None
+    next_due_date: date | None
+    next_due_odometer: int | None
+    progress: float  # 0..1 share of the interval already used, the larger of time and distance
+
+
+class DashboardVehicle(BaseModel):
+    id: int
+    name: str
+    vehicle_type: str
+    license_plate: str | None
+    current_odometer: int
+    reminder: VehicleReminderSummary | None
+
+
 class DashboardOut(BaseModel):
     vehicle_count: int
     cost_this_month: Decimal
+    cost_this_year: Decimal
     attention_reminders: list[ReminderOut]
     recent_records: list[DashboardRecord]
+    vehicles: list[DashboardVehicle]
 
 
 class DiagnoseIn(BaseModel):
@@ -95,3 +118,16 @@ class DiagnoseIn(BaseModel):
 
 class DiagnoseOut(BaseModel):
     suggestion: str
+
+
+class DiagnosisOut(BaseModel):
+    """One row of the diagnoses table (FR-21): successful calls and failed ones alike."""
+
+    id: int
+    created_at: datetime
+    symptom_text: str
+    status: str  # OK | FAILED
+    ai_suggestion: str | None
+    urgency_level: str | None  # LOW | MEDIUM | HIGH
+    error_code: str | None  # NO_KEY | RATE_LIMITED | TIMEOUT | UPSTREAM_ERROR
+    model: str | None
