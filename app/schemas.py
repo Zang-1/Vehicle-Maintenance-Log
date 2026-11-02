@@ -232,6 +232,31 @@ class ServiceTypeOut(BaseModel):
     is_active: bool
 
 
+class AppliesTo(str, Enum):
+    MOTORBIKE = "MOTORBIKE"
+    CAR = "CAR"
+    ALL = "ALL"
+
+
+class ServiceTypeIn(BaseModel):
+    """FR-12. Only the name is required; an empty interval means "no default" (NULL)."""
+
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    description: Annotated[str, StringConstraints(max_length=255)] | None = None
+    applies_to: AppliesTo = AppliesTo.ALL
+    default_interval_km: Annotated[int, Field(gt=0, le=1_000_000)] | None = None
+    default_interval_months: Annotated[int, Field(gt=0, le=240)] | None = None
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def empty_is_none(cls, value):
+        return blank_to_none(value)
+
+
+class ActiveIn(BaseModel):
+    active: bool = True
+
+
 class ItemIn(BaseModel):
     service_type_id: Annotated[int, Field(gt=0)]
     description: Annotated[str, StringConstraints(max_length=255)] | None = None
