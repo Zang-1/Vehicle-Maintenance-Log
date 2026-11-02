@@ -6,16 +6,17 @@
 {% block actions %}<button class="btn btn-primary" type="button" id="add"><svg class="ic"><use href="#i-plus"></use></svg>Thêm loại việc</button>{% endblock %}
 
 {% block content %}
-{# service_types.js loads GET /api/service-types (?active=true|false) and fills #st-list. Add and edit use the dialog. #}
+{# service_types.js loads GET /api/service-types once, filters in the browser and fills #st-list with a table. #}
 <div class="chips" role="group" aria-label="Lọc loại việc" id="filter">
-  <button class="chip active" type="button" data-filter="active" aria-pressed="true">Đang dùng</button>
+  <button class="chip active" type="button" data-filter="all" aria-pressed="true">Tất cả <span class="cnt" id="count-all">0</span></button>
+  <button class="chip" type="button" data-filter="MOTORBIKE" aria-pressed="false">Xe máy</button>
+  <button class="chip" type="button" data-filter="CAR" aria-pressed="false">Ô tô</button>
+  <button class="chip" type="button" data-filter="active" aria-pressed="false">Đang dùng</button>
   <button class="chip" type="button" data-filter="inactive" aria-pressed="false">Ngừng dùng</button>
-  <button class="chip" type="button" data-filter="all" aria-pressed="false">Tất cả</button>
 </div>
 
-<div id="st-list" aria-live="polite">
-  <div class="card"><div class="skel skel-block"></div></div>
-  <div class="card"><div class="skel skel-block"></div></div>
+<div class="card table-card" id="st-list" aria-live="polite">
+  <div class="skel skel-block"></div>
 </div>
 
 <dialog class="dialog" id="st-dialog" aria-labelledby="st-title"><div class="dialog-body">
@@ -54,6 +55,16 @@
       <button class="btn btn-primary" type="submit" id="st-save"><svg class="ic"><use href="#i-check"></use></svg>Lưu</button>
     </div>
   </form>
+</div></dialog>
+
+<dialog class="dialog" id="st-delete-dialog" aria-labelledby="st-delete-title"><div class="dialog-body">
+  <span class="dialog-icon tone-bad"><svg class="ic"><use href="#i-alert"></use></svg></span>
+  <h2 id="st-delete-title">Xóa loại việc này?</h2>
+  <p class="muted">“<span id="st-delete-name"></span>” chưa được dùng ở đâu nên xóa hẳn được. Không thể hoàn tác.</p>
+  <div class="dialog-actions">
+    <button class="btn btn-secondary" type="button" id="st-delete-cancel">Hủy</button>
+    <button class="btn btn-danger" type="button" id="st-delete-confirm">Xóa</button>
+  </div>
 </div></dialog>
 {% endblock %}
 

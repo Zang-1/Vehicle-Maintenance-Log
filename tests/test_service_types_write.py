@@ -59,3 +59,28 @@ def test_service_types_page_is_real():
     assert response.status_code == 200
     assert "Loại việc bảo dưỡng" in response.text
     assert "đang được xây dựng" not in response.text
+
+def test_delete_unused_service_type(monkeypatch):
+    cursor = use_fake_db(monkeypatch, [
+        ("DELETE FROM service_types", None),
+        ("FROM service_types WHERE id", {**ROW, "used_count": 0}),
+    ])
+    response = client.delete("/api/service-types/7")
+    assert response.status_code == 204
+    assert cursor.calls_matching("DELETE FROM service_types")[0] == {"id": 7}
+
+
+def test_delete_used_service_type_returns_409(monkeypatch):
+    cursor = use_fake_db(monkeypatch, [
+        ("DELETE FROM service_types", None),
+        ("FROM service_types WHERE id", {**ROW, "used_count": 3}),
+    ])
+    response = client.delete("/api/service-types/7")
+    assert response.status_code == 409
+    assert response.json()["error_code"] == "SERVICE_TYPE_IN_USE"
+    assert not cursor.calls_matching("DELETE FROM service_types")
+
+
+def test_delete_missing_service_type_returns_404(monkeypatch):
+    use_fake_db(monkeypatch, [("FROM service_types WHERE id", None)])
+    assert client.delete("/api/service-types/99").status_code == 404

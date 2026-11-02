@@ -1,4 +1,5 @@
-// Loại việc bảo dưỡng (FR-11, FR-12): GET /api/service-types, then add/edit in a dialog, retire instead of delete (BR-09).
+// Loại việc bảo dưỡng (FR-11, FR-12): one table, filtered in the browser.
+// A type that records or reminders use can only be retired; an unused one can be deleted (BR-09).
 (function () {
   "use strict";
 
@@ -6,64 +7,75 @@
   const chips = document.querySelectorAll("#filter .chip");
   const appliesChips = document.querySelectorAll("#applies-chips .chip");
   const dialog = document.getElementById("st-dialog");
+  const deleteDialog = document.getElementById("st-delete-dialog");
   const form = document.getElementById("st-form");
   const formError = document.getElementById("st-error");
   const saveButton = document.getElementById("st-save");
 
   const APPLIES = { ALL: "Mọi loại xe", MOTORBIKE: "Xe máy", CAR: "Ô tô" };
-  const QUERY = { active: "?active=true", inactive: "?active=false", all: "" };
-  const EMPTY = {
-    active: ["Chưa có loại việc nào", "Thêm loại việc đầu tiên để dùng khi ghi bảo dưỡng và đặt nhắc."],
-    inactive: ["Chưa có loại việc nào ngừng dùng", "Loại việc đã ngừng dùng hiện ở đây; lịch sử cũ vẫn giữ nguyên."],
-    all: ["Chưa có loại việc nào", "Thêm loại việc đầu tiên để dùng khi ghi bảo dưỡng và đặt nhắc."],
+  const MATCH = {
+    all: () => true,
+    MOTORBIKE: (t) => t.applies_to !== "CAR",
+    CAR: (t) => t.applies_to !== "MOTORBIKE",
+    active: (t) => t.is_active,
+    inactive: (t) => !t.is_active,
   };
+  const HEADERS = [["Loại việc", ""], ["Áp dụng cho", ""], ["Chu kỳ km", "r"], ["Chu kỳ tháng", "r"], ["Trạng thái", ""], ["", ""]];
 
-  let filter = "active";
+  let types = [];
+  let filter = "all";
   let applies = "ALL";
   let editingId = null;
+  let deleting = null;
 
-  function intervalText(t) {
-    const parts = [];
-    if (t.default_interval_km) parts.push(`${formatNumber(t.default_interval_km)} km`);
-    if (t.default_interval_months) parts.push(`${t.default_interval_months} tháng`);
-    return parts.length ? `Chu kỳ: ${parts.join(" hoặc ")}` : "Chưa đặt chu kỳ";
+  function cell(label, className, ...children) {
+    const td = el("td", className, ...children);
+    td.dataset.label = label; // the phone layout prints it in front of the value
+    return td;
+  }
+
+  function button(label, className, handler) {
+    const node = el("button", `btn btn-sm ${className}`, label);
+    node.type = "button";
+    node.addEventListener("click", handler);
+    return node;
   }
 
   function row(t) {
-    const edit = el("button", "btn btn-secondary", "Sửa");
-    edit.type = "button";
-    edit.addEventListener("click", () => openDialog(t));
-    const toggle = el("button", "btn btn-secondary", t.is_active ? "Ngừng dùng" : "Dùng lại");
-    toggle.type = "button";
-    toggle.addEventListener("click", () => setActive(t));
+    const used = t.used_count ? `Đã dùng ${t.used_count} lần` : "Chưa dùng";
+    const second = t.used_count
+      ? button(t.is_active ? "Ngừng dùng" : "Dùng lại", "btn-ghost", () => setActive(t))
+      : button("Xóa", "btn-ghost text-bad", () => askDelete(t));
     return el(
-      "div",
-      `card st-row${t.is_active ? "" : " is-archived"}`,
-      el(
-        "div",
-        "st-main",
-        el("b", "", t.name),
-        el("span", "row-sub", `${APPLIES[t.applies_to]} · ${intervalText(t)}`),
-        t.description ? el("span", "muted", t.description) : null,
-      ),
-      t.is_active ? null : el("span", "badge badge-neutral", "Ngừng dùng"),
-      el("div", "st-actions", edit, toggle),
+      "tr",
+      "",
+      cell("", "first", el("b", "", t.name), el("span", "sub", [t.description, used].filter(Boolean).join(" · "))),
+      cell("Áp dụng cho", "", el("span", "badge badge-neutral nodot", APPLIES[t.applies_to])),
+      cell("Chu kỳ km", "r num", t.default_interval_km ? `${formatNumber(t.default_interval_km)} km` : "—"),
+      cell("Chu kỳ tháng", "r num", t.default_interval_months ? `${t.default_interval_months} tháng` : "—"),
+      cell("Trạng thái", "", el("span", `badge ${t.is_active ? "badge-ok" : "badge-neutral"}`, t.is_active ? "Đang dùng" : "Ngừng dùng")),
+      cell("", "", el("div", "st-actions", button("Sửa", "btn-ghost", () => openDialog(t)), second)),
     );
   }
 
-  function render(items) {
-    if (!items.length) {
-      const [title, sub] = EMPTY[filter];
-      list.replaceChildren(el("div", "card empty", el("p", "empty-title", title), el("p", "muted", sub)));
+  function render() {
+    document.getElementById("count-all").textContent = types.length;
+    const rows = types.filter(MATCH[filter]);
+    if (!rows.length) {
+      list.replaceChildren(
+        el("div", "empty", icon("wrench"), el("p", "empty-title", "Không có loại việc nào"), el("p", "muted", "Thử đổi bộ lọc hoặc thêm loại việc mới.")),
+      );
       return;
     }
-    list.replaceChildren(...items.map(row));
+    const head = el("thead", "", el("tr", "", ...HEADERS.map(([label, className]) => el("th", className, label))));
+    list.replaceChildren(el("table", "data-table", head, el("tbody", "", ...rows.map(row))));
   }
 
   async function load() {
     document.getElementById("error").hidden = true;
     try {
-      render(await fetchJson(`/api/service-types${QUERY[filter]}`));
+      types = await fetchJson("/api/service-types");
+      render();
     } catch (error) {
       showError(error.message);
       list.replaceChildren(el("p", "muted", "Không tải được danh sách loại việc."));
@@ -74,11 +86,29 @@
     try {
       await VmlForm.sendJson(`/api/service-types/${t.id}/active`, "PATCH", { active: !t.is_active });
       showToast(t.is_active ? "Đã ngừng dùng loại việc này." : "Đã dùng lại loại việc này.");
-      load();
     } catch (error) {
       showError(error.message);
     }
+    load();
   }
+
+  function askDelete(t) {
+    deleting = t;
+    document.getElementById("st-delete-name").textContent = t.name;
+    deleteDialog.showModal();
+  }
+
+  document.getElementById("st-delete-confirm").addEventListener("click", async () => {
+    deleteDialog.close();
+    try {
+      await fetchJson(`/api/service-types/${deleting.id}`, { method: "DELETE" });
+      showToast("Đã xóa loại việc.");
+    } catch (error) {
+      showError(error.message); // e.g. a record started using it meanwhile
+    }
+    load();
+  });
+  document.getElementById("st-delete-cancel").addEventListener("click", () => deleteDialog.close());
 
   function setApplies(value) {
     applies = value;
@@ -153,7 +183,7 @@
       } else if (error.body && Array.isArray(error.body.detail)) {
         VmlForm.showServerError(form, error);
       } else {
-        formError.textContent = error.message; // #error sits behind the modal, so show it inside
+        formError.textContent = error.message; // #error sits behind the dialog, so show it inside
         formError.hidden = false;
       }
     } finally {
@@ -175,7 +205,7 @@
         other.classList.toggle("active", on);
         other.setAttribute("aria-pressed", String(on));
       });
-      load();
+      render();
     }),
   );
 
