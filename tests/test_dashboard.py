@@ -134,10 +134,9 @@ def test_dashboard_page_needs_no_database(monkeypatch):
 
 
 def test_upcoming_pages_exist():
-    for path in ["/thong-ke", "/them"]:
-        r = client.get(path)
-        assert r.status_code == 200, path
-        assert "đang được xây dựng" in r.text
+    r = client.get("/them")
+    assert r.status_code == 200
+    assert "đang được xây dựng" in r.text
 
 
 def test_static_files_are_served():

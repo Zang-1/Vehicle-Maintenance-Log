@@ -1,10 +1,18 @@
 """Dashboard numbers (FR-16). Everything is read from the two views of doc 04."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from psycopg.rows import dict_row
 
 from app import db
-from app.schemas import DashboardOut, DashboardVehicle, VehicleReminderSummary
+from app.schemas import (
+    CostByType,
+    CostByVehicle,
+    CostMonth,
+    CostsOut,
+    DashboardOut,
+    DashboardVehicle,
+    VehicleReminderSummary,
+)
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
@@ -120,4 +128,69 @@ def dashboard():
         attention_reminders=attention,
         recent_records=recent,
         vehicles=vehicle_cards(vehicles, reminders),
+    )
+
+
+# ---- Chi phí (FR-17, Khoa): a year or all time, all vehicles or one ----
+
+COSTS_FILTER = """
+(%(year)s::int IS NULL OR extract(year FROM service_date) = %(year)s::int)
+AND (%(vehicle_id)s::bigint IS NULL OR vehicle_id = %(vehicle_id)s::bigint)
+"""
+
+COSTS_TOTAL_SQL = f"""
+SELECT coalesce(sum(total_cost), 0) AS grand_total, count(*) AS record_count,
+       coalesce(sum(item_count), 0)::int AS item_count
+FROM v_record_totals
+WHERE {COSTS_FILTER}
+"""
+
+COSTS_MONTHLY_SQL = f"""
+SELECT extract(month FROM service_date)::int AS month, sum(total_cost) AS total
+FROM v_record_totals
+WHERE {COSTS_FILTER}
+GROUP BY 1
+ORDER BY 1
+"""
+
+COSTS_BY_TYPE_SQL = f"""
+SELECT st.id AS service_type_id, st.name AS service_type_name, sum(i.line_total) AS total
+FROM maintenance_items i
+JOIN v_record_totals r ON r.record_id = i.record_id
+JOIN service_types st ON st.id = i.service_type_id
+WHERE {COSTS_FILTER}
+GROUP BY st.id, st.name
+ORDER BY total DESC, st.name
+"""
+
+COSTS_BY_VEHICLE_SQL = f"""
+SELECT v.id AS vehicle_id, v.name AS vehicle_name, v.vehicle_type, v.license_plate,
+       count(*) AS record_count, sum(t.total_cost) AS total
+FROM v_record_totals t
+JOIN vehicles v ON v.id = t.vehicle_id
+WHERE {COSTS_FILTER}
+GROUP BY v.id
+ORDER BY total DESC, v.id
+"""
+
+
+@router.get("/costs", response_model=CostsOut)
+def costs(vehicle_id: int | None = None, year: int | None = Query(default=None, ge=2000, le=2100)):
+    params = {"year": year, "vehicle_id": vehicle_id}
+    with db.pool.connection(timeout=5) as conn:
+        cur = conn.cursor(row_factory=dict_row)
+        totals = cur.execute(COSTS_TOTAL_SQL, params).fetchone()
+        monthly = cur.execute(COSTS_MONTHLY_SQL, params).fetchall()
+        by_type = cur.execute(COSTS_BY_TYPE_SQL, params).fetchall()
+        by_vehicle = cur.execute(COSTS_BY_VEHICLE_SQL, params).fetchall()
+    found = {row["month"]: row["total"] for row in monthly}
+    return CostsOut(
+        year=year,
+        vehicle_id=vehicle_id,
+        total=totals["grand_total"],
+        record_count=totals["record_count"],
+        item_count=totals["item_count"],
+        months=[CostMonth(month=m, total=found.get(m, 0)) for m in range(1, 13)],
+        by_service_type=[CostByType(**row) for row in by_type],
+        by_vehicle=[CostByVehicle(**row) for row in by_vehicle],
     )

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Chi phí{% endblock %}
+{% block subheading %}<p class="page-sub">Bạn đã chi bao nhiêu cho việc bảo dưỡng</p>{% endblock %}
+{% block heading %}Chi phí{% endblock %}
+
+{% block content %}
+{# costs.js loads GET /api/stats/costs?year=&vehicle_id= and fills #cost-body. #}
+<div class="cost-filters">
+  <div class="chips" role="group" aria-label="Khoảng thời gian" id="range">
+    <button class="chip active" type="button" data-range="year" aria-pressed="true">Năm nay</button>
+    <button class="chip" type="button" data-range="all" aria-pressed="false">Toàn bộ</button>
+  </div>
+  <div class="field cost-vehicle-filter">
+    <label class="field-label" for="f-vehicle">Xe</label>
+    <select class="control" id="f-vehicle"><option value="">Tất cả các xe</option></select>
+  </div>
+</div>
+
+<div id="cost-body" aria-live="polite">
+  <div class="card">
+    <div class="skel skel-block"></div> </div>
+</div>
+{% endblock %}
+
+{% block screen %}Chi phí · FR-17{% endblock %}
+
+{% block scripts %}
+<script src="/static/costs.js?v={{ request.app.version }}"></script>
+{% endblock %}
