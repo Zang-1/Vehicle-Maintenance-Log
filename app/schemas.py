@@ -322,3 +322,39 @@ class RecordOut(RecordSummary):
     license_plate: str | None
     note: str | None
     items: list[ItemOut]
+
+
+# ---------- M6 Chi phí (Khoa) ----------
+
+
+class CostMonth(BaseModel):
+    month: int  # 1..12
+    total: Decimal
+
+
+class CostByType(BaseModel):
+    service_type_id: int
+    service_type_name: str
+    total: Decimal
+
+
+class CostByVehicle(BaseModel):
+    vehicle_id: int
+    vehicle_name: str
+    vehicle_type: VehicleType
+    license_plate: str | None
+    record_count: int
+    total: Decimal
+
+
+class CostsOut(BaseModel):
+    """FR-17. year None = all time; vehicle_id None = all vehicles."""
+
+    year: int | None
+    vehicle_id: int | None
+    total: Decimal
+    record_count: int
+    item_count: int
+    months: list[CostMonth]  # always 12 entries; for all time, the same month of every year is added up
+    by_service_type: list[CostByType]
+    by_vehicle: list[CostByVehicle]

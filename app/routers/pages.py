@@ -67,11 +67,16 @@ def record_edit_page(request: Request, record_id: int):
 @router.get("/loai-dich-vu")
 def service_types_page(request: Request):
     return templates.TemplateResponse(request, "service_types.html", {"active": "loai-dich-vu"})
+
+
+# Costs (M6, Khoa)
+@router.get("/thong-ke")
+def costs_page(request: Request):
+    return templates.TemplateResponse(request, "costs.html", {"active": "thong-ke"})
 # builds it, so links from the home screen never end on a 404.
 # path -> (menu key, title, screen in ui-design.html, owner)
 UPCOMING = {
-    "/thong-ke": ("thong-ke", "Chi phí", "Chi phí", "Khoa"),
-   
+
     "/them": ("them", "Thêm", "Thêm", "Khoa"),
 }
 
