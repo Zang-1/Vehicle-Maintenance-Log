@@ -63,11 +63,15 @@ def record_edit_page(request: Request, record_id: int):
 
 
 # Screens built by teammates (docs/PHAN-CONG.md §2.1). Until then the link opens a page that says who
+# Service types (M4, Khoa)
+@router.get("/loai-dich-vu")
+def service_types_page(request: Request):
+    return templates.TemplateResponse(request, "service_types.html", {"active": "loai-dich-vu"})
 # builds it, so links from the home screen never end on a 404.
 # path -> (menu key, title, screen in ui-design.html, owner)
 UPCOMING = {
     "/thong-ke": ("thong-ke", "Chi phí", "Chi phí", "Khoa"),
-    "/loai-dich-vu": ("loai-dich-vu", "Loại việc bảo dưỡng", "Loại việc bảo dưỡng", "Khoa"),
+   
     "/them": ("them", "Thêm", "Thêm", "Khoa"),
 }
 
