@@ -690,6 +690,28 @@ select.control { cursor: pointer; }
   .summary-card .btn { width: 100%; }
 }
 
-.st-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-.st-main { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
-.st-actions { display: flex; gap: 8px; }
+/* =====================================================================
+   Loại việc bảo dưỡng (Khoa, M4)
+   ===================================================================== */
+.chip .cnt { margin-left: 2px; font-size: 11.5px; opacity: 0.7; }
+.table-card { padding: 8px 8px 4px; overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; font-weight: 600; text-align: left; white-space: nowrap; color: var(--text-muted); }
+.data-table td { padding: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 14px; }
+.data-table tr:last-child td { border-bottom: 0; }
+.data-table .r { text-align: right; }
+.data-table .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.data-table .first b { font-weight: 600; overflow-wrap: anywhere; }
+.data-table .sub { display: block; font-size: 12.5px; color: var(--text-muted); }
+.st-actions { display: flex; justify-content: flex-end; gap: 4px; flex-wrap: wrap; }
+
+@media (max-width: 767px) {
+  .data-table thead { display: none; }
+  .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+  .data-table tr { padding: 10px 6px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child { border-bottom: 0; }
+  .data-table td { padding: 3px 0; border: 0; text-align: left; }
+  .data-table td[data-label]:not([data-label=""]) { display: flex; justify-content: space-between; gap: 12px; }
+  .data-table td[data-label]:not([data-label=""])::before { content: attr(data-label); color: var(--text-muted); }
+  .st-actions { justify-content: flex-start; padding-top: 6px; }
+}

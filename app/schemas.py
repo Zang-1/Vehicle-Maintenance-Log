@@ -230,6 +230,7 @@ class ServiceTypeOut(BaseModel):
     default_interval_km: int | None
     default_interval_months: int | None
     is_active: bool
+    used_count: int = 0
 
 
 class AppliesTo(str, Enum):
