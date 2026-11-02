@@ -689,3 +689,7 @@ select.control { cursor: pointer; }
   .record-side { flex-basis: 100%; }
   .summary-card .btn { width: 100%; }
 }
+
+.st-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.st-main { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
+.st-actions { display: flex; gap: 8px; }

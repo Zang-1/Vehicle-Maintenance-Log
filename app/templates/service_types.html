@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Loại việc bảo dưỡng{% endblock %}
+{% block subheading %}<p class="page-sub">Danh mục dùng khi ghi lần bảo dưỡng và đặt nhắc</p>{% endblock %}
+{% block heading %}Loại việc bảo dưỡng{% endblock %}
+{% block actions %}<button class="btn btn-primary" type="button" id="add"><svg class="ic"><use href="#i-plus"></use></svg>Thêm loại việc</button>{% endblock %}
+
+{% block content %}
+{# service_types.js loads GET /api/service-types (?active=true|false) and fills #st-list. Add and edit use the dialog. #}
+<div class="chips" role="group" aria-label="Lọc loại việc" id="filter">
+  <button class="chip active" type="button" data-filter="active" aria-pressed="true">Đang dùng</button>
+  <button class="chip" type="button" data-filter="inactive" aria-pressed="false">Ngừng dùng</button>
+  <button class="chip" type="button" data-filter="all" aria-pressed="false">Tất cả</button>
+</div>
+
+<div id="st-list" aria-live="polite">
+  <div class="card"><div class="skel skel-block"></div></div>
+  <div class="card"><div class="skel skel-block"></div></div>
+</div>
+
+<dialog class="dialog" id="st-dialog" aria-labelledby="st-title"><div class="dialog-body">
+  <h2 id="st-title">Thêm loại việc</h2>
+  <form id="st-form" novalidate>
+    <div class="field" data-field="applies_to">
+      <span class="field-label" id="applies-label">Áp dụng cho</span>
+      <div class="chips" role="group" aria-labelledby="applies-label" id="applies-chips">
+        <button class="chip active" type="button" data-applies="ALL" aria-pressed="true">Mọi loại xe</button>
+        <button class="chip" type="button" data-applies="MOTORBIKE" aria-pressed="false">Xe máy</button>
+        <button class="chip" type="button" data-applies="CAR" aria-pressed="false">Ô tô</button>
+      </div>
+    </div>
+    <div class="field" data-field="name">
+      <label class="field-label" for="f-name">Tên loại việc <span class="req">*</span></label>
+      <input class="control" id="f-name" maxlength="100" autocomplete="off" placeholder="Ví dụ: Thay nhớt">
+    </div>
+    <div class="field" data-field="description">
+      <label class="field-label" for="f-desc">Mô tả</label>
+      <input class="control" id="f-desc" maxlength="255" autocomplete="off">
+    </div>
+    <div class="grid-2">
+      <div class="field" data-field="default_interval_km">
+        <label class="field-label" for="f-km">Chu kỳ mặc định (km)</label>
+        <div class="input-wrap"><input class="control" id="f-km" inputmode="numeric" autocomplete="off" placeholder="2.000"><span class="suffix">km</span></div>
+      </div>
+      <div class="field" data-field="default_interval_months">
+        <label class="field-label" for="f-months">Chu kỳ mặc định (tháng)</label>
+        <div class="input-wrap"><input class="control" id="f-months" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="3"><span class="suffix">tháng</span></div>
+      </div>
+    </div>
+    <p class="field-help">Chu kỳ chỉ là gợi ý khi đặt nhắc; để trống nếu không cố định.</p>
+    <p class="field-error" id="st-error" role="alert" hidden></p>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" type="button" id="st-cancel">Hủy</button>
+      <button class="btn btn-primary" type="submit" id="st-save"><svg class="ic"><use href="#i-check"></use></svg>Lưu</button>
+    </div>
+  </form>
+</div></dialog>
+{% endblock %}
+
+{% block screen %}Loại việc bảo dưỡng · FR-11, FR-12{% endblock %}
+
+{% block scripts %}
+<script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/service_types.js?v={{ request.app.version }}"></script>
+{% endblock %}
