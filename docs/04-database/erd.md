@@ -15,7 +15,9 @@ File đi kèm (hai file SQL nằm ở thư mục `db/` ở gốc repo, nơi Comp
 
 | Bảng | Ý nghĩa | FR |
 |---|---|---|
-| `service_types` | Danh mục loại dịch vụ, có chu kỳ mặc định | FR-11, FR-12 |
+| `users` | Tài khoản: email, tên hiển thị, mật khẩu đã băm | FR-23, FR-24 |
+| `sessions` | Phiên đăng nhập; chỉ lưu sha256 của token trong cookie | FR-24 |
+| `service_types` | Danh mục loại dịch vụ, có chu kỳ mặc định. `user_id` NULL = loại mặc định dùng chung | FR-11, FR-12, FR-25 |
 | `vehicles` | Xe | FR-01 → FR-05 |
 | `maintenance_records` | Một lần bảo dưỡng | FR-06 → FR-09 |
 | `maintenance_items` | Hạng mục trong một lần bảo dưỡng | FR-06, FR-08 |
@@ -28,6 +30,10 @@ Endpoint `/health/db` kiểm tra database bằng `SELECT count(*) FROM vehicles`
 
 ```mermaid
 erDiagram
+    users ||--o{ sessions : "đăng nhập"
+    users ||--o{ vehicles : "sở hữu"
+    users ||--o{ diagnoses : "hỏi AI"
+    users |o--o{ service_types : "tự thêm"
     vehicles ||--o{ maintenance_records : "có"
     vehicles ||--o{ reminders : "có"
     vehicles |o--o{ diagnoses : "được chẩn đoán"
@@ -108,6 +114,9 @@ erDiagram
 | Quan hệ | Bản số | Khi xóa bản ghi cha | Lý do |
 |---|---|---|---|
 | vehicles → maintenance_records | 1 – n | **RESTRICT** | Xe đã có lịch sử không xóa hẳn được, chỉ lưu trữ (BR-09) |
+| users → vehicles, diagnoses | 1 – n | (không xóa tài khoản) | FR-25: mọi truy vấn lọc theo `user_id` của người đang đăng nhập |
+| users → sessions | 1 – n | CASCADE | |
+| users → service_types | 0..1 – n | (không xóa tài khoản) | NULL = loại mặc định, chỉ đọc |
 | vehicles → reminders | 1 – n | CASCADE | Nhắc lịch không có ý nghĩa khi không còn xe |
 | vehicles → diagnoses | 0..1 – n | SET NULL | Giữ lịch sử chẩn đoán |
 | maintenance_records → maintenance_items | 1 – 1..n | CASCADE | Xóa lần bảo dưỡng thì xóa luôn hạng mục. "Ít nhất 1 hạng mục" kiểm tra ở app (BR-04) |
@@ -118,12 +127,27 @@ erDiagram
 
 Quy ước: khóa chính `id bigint GENERATED ALWAYS AS IDENTITY`, khóa ngoại `<bảng>_id`, thời gian `timestamptz` (Supabase lưu UTC), tiền VNĐ dạng `numeric` (không dùng `float` để tránh sai số). Giá trị liệt kê dùng `text` + `CHECK ... IN (...)` thay vì `CREATE TYPE`, vì `CREATE TYPE` không có `IF NOT EXISTS` nên script sẽ không chạy lại được.
 
+### 4.0. `users` và `sessions` (FR-23 → FR-25)
+
+| Cột | Kiểu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| users.id | bigint | PK, identity | |
+| users.email | text | NOT NULL, UNIQUE, chữ thường | BR-11 |
+| users.display_name | text | NOT NULL, 1–60 ký tự | Hiện ở menu |
+| users.password_hash | text | NOT NULL | `scrypt$<salt>$<hash>`; `!` = tài khoản dùng thử, không đăng nhập bằng mật khẩu |
+| sessions.token_hash | text | PK | sha256 của token trong cookie `vml_session` (HttpOnly, SameSite=Lax) |
+| sessions.user_id | bigint | FK → users, CASCADE | |
+| sessions.expires_at | timestamptz | NOT NULL | 30 ngày sau khi đăng nhập |
+
+`schema.sql` tạo sẵn tài khoản dùng thử `demo@sobaoduong.local`; dữ liệu mẫu ở `seed.sql` thuộc tài khoản này. Với database tạo trước khi có tài khoản, `schema.sql` thêm cột `user_id` và gán dữ liệu cũ cho tài khoản dùng thử, nên chạy lại `schema.sql` là nâng cấp xong.
+
 ### 4.1. `service_types`
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
 | id | bigint | PK, identity | |
-| name | text | NOT NULL, UNIQUE, 1–100 ký tự | Ví dụ "Thay nhớt máy (xe máy)" |
+| user_id | bigint | FK → users, có thể NULL | NULL = loại mặc định (mọi người thấy, không ai sửa); có giá trị = loại riêng |
+| name | text | NOT NULL, UNIQUE (user_id, name), 1–100 ký tự | Ví dụ "Thay nhớt máy (xe máy)". App còn chặn tên riêng trùng tên loại mặc định |
 | description | text | | |
 | applies_to | text | NOT NULL, mặc định 'ALL', ∈ {MOTORBIKE, CAR, ALL} | Loại xe áp dụng |
 | default_interval_km | integer | > 0, có thể NULL | Chu kỳ khuyến nghị (km) |
@@ -196,6 +220,7 @@ Quy ước: khóa chính `id bigint GENERATED ALWAYS AS IDENTITY`, khóa ngoại
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |---|---|---|---|
 | id | bigint | PK | |
+| user_id | bigint | NOT NULL, FK → users | Người hỏi (FR-25) |
 | vehicle_id | bigint | FK → vehicles, có thể NULL | Xe được hỏi (không bắt buộc) |
 | symptom_text | text | NOT NULL, 10–1.000 ký tự | Triệu chứng người dùng nhập |
 | status | text | NOT NULL, ∈ {OK, FAILED} | |
@@ -227,6 +252,9 @@ Ngoài khóa chính và các ràng buộc UNIQUE (PostgreSQL tự tạo index):
 | `maintenance_items (record_id)` | Lấy hạng mục của một lần bảo dưỡng, tính tổng chi phí |
 | `maintenance_items (service_type_id)` | Thống kê theo loại dịch vụ; tìm lần làm gần nhất cùng loại |
 | `diagnoses (created_at DESC)` | Lịch sử chẩn đoán mới nhất |
+| `diagnoses (user_id, created_at DESC)` | Lịch sử chẩn đoán của một người |
+| `vehicles (user_id)`, UNIQUE `vehicles (user_id, license_plate)` | Xe của một người; biển số không trùng trong xe của một người (BR-01) |
+| `sessions (user_id)` | Dọn phiên hết hạn của một người |
 
 PostgreSQL không tự tạo index cho cột khóa ngoại (khác MySQL), nên hai index trên `maintenance_items` phải tạo tay.
 

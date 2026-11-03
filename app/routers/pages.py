@@ -1,13 +1,18 @@
-"""HTML pages (doc 07: router pages). Each page is a Jinja2 shell; app.js loads the data from /api/*."""
+"""HTML pages (doc 07: router pages). Each page is a Jinja2 shell; app.js loads the data from /api/*.
+
+Every page here needs a signed-in user (page_user): without one, main.py redirects to /dang-nhap.
+"""
 
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
+
+from app.auth import page_user
 
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
-router = APIRouter(include_in_schema=False)
+router = APIRouter(include_in_schema=False, dependencies=[Depends(page_user)])
 
 
 @router.get("/")

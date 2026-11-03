@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query
 from psycopg.rows import dict_row
 
 from app import db
+from app.auth import CurrentUser
 from app.schemas import (
     CostByType,
     CostByVehicle,
@@ -16,18 +17,20 @@ from app.schemas import (
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
-VEHICLE_COUNT_SQL = "SELECT count(*) AS n FROM vehicles WHERE NOT is_archived"
+VEHICLE_COUNT_SQL = "SELECT count(*) AS n FROM vehicles WHERE user_id = %(uid)s AND NOT is_archived"
 
 COST_THIS_MONTH_SQL = """
 SELECT coalesce(sum(total_cost), 0) AS total
 FROM v_record_totals
 WHERE service_date >= date_trunc('month', current_date)
+  AND vehicle_id IN (SELECT id FROM vehicles WHERE user_id = %(uid)s)
 """
 
 COST_THIS_YEAR_SQL = """
 SELECT coalesce(sum(total_cost), 0) AS total
 FROM v_record_totals
 WHERE service_date >= date_trunc('year', current_date)
+  AND vehicle_id IN (SELECT id FROM vehicles WHERE user_id = %(uid)s)
 """
 
 ATTENTION_SQL = """
@@ -36,6 +39,7 @@ SELECT reminder_id, vehicle_id, vehicle_name, service_type_id, service_type_name
        next_due_date, next_due_odometer, days_left, km_left, is_active, status
 FROM v_reminder_status
 WHERE is_active AND status <> 'OK'
+  AND vehicle_id IN (SELECT id FROM vehicles WHERE user_id = %(uid)s)
 ORDER BY (status = 'OVERDUE') DESC, days_left NULLS LAST, km_left NULLS LAST
 """
 
@@ -48,6 +52,7 @@ SELECT t.record_id, t.vehicle_id, v.name AS vehicle_name, t.service_date, t.odom
          WHERE i.record_id = t.record_id) AS items_summary
 FROM v_record_totals t
 JOIN vehicles v ON v.id = t.vehicle_id
+WHERE v.user_id = %(uid)s
 ORDER BY t.service_date DESC, t.record_id DESC
 LIMIT 5
 """
@@ -55,7 +60,7 @@ LIMIT 5
 VEHICLES_SQL = """
 SELECT id, name, vehicle_type, license_plate, current_odometer
 FROM vehicles
-WHERE NOT is_archived
+WHERE user_id = %(uid)s AND NOT is_archived
 ORDER BY id
 """
 
@@ -63,7 +68,7 @@ ACTIVE_REMINDERS_SQL = """
 SELECT vehicle_id, service_type_name, status, days_left, km_left,
        next_due_date, next_due_odometer, base_date, base_odometer, current_odometer, interval_km
 FROM v_reminder_status
-WHERE is_active
+WHERE is_active AND vehicle_id IN (SELECT id FROM vehicles WHERE user_id = %(uid)s)
 """
 
 STATUS_RANK = {"OVERDUE": 0, "DUE_SOON": 1, "OK": 2}
@@ -111,16 +116,17 @@ def vehicle_cards(vehicles: list[dict], reminders: list[dict]) -> list[Dashboard
 
 
 @router.get("/dashboard", response_model=DashboardOut)
-def dashboard():
+def dashboard(user: CurrentUser):
+    mine = {"uid": user["id"]}
     with db.pool.connection(timeout=5) as conn:
         cur = conn.cursor(row_factory=dict_row)
-        vehicle_count = cur.execute(VEHICLE_COUNT_SQL).fetchone()["n"]
-        cost_this_month = cur.execute(COST_THIS_MONTH_SQL).fetchone()["total"]
-        cost_this_year = cur.execute(COST_THIS_YEAR_SQL).fetchone()["total"]
-        attention = cur.execute(ATTENTION_SQL).fetchall()
-        recent = cur.execute(RECENT_RECORDS_SQL).fetchall()
-        vehicles = cur.execute(VEHICLES_SQL).fetchall()
-        reminders = cur.execute(ACTIVE_REMINDERS_SQL).fetchall()
+        vehicle_count = cur.execute(VEHICLE_COUNT_SQL, mine).fetchone()["n"]
+        cost_this_month = cur.execute(COST_THIS_MONTH_SQL, mine).fetchone()["total"]
+        cost_this_year = cur.execute(COST_THIS_YEAR_SQL, mine).fetchone()["total"]
+        attention = cur.execute(ATTENTION_SQL, mine).fetchall()
+        recent = cur.execute(RECENT_RECORDS_SQL, mine).fetchall()
+        vehicles = cur.execute(VEHICLES_SQL, mine).fetchall()
+        reminders = cur.execute(ACTIVE_REMINDERS_SQL, mine).fetchall()
     return DashboardOut(
         vehicle_count=vehicle_count,
         cost_this_month=cost_this_month,
@@ -136,6 +142,7 @@ def dashboard():
 COSTS_FILTER = """
 (%(year)s::int IS NULL OR extract(year FROM service_date) = %(year)s::int)
 AND (%(vehicle_id)s::bigint IS NULL OR vehicle_id = %(vehicle_id)s::bigint)
+AND vehicle_id IN (SELECT id FROM vehicles WHERE user_id = %(uid)s)
 """
 
 COSTS_TOTAL_SQL = f"""
@@ -175,8 +182,8 @@ ORDER BY total DESC, v.id
 
 
 @router.get("/costs", response_model=CostsOut)
-def costs(vehicle_id: int | None = None, year: int | None = Query(default=None, ge=2000, le=2100)):
-    params = {"year": year, "vehicle_id": vehicle_id}
+def costs(user: CurrentUser, vehicle_id: int | None = None, year: int | None = Query(default=None, ge=2000, le=2100)):
+    params = {"year": year, "vehicle_id": vehicle_id, "uid": user["id"]}
     with db.pool.connection(timeout=5) as conn:
         cur = conn.cursor(row_factory=dict_row)
         totals = cur.execute(COSTS_TOTAL_SQL, params).fetchone()

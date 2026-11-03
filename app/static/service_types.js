@@ -54,7 +54,10 @@
       cell("Chu kỳ km", "r num", t.default_interval_km ? `${formatNumber(t.default_interval_km)} km` : "—"),
       cell("Chu kỳ tháng", "r num", t.default_interval_months ? `${t.default_interval_months} tháng` : "—"),
       cell("Trạng thái", "", el("span", `badge ${t.is_active ? "badge-ok" : "badge-neutral"}`, t.is_active ? "Đang dùng" : "Ngừng dùng")),
-      cell("", "", el("div", "st-actions", button("Sửa", "btn-ghost", () => openDialog(t)), second)),
+      // a default type is shared by everyone, so only the user's own types can be changed
+      cell("", "", t.is_builtin
+        ? el("div", "st-actions", el("span", "badge badge-neutral nodot", "Mặc định"))
+        : el("div", "st-actions", button("Sửa", "btn-ghost", () => openDialog(t)), second)),
     );
   }
 

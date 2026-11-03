@@ -121,6 +121,10 @@ async function fetchJson(url, options) {
   } catch {
     // not JSON (e.g. a proxy error page): keep body null
   }
+  if (response.status === 401 && body && body.error_code === "NOT_SIGNED_IN") {
+    // the session ended (signed out in another tab, or 30 days passed): sign in again, then come back here
+    location.href = `/dang-nhap?next=${encodeURIComponent(location.pathname + location.search)}`;
+  }
   if (!response.ok) {
     const error = new Error(body && body.message ? body.message : `Máy chủ báo lỗi ${response.status}.`);
     error.status = response.status;
@@ -165,6 +169,16 @@ document.querySelectorAll("[data-theme-toggle]").forEach((button) =>
       localStorage.setItem("vml-theme", next);
     } catch {
       // private mode: the choice lasts until the page closes
+    }
+  }),
+);
+
+document.querySelectorAll("[data-logout]").forEach((button) =>
+  button.addEventListener("click", async () => {
+    try {
+      await fetchJson("/api/auth/logout", { method: "POST" });
+    } finally {
+      location.href = "/dang-nhap";
     }
   }),
 );

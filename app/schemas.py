@@ -48,6 +48,32 @@ class ErrorOut(BaseModel):
     message: str
 
 
+# ---------- Tài khoản (FR-23, FR-24) ----------
+
+Email = Annotated[
+    str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=3, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+]
+
+
+class RegisterIn(BaseModel):
+    """BR-11 one account per email (lower case), BR-12 password of 8 to 128 characters."""
+
+    email: Email
+    display_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+    password: Annotated[str, StringConstraints(min_length=8, max_length=128)]
+
+
+class LoginIn(BaseModel):
+    email: Email
+    password: Annotated[str, StringConstraints(min_length=1, max_length=128)]
+
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    display_name: str
+
+
 class ReminderStatus(str, Enum):
     OK = "OK"
     DUE_SOON = "DUE_SOON"
@@ -231,6 +257,7 @@ class ServiceTypeOut(BaseModel):
     default_interval_months: int | None
     is_active: bool
     used_count: int = 0
+    is_builtin: bool = False  # a default type: everyone sees it, nobody edits it
 
 
 class AppliesTo(str, Enum):

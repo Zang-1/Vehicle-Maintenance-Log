@@ -19,17 +19,22 @@ VALUES
   ('Bảo dưỡng định kỳ tổng quát',  'Gói bảo dưỡng định kỳ theo khuyến nghị hãng',   'ALL',       10000, 6),
   ('Vệ sinh nồi / dây curoa',      'Vệ sinh bộ nồi, kiểm tra dây curoa xe tay ga',  'MOTORBIKE', 8000,  12),
   ('Sửa chữa khác',                'Công việc không nằm trong danh mục',            'ALL',       NULL,  NULL)
-ON CONFLICT (name) DO NOTHING;
+ON CONFLICT (user_id, name) DO NOTHING;
 
 -- -------------------------------------------------------------
 -- Xe
 -- -------------------------------------------------------------
-INSERT INTO vehicles (name, vehicle_type, brand, model, manufacture_year, license_plate, current_odometer, purchase_date)
-VALUES
+-- Xe mẫu thuộc tài khoản dùng thử (schema.sql tạo tài khoản này)
+INSERT INTO vehicles (user_id, name, vehicle_type, brand, model, manufacture_year, license_plate, current_odometer, purchase_date)
+SELECT u.id, x.name, x.vehicle_type, x.brand, x.model, x.manufacture_year, x.license_plate, x.current_odometer, x.purchase_date::date
+FROM (VALUES
   ('Vision đi làm', 'MOTORBIKE', 'Honda',  'Vision',        2022, '59X1-123.45', 12850, '2022-03-15'),
   ('Vios gia đình', 'CAR',       'Toyota', 'Vios',          2020, '51H-678.90',  45200, '2020-08-01'),
   ('Air Blade',     'MOTORBIKE', 'Honda',  'Air Blade 125', 2021, '59P2-456.78', 20300, '2021-05-20')
-ON CONFLICT (license_plate) DO NOTHING;
+) AS x(name, vehicle_type, brand, model, manufacture_year, license_plate, current_odometer, purchase_date)
+CROSS JOIN users u
+WHERE u.email = 'demo@sobaoduong.local'
+ON CONFLICT (user_id, license_plate) DO NOTHING;
 
 -- -------------------------------------------------------------
 -- Lần bảo dưỡng
@@ -72,7 +77,7 @@ JOIN vehicles v            ON v.license_plate = x.plate
 JOIN maintenance_records r ON r.vehicle_id = v.id
                           AND r.service_date = x.service_date::date
                           AND r.odometer = x.odometer
-JOIN service_types st      ON st.name = x.service_type
+JOIN service_types st      ON st.name = x.service_type AND st.user_id IS NULL
 WHERE NOT EXISTS (
   SELECT 1 FROM maintenance_items i
   WHERE i.record_id = r.id AND i.description = x.description
@@ -91,14 +96,14 @@ FROM (VALUES
   ('59P2-456.78', 'Thay nhớt máy (xe máy)',      1500,  2,  '2026-01-01', 18000)
 ) AS x(plate, service_type, interval_km, interval_months, start_date, start_odometer)
 JOIN vehicles v       ON v.license_plate = x.plate
-JOIN service_types st ON st.name = x.service_type
+JOIN service_types st ON st.name = x.service_type AND st.user_id IS NULL
 ON CONFLICT (vehicle_id, service_type_id) DO NOTHING;
 
 -- -------------------------------------------------------------
 -- Lịch sử chẩn đoán AI: 1 lần thành công, 1 lần bị 429
 -- -------------------------------------------------------------
-INSERT INTO diagnoses (vehicle_id, symptom_text, status, ai_suggestion, urgency_level, suggested_service_type_id, error_code, model, created_at)
-SELECT v.id, x.symptom_text, x.status, x.ai_suggestion, x.urgency_level, st.id, x.error_code, x.model, x.created_at::timestamptz
+INSERT INTO diagnoses (user_id, vehicle_id, symptom_text, status, ai_suggestion, urgency_level, suggested_service_type_id, error_code, model, created_at)
+SELECT v.user_id, v.id, x.symptom_text, x.status, x.ai_suggestion, x.urgency_level, st.id, x.error_code, x.model, x.created_at::timestamptz
 FROM (VALUES
   ('59X1-123.45', 'Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu', 'OK',
    'Má phanh trước có thể đã mòn hoặc bám bẩn. Nên kiểm tra độ dày má phanh và dầu phanh trong tuần này.',
@@ -107,7 +112,7 @@ FROM (VALUES
    NULL, NULL, NULL, 'RATE_LIMITED', 'gemini-flash', '2026-10-16 20:05:00+07')
 ) AS x(plate, symptom_text, status, ai_suggestion, urgency_level, service_type, error_code, model, created_at)
 JOIN vehicles v ON v.license_plate = x.plate
-LEFT JOIN service_types st ON st.name = x.service_type
+LEFT JOIN service_types st ON st.name = x.service_type AND st.user_id IS NULL
 WHERE NOT EXISTS (
   SELECT 1 FROM diagnoses d WHERE d.symptom_text = x.symptom_text AND d.created_at = x.created_at::timestamptz
 );

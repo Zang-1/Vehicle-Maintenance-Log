@@ -1,0 +1,28 @@
+{% extends "_auth.html" %}
+
+{% block title %}Đăng nhập{% endblock %}
+
+{% block content %}
+<div>
+  <h1 class="auth-title">Đăng nhập</h1>
+  <p class="muted">Xe và lịch sử bảo dưỡng của bạn chỉ mình bạn thấy.</p>
+</div>
+
+<form class="auth-form" id="auth-form" data-url="/api/auth/login" data-next="{{ next }}" novalidate>
+  <div class="field">
+    <label class="field-label" for="f-email">Email</label>
+    <input class="control" id="f-email" name="email" type="email" autocomplete="email" required autofocus>
+  </div>
+  <div class="field">
+    <label class="field-label" for="f-password">Mật khẩu</label>
+    <input class="control" id="f-password" name="password" type="password" autocomplete="current-password" required>
+  </div>
+  <p class="form-alert" id="auth-error" role="alert" hidden></p>
+  <button class="btn btn-primary btn-big" type="submit">Đăng nhập</button>
+</form>
+
+<div class="auth-or"><span>hoặc</span></div>
+<button class="btn btn-big auth-demo" type="button" id="demo-btn" data-next="{{ next }}">Dùng thử với dữ liệu mẫu</button>
+
+<p class="auth-switch">Chưa có tài khoản? <a href="/dang-ky{{ '?next=' ~ (next | urlencode) if next != '/' else '' }}">Đăng ký</a></p>
+{% endblock %}

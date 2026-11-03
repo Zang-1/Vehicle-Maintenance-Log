@@ -1,25 +1,8 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% include "_head.html" %}
   <title>{% block title %}{% endblock %} · Sổ Bảo Dưỡng Xe</title>
-  {# Set the theme before the first paint so a dark-mode user never sees a white flash #}
-  <script>
-    (function () {
-      var theme = null;
-      try { theme = localStorage.getItem("vml-theme"); } catch (e) {}
-      if (theme !== "light" && theme !== "dark") {
-        theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      }
-      document.documentElement.dataset.theme = theme;
-    })();
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
-  {# ?v=<version>: a new release gets a new URL, so browsers never keep an old cached file #}
-  <link rel="stylesheet" href="/static/style.css?v={{ request.app.version }}">
 </head>
 <body>
   {# Icons (Lucide, stroke 2) and the two vehicle drawings. Use: <svg class="ic"><use href="#i-car"></use></svg> #}
@@ -41,6 +24,7 @@
     <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
     <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9 12l2 2 4-4"/></symbol>
     {# Vehicle drawings: the body takes currentColor, so a page sets the colour with style="color:..." #}
     <symbol id="d-car" viewBox="0 0 160 96"><ellipse cx="80" cy="86" rx="68" ry="6" fill="#0F172A" fill-opacity=".16"/><path d="M18 62c0-6 4-10 10-11l18-3 16-14c4-3 8-5 14-5h26c6 0 11 2 15 6l14 13 14 3c6 1 10 6 10 12v8c0 3-2 5-5 5H23c-3 0-5-2-5-5z" fill="currentColor"/><path d="M60 47l12-11c3-2 6-3 9-3h11v14z" fill="#BFDBFE"/><path d="M98 33h6c4 0 7 1 10 4l10 10H98z" fill="#BFDBFE"/><circle cx="48" cy="72" r="13" fill="#0F172A"/><circle cx="48" cy="72" r="6" fill="#CBD5E1"/><circle cx="116" cy="72" r="13" fill="#0F172A"/><circle cx="116" cy="72" r="6" fill="#CBD5E1"/><rect x="134" y="55" width="10" height="5" rx="2" fill="#FDE68A"/><rect x="19" y="56" width="7" height="5" rx="2" fill="#F87171"/></symbol>
@@ -75,7 +59,11 @@
       {% endfor %}
       <button class="nav-button" type="button" data-open-help><svg class="ic"><use href="#i-info"></use></svg>Hướng dẫn</button>
     </nav>
-    <p class="sidebar-foot">Bản demo · dữ liệu dùng chung · v{{ request.app.version }}</p>
+    <div class="sidebar-foot">
+      <span class="user-avatar" aria-hidden="true">{{ request.state.user.display_name[:1] | upper }}</span>
+      <span class="user-name"><b>{{ request.state.user.display_name }}</b><small>{{ request.state.user.email }}</small></span>
+      <button class="icon-btn plain" type="button" data-logout aria-label="Đăng xuất" title="Đăng xuất"><svg class="ic"><use href="#i-logout"></use></svg></button>
+    </div>
   </aside>
 
   <div class="main">
@@ -91,6 +79,7 @@
         <button class="icon-btn" type="button" data-theme-toggle aria-label="Chuyển giao diện sáng/tối" title="Chuyển giao diện sáng/tối">
           <svg class="ic theme-dark"><use href="#i-moon"></use></svg><svg class="ic theme-light"><use href="#i-sun"></use></svg>
         </button>
+        <button class="icon-btn mobile-only" type="button" data-logout aria-label="Đăng xuất" title="Đăng xuất"><svg class="ic"><use href="#i-logout"></use></svg></button>
       </div>
     </header>
 
