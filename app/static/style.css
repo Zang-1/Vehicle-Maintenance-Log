@@ -160,6 +160,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .page-head { display: flex; align-items: center; gap: 12px; padding: 30px 40px 6px 8px; }
 .page-title { flex: 1; min-width: 0; }
 .page-sub { font-size: 13px; color: var(--text-muted); }
+.page-sub a { display: inline-block; margin-bottom: 2px; color: var(--primary); font-weight: 600; text-decoration: none; }
+.page-sub a:hover { text-decoration: underline; }
 .page-head h1 { font-size: 28px; line-height: 1.25; font-weight: 700; letter-spacing: -0.5px; }
 .page-actions { display: flex; align-items: center; gap: 10px; }
 .mobile-only { display: none; }
@@ -338,11 +340,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .dash-status.ok { background: var(--ok-bg); color: var(--ok); }
 .dash-bar .btn { margin-left: auto; }
 
-.next-card { display: flex; align-items: center; gap: 22px; padding: 22px 26px; }
+.next-card { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; padding: 22px 26px; }
 .next-card .thumb { width: 128px; height: 84px; }
 .next-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
 .next-title { font-size: 24px; line-height: 1.25; font-weight: 700; }
-.next-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.next-main { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 
 .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .tile {
@@ -354,7 +356,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .tile:hover, .vehicle-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .tile-label { font-size: 14px; color: var(--text-muted); }
-.tile-value { font-size: 34px; line-height: 1.2; font-weight: 750; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tile { container-type: inline-size; }
+.tile-value { font-size: clamp(18px, 14cqi, 34px); line-height: 1.2; font-weight: 750; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tile-more { display: inline-flex; align-items: center; gap: 2px; margin-top: 4px; font-size: 13.5px; font-weight: 650; color: var(--primary); }
 .tile-more .ic { width: 16px; height: 16px; }
 
@@ -425,6 +428,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
    ===================================================================== */
 @media (max-width: 1100px) {
   .diagnose-grid { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .tiles .tile:last-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 767px) {
@@ -465,13 +470,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
   .dash-bar .btn { width: 100%; margin-left: 0; }
   .next-card { flex-direction: column; align-items: stretch; gap: 12px; padding: 18px; }
+  .next-main { flex-basis: auto; }
   .next-card .thumb { display: none; }
   .next-title { font-size: 20px; }
   .btn-big { width: 100%; }
   .tiles { grid-template-columns: 1fr 1fr; gap: 12px; }
   .tiles .tile:last-child { grid-column: 1 / -1; }
   .tile { padding: 16px; }
-  .tile-value { font-size: 24px; }
+  .tile-value { font-size: clamp(18px, 14cqi, 26px); }
   .vehicle-list { grid-template-columns: 1fr; gap: 12px; }
   .vehicle-card { padding: 12px; gap: 12px; }
   .vehicle-card .thumb { width: 64px; height: 44px; }
@@ -552,7 +558,8 @@ a.vcard:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .kpi { display: flex; flex-direction: column; gap: 2px; padding: 16px 20px; border-right: 1px solid var(--border); min-width: 0; }
 .kpi:last-child { border-right: 0; }
 .kpi small { font-size: 12.5px; color: var(--text-muted); }
-.kpi b { font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kpi { container-type: inline-size; }
+.kpi b { font-size: clamp(13px, 14cqi, 17px); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .tabs { display: flex; gap: 6px; padding: 5px; width: fit-content; max-width: 100%; overflow-x: auto; border: 1px solid var(--glass-border); border-radius: 999px; background: var(--surface); }
 .tab { flex: none; padding: 9px 18px; border: 0; border-radius: 999px; background: none; color: var(--text-muted); font-weight: 650; white-space: nowrap; cursor: pointer; }
@@ -596,13 +603,16 @@ a.vcard:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
   .info-grid { grid-template-columns: minmax(0, 1fr); padding: 18px; }
   .history-tools .csv-link { margin-left: 0; }
   .history-row { padding: 12px 14px; }
+  .tabs { scrollbar-width: none; }
+  .tab { padding: 8px 10px; font-size: 13.5px; }
 }
 
 /* =====================================================================
    S05–S06 Ghi lần bảo dưỡng, Chi tiết lần bảo dưỡng (Lâm, M3)
    ===================================================================== */
 .form-stack { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.grid-3 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.grid-3 > :first-child { grid-column: 1 / -1; } /* the vehicle select holds name and plate */
 .note-area { min-height: 90px; resize: vertical; line-height: 1.6; }
 select.control { cursor: pointer; }
 
@@ -610,7 +620,7 @@ select.control { cursor: pointer; }
    hidden until "Thêm chi tiết" is open, so the common case is just: what was done and how much it cost. */
 .items { display: flex; flex-direction: column; gap: 12px; }
 .item-head { display: none; }
-.item-head:has(+ .items.simple) { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) 120px 40px; gap: 10px; padding: 0 2px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+.item-head:has(+ .items.simple) { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) 104px 40px; gap: 10px; padding: 0 2px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
 .item-head:has(+ .items.simple) span:nth-child(2), .item-head:has(+ .items.simple) span:nth-child(3) { display: none; }
 .item-head .r { text-align: right; }
 /* open: two lines per item (type, quantity, price on the first; description and line total on the second) */
@@ -624,7 +634,7 @@ select.control { cursor: pointer; }
 .f-type { grid-area: type; } .f-qty { grid-area: qty; } .f-price { grid-area: price; }
 .f-desc { grid-area: desc; } .line-total { grid-area: total; } .item-del { grid-area: del; }
 /* folded: one line per item */
-.items.simple .item-row { grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) 120px 40px; grid-template-areas: "type price total del"; padding-bottom: 0; border-bottom: 0; }
+.items.simple .item-row { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) 104px 40px; grid-template-areas: "type price total del"; padding-bottom: 0; border-bottom: 0; }
 .items.simple .f-desc, .items.simple .f-qty { display: none; }
 .line-total { padding-top: 13px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .icon-btn.plain { border-color: transparent; background: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--text-muted); }
@@ -703,7 +713,7 @@ select.control { cursor: pointer; }
 .data-table .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .data-table .first b { font-weight: 600; overflow-wrap: anywhere; }
 .data-table .sub { display: block; font-size: 12.5px; color: var(--text-muted); }
-.st-actions { display: flex; justify-content: flex-end; gap: 4px; flex-wrap: wrap; }
+.st-actions { display: flex; justify-content: flex-end; gap: 4px; white-space: nowrap; }
 
 @media (max-width: 767px) {
   .data-table thead { display: none; }
@@ -738,8 +748,9 @@ select.control { cursor: pointer; }
 
 .cost-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
 .cost-stat { display: flex; flex-direction: column; gap: 8px; padding: 22px; min-width: 0; }
-.cost-value { font-size: 28px; line-height: 1.25; font-weight: 750; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.cost-value-text { font-size: 18px; line-height: 1.6; font-weight: 700; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; }
+.cost-stat { container-type: inline-size; }
+.cost-value { font-size: clamp(18px, 14cqi, 28px); line-height: 1.25; font-weight: 750; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cost-value-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 18px; line-height: 1.35; font-weight: 700; letter-spacing: 0; white-space: normal; overflow: hidden; }
 .cost-sub { min-height: 18px; font-size: 12.5px; font-weight: 600; }
 
 .cost-section { display: flex; flex-direction: column; gap: 16px; padding: 22px; min-width: 0; }
@@ -781,7 +792,7 @@ select.control { cursor: pointer; }
 @media (max-width: 767px) {
   .cost-stats { gap: 12px; }
   .cost-stat { padding: 14px; }
-  .cost-value { font-size: 21px; }
+  .cost-value { font-size: clamp(18px, 14cqi, 22px); }
   .cost-section { padding: 16px; }
   .cost-bars { height: 200px; gap: 3px; }
   .cost-bar-label { font-size: 10.5px; }
