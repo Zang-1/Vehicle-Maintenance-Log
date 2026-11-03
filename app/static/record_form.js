@@ -69,7 +69,7 @@
     row.qtyInput.setAttribute("aria-label", "Số lượng");
     row.priceInput = el("input", "control");
     row.priceInput.inputMode = "numeric";
-    row.priceInput.placeholder = "Ví dụ 135.000";
+    row.priceInput.placeholder = "135.000";
     row.priceInput.setAttribute("aria-label", "Giá tiền");
     row.totalCell = el("div", "line-total");
     row.removeButton = el("button", "icon-btn plain item-del", icon("x"));
