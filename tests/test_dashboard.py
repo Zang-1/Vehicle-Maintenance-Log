@@ -55,7 +55,7 @@ class FakeCursor:
     def __init__(self):
         self.query = ""
 
-    def execute(self, query):
+    def execute(self, query, params=None):
         self.query = query
         return self
 
@@ -67,10 +67,10 @@ class FakeCursor:
         return {"total": Decimal(0)}
 
     def fetchall(self):
+        if "v_reminder_status" in self.query:  # first: these queries also name vehicles (the user filter)
+            return ATTENTION if "status <> 'OK'" in self.query else REMINDERS
         if "FROM vehicles" in self.query:
             return VEHICLES
-        if "v_reminder_status" in self.query:
-            return ATTENTION if "status <> 'OK'" in self.query else REMINDERS
         return RECENT
 
 

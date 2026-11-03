@@ -8,7 +8,7 @@ client = TestClient(app)
 
 ROW = {
     "id": 7, "name": "Thay nhớt", "description": None, "applies_to": "ALL",
-    "default_interval_km": 2000, "default_interval_months": 3, "is_active": True,
+    "default_interval_km": 2000, "default_interval_months": 3, "is_active": True, "is_builtin": False,
 }
 BODY = {"name": "Thay nhớt", "applies_to": "ALL", "default_interval_km": 2000, "default_interval_months": 3}
 
@@ -51,7 +51,7 @@ def test_retire_service_type(monkeypatch):
     response = client.patch("/api/service-types/7/active", json={"active": False})
     assert response.status_code == 200
     assert response.json()["is_active"] is False
-    assert cursor.calls_matching("SET is_active")[0] == {"id": 7, "active": False}
+    assert cursor.calls_matching("SET is_active")[0] == {"id": 7, "active": False, "uid": 1}
 
 
 def test_service_types_page_is_real():
@@ -67,7 +67,7 @@ def test_delete_unused_service_type(monkeypatch):
     ])
     response = client.delete("/api/service-types/7")
     assert response.status_code == 204
-    assert cursor.calls_matching("DELETE FROM service_types")[0] == {"id": 7}
+    assert cursor.calls_matching("DELETE FROM service_types")[0] == {"id": 7, "uid": 1}
 
 
 def test_delete_used_service_type_returns_409(monkeypatch):

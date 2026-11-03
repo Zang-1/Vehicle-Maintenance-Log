@@ -3,11 +3,39 @@
 -- Người phụ trách: Kiều Bảo Giang (bước 04 - ERD & Database Design)
 
 -- -------------------------------------------------------------
+-- Tài khoản và phiên đăng nhập (FR-23 -> FR-25)
+-- Mật khẩu chỉ lưu dạng băm scrypt; phiên chỉ lưu sha256 của token nằm trong cookie.
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS users (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  email         text NOT NULL UNIQUE CHECK (email = lower(email) AND length(email) BETWEEN 3 AND 254), -- BR-11
+  display_name  text NOT NULL CHECK (length(display_name) BETWEEN 1 AND 60),
+  password_hash text NOT NULL,                                   -- '!' = không đăng nhập bằng mật khẩu được
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash text PRIMARY KEY,
+  user_id    bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions (user_id);
+
+-- Tài khoản dùng thử: nút "Dùng thử" vào thẳng; dữ liệu mẫu (seed.sql) thuộc về tài khoản này.
+INSERT INTO users (email, display_name, password_hash)
+VALUES ('demo@sobaoduong.local', 'Tài khoản dùng thử', '!')
+ON CONFLICT (email) DO NOTHING;
+
+-- -------------------------------------------------------------
 -- Danh mục loại dịch vụ (FR-11, FR-12)
+-- user_id NULL = loại mặc định, mọi người cùng thấy, chỉ đọc. Có user_id = loại riêng của người đó.
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS service_types (
   id                      bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name                    text NOT NULL UNIQUE CHECK (length(name) BETWEEN 1 AND 100),
+  user_id                 bigint REFERENCES users (id),
+  name                    text NOT NULL CHECK (length(name) BETWEEN 1 AND 100),
   description             text,
   applies_to              text NOT NULL DEFAULT 'ALL' CHECK (applies_to IN ('MOTORBIKE', 'CAR', 'ALL')),
   default_interval_km     integer CHECK (default_interval_km > 0),
@@ -20,12 +48,13 @@ CREATE TABLE IF NOT EXISTS service_types (
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS vehicles (
   id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id          bigint NOT NULL REFERENCES users (id),         -- FR-25: xe của ai người đó thấy
   name             text NOT NULL CHECK (length(name) BETWEEN 1 AND 100),
   vehicle_type     text NOT NULL CHECK (vehicle_type IN ('MOTORBIKE', 'CAR', 'OTHER')),
   brand            text,
   model            text,
   manufacture_year integer CHECK (manufacture_year BETWEEN 1950 AND 2100),
-  license_plate    text UNIQUE,                                  -- BR-01 (NULL được phép trùng)
+  license_plate    text,                                         -- BR-01: không trùng trong xe của một người
   current_odometer integer NOT NULL DEFAULT 0 CHECK (current_odometer >= 0),
   purchase_date    date,
   is_archived      boolean NOT NULL DEFAULT false,
@@ -91,6 +120,7 @@ CREATE TABLE IF NOT EXISTS reminders (
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS diagnoses (
   id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id       bigint NOT NULL REFERENCES users (id),
   vehicle_id    bigint REFERENCES vehicles (id) ON DELETE SET NULL,
   symptom_text  text NOT NULL CHECK (length(symptom_text) BETWEEN 10 AND 1000),
   status        text NOT NULL CHECK (status IN ('OK', 'FAILED')),
@@ -105,6 +135,26 @@ CREATE TABLE IF NOT EXISTS diagnoses (
 );
 
 CREATE INDEX IF NOT EXISTS diagnoses_created_at_idx ON diagnoses (created_at DESC);
+
+-- -------------------------------------------------------------
+-- Nâng cấp database tạo trước khi có tài khoản (Supabase): dữ liệu cũ thành của tài khoản dùng thử.
+-- Với database mới, các lệnh dưới không làm gì.
+-- -------------------------------------------------------------
+ALTER TABLE service_types ADD COLUMN IF NOT EXISTS user_id bigint REFERENCES users (id);
+ALTER TABLE vehicles      ADD COLUMN IF NOT EXISTS user_id bigint REFERENCES users (id);
+ALTER TABLE diagnoses     ADD COLUMN IF NOT EXISTS user_id bigint REFERENCES users (id);
+UPDATE vehicles  SET user_id = (SELECT id FROM users WHERE email = 'demo@sobaoduong.local') WHERE user_id IS NULL;
+UPDATE diagnoses SET user_id = (SELECT id FROM users WHERE email = 'demo@sobaoduong.local') WHERE user_id IS NULL;
+ALTER TABLE vehicles  ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE diagnoses ALTER COLUMN user_id SET NOT NULL;
+
+-- Trùng tên loại việc / trùng biển số chỉ tính trong dữ liệu của một người (thay cho UNIQUE toàn bảng)
+ALTER TABLE service_types DROP CONSTRAINT IF EXISTS service_types_name_key;
+ALTER TABLE vehicles      DROP CONSTRAINT IF EXISTS vehicles_license_plate_key;
+CREATE UNIQUE INDEX IF NOT EXISTS service_types_user_name_key ON service_types (user_id, name) NULLS NOT DISTINCT;
+CREATE UNIQUE INDEX IF NOT EXISTS vehicles_user_plate_key ON vehicles (user_id, license_plate);
+CREATE INDEX IF NOT EXISTS vehicles_user_idx ON vehicles (user_id);
+CREATE INDEX IF NOT EXISTS diagnoses_user_idx ON diagnoses (user_id, created_at DESC);
 
 -- -------------------------------------------------------------
 -- View: tổng chi phí mỗi lần bảo dưỡng (BR-05)
@@ -195,3 +245,5 @@ ALTER TABLE maintenance_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE maintenance_items   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reminders           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE diagnoses           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions            ENABLE ROW LEVEL SECURITY;

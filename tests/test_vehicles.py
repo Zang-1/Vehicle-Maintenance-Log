@@ -28,14 +28,14 @@ def test_list_defaults_to_active_vehicles(monkeypatch):
     assert body[0]["name"] == "Vision đi làm"
     assert body[0]["total_cost"] == "705000"  # Decimal travels as a string
     assert body[0]["overdue_count"] == 1
-    assert cursor.calls[0][1] == {"archived": False}
+    assert cursor.calls[0][1] == {"archived": False, "uid": 1}  # FR-25: only the signed-in user's vehicles
 
 
 def test_list_filters_archived_and_all(monkeypatch):
     cursor = use_fake_db(monkeypatch, [("FROM vehicles v", [])])
     assert client.get("/api/vehicles?archived=archived").json() == []
     assert client.get("/api/vehicles?archived=all").json() == []
-    assert [call[1] for call in cursor.calls] == [{"archived": True}, {"archived": None}]
+    assert [call[1] for call in cursor.calls] == [{"archived": True, "uid": 1}, {"archived": None, "uid": 1}]
 
 
 def test_list_rejects_an_unknown_filter(monkeypatch):

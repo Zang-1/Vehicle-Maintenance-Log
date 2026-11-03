@@ -85,7 +85,9 @@ podman compose up --build
 
 | Endpoint | Trả về |
 |---|---|
-| `GET /` | Giao diện Trang chủ (S01), phong cách kính mờ theo `ui-design.html`. Trang của Lâm và Khoa hiện "đang xây dựng" cho tới khi xong (docs/PHAN-CONG.md §2.1) |
+| `GET /` | Giao diện Trang chủ (S01), phong cách kính mờ theo `ui-design.html`. Mọi trang cần đăng nhập; chưa đăng nhập thì chuyển tới `/dang-nhap` rồi quay lại |
+| `GET /dang-nhap`, `GET /dang-ky` | Đăng nhập (có nút "Dùng thử" vào tài khoản dữ liệu mẫu), đăng ký (FR-23, FR-24) |
+| `POST /api/auth/register` · `/login` · `/demo` · `/logout`, `GET /api/auth/me` | Tài khoản. Đăng nhập xong server đặt cookie `vml_session` (HttpOnly); mọi `/api/*` khác trả 401 `NOT_SIGNED_IN` khi không có phiên, và chỉ trả dữ liệu của người đang đăng nhập (FR-25) |
 | `GET /api/info` | Tên app, phiên bản, môi trường (đối chiếu sau mỗi lần deploy) |
 | `GET /api/stats/dashboard` | Số liệu cho Trang chủ: việc cần làm, chi phí tháng và năm, lần bảo dưỡng gần nhất, từng xe kèm nhắc lịch gấp nhất và tỉ lệ chu kỳ đã dùng |
 | `GET /chan-doan` | Giao diện Hỏi AI về xe (S10) |

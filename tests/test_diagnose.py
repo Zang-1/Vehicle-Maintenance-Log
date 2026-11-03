@@ -50,7 +50,7 @@ def test_diagnose_returns_the_suggestion_and_saves_it(monkeypatch, saved):
     assert r.status_code == 200
     assert r.json() == {"suggestion": "Má phanh mòn.\nMức khẩn cấp: MEDIUM"}
     assert saved == [{
-        "symptom_text": SYMPTOM, "model": ai.AI_MODEL, "status": "OK", "error_code": None,
+        "user_id": 1, "symptom_text": SYMPTOM, "model": ai.AI_MODEL, "status": "OK", "error_code": None,
         "ai_suggestion": "Má phanh mòn.\nMức khẩn cấp: MEDIUM", "urgency_level": "MEDIUM",
     }]
 

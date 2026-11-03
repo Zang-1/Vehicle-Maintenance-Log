@@ -57,7 +57,8 @@ Quy ước cho phần giao diện:
 - **Lâm và Khoa bắt đầu code sau khi PR khung giao diện của Giang được merge** (T3 03/11), để dùng chung class thay vì tự viết lại. Trước đó đọc kỹ `ui-design.html` và dựng sẵn `.html` của trang mình.
 - **Mỗi trang một file JS** trong `app/static/` (như `dashboard.js`, `diagnose.js`), chỉ gọi API của chính app qua `fetchJson`, dựng DOM bằng `el()`, không dùng `innerHTML` với dữ liệu người dùng.
 - **Tab Nhắc bảo dưỡng** nằm trong trang Chi tiết xe của Lâm; Khoa viết phần nội dung, Lâm gắn vào. Hai người thống nhất tên hàm ngay khi bắt đầu.
-- **Ngoài phạm vi:** Đăng nhập/Đăng ký và nút chuyển Anh–Việt chỉ có trong bản thiết kế để minh hoạ. Yêu cầu (tài liệu 01) không có đăng nhập và giao diện chỉ tiếng Việt, nên app thật không làm hai phần này nếu nhóm chưa thống nhất đổi yêu cầu.
+- **Tài khoản (Giang, FR-23 → FR-25):** đã thêm đăng ký, đăng nhập và dữ liệu riêng cho từng người. Router mới phải nhận `user: CurrentUser` (app/auth.py) và lọc theo `user["id"]`; xem cách làm ở app/routers/vehicles.py.
+- **Ngoài phạm vi:** nút chuyển Anh–Việt chỉ có trong bản thiết kế để minh hoạ; giao diện chỉ tiếng Việt.
 
 ## 3. Report và thuyết trình
 

@@ -3,19 +3,21 @@
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import quote
 
 import psycopg
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import db
+from app.auth import SignInRequired
 from app.errors import ApiError
-from app.routers import diagnose, pages, records, service_types, stats, vehicles
+from app.routers import auth, diagnose, pages, records, service_types, stats, vehicles
 from app.schemas import ErrorOut, HealthDbOut, HealthOut, RootOut
 
 APP_NAME = os.getenv("APP_NAME", "vehicle-maintenance-log")
-APP_VERSION = "0.4.3"  # bump in a pull request to trace a commit to production
+APP_VERSION = "0.5.0"  # bump in a pull request to trace a commit to production
 APP_ENV = os.getenv("APP_ENV", "development")
 
 
@@ -34,6 +36,13 @@ app.mount("/static", StaticFiles(directory=Path(__file__).resolve().parent / "st
 async def api_error_handler(request: Request, err: ApiError):
     body = ErrorOut(error_code=err.error_code, message=err.message)
     return JSONResponse(status_code=err.status_code, content=body.model_dump())
+
+
+@app.exception_handler(SignInRequired)
+async def sign_in_required_handler(request: Request, err: SignInRequired):
+    # A page opened without signing in: go to the sign-in page, then come back here.
+    target = request.url.path + (f"?{request.url.query}" if request.url.query else "")
+    return RedirectResponse(f"/dang-nhap?next={quote(target)}", status_code=303)
 
 
 @app.exception_handler(psycopg.OperationalError)  # includes PoolTimeout
@@ -79,4 +88,5 @@ app.include_router(vehicles.router)
 app.include_router(records.router)
 app.include_router(service_types.router)
 app.include_router(diagnose.router)
+app.include_router(auth.router)
 app.include_router(pages.router)  # last: the HTML pages, "/" is the dashboard

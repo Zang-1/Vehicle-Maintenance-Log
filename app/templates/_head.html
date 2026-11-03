@@ -1,0 +1,19 @@
+{# Shared <head> content: base.html and the sign-in pages include it. #}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {# Set the theme before the first paint so a dark-mode user never sees a white flash #}
+  <script>
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem("vml-theme"); } catch (e) {}
+      if (theme !== "light" && theme !== "dark") {
+        theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+  {# ?v=<version>: a new release gets a new URL, so browsers never keep an old cached file #}
+  <link rel="stylesheet" href="/static/style.css?v={{ request.app.version }}">

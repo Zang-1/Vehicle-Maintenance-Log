@@ -32,7 +32,8 @@ Nhiều chủ xe máy, ô tô không nhớ lần cuối thay nhớt, thay lọc 
 
 | Trong phạm vi | Ngoài phạm vi (lý do) |
 |---|---|
-| CRUD xe, lần bảo dưỡng + hạng mục, nhắc lịch, danh mục loại dịch vụ | **Đăng nhập, nhiều người dùng, phân quyền.** Brief yêu cầu phạm vi nhỏ; bản demo dùng chung một bộ dữ liệu |
+| CRUD xe, lần bảo dưỡng + hạng mục, nhắc lịch, danh mục loại dịch vụ | **Phân quyền nhiều vai trò, quên mật khẩu, đăng nhập Google.** Quên mật khẩu cần gửi email; app chỉ có một vai trò là chủ xe |
+| Tài khoản: đăng ký, đăng nhập, mỗi người chỉ thấy dữ liệu của mình (FR-23 → FR-25) | |
 | Trạng thái nhắc lịch được tính ngay khi mở trang | **Tiến trình chạy ngầm theo giờ, gửi email.** Render free sleep sau ~15 phút không dùng nên tác vụ hẹn giờ không chạy được |
 | Thống kê chi phí | **Upload ảnh hóa đơn.** Brief khuyên tránh lưu file lớn hơn vài MB |
 | Chẩn đoán AI qua Gemini, gọi từ server | Xử lý ảnh/video, huấn luyện mô hình, thời gian thực (socket), thanh toán. Brief yêu cầu tránh |
@@ -124,6 +125,14 @@ Ghi chú cho use case (02): GitHub Actions, Render, Supabase là **nền tảng 
 | FR-21 | Lịch sử chẩn đoán | Lưu mọi lần gọi (thành công hoặc lỗi) vào database; xem lại danh sách | Should |
 | FR-22 | Tạo nhắc lịch từ gợi ý | Từ kết quả chẩn đoán, bấm một nút để ghi nhận bảo dưỡng hoặc tạo nhắc lịch cho hạng mục được gợi ý | Could |
 
+### 4.7. Tài khoản
+
+| Mã | Chức năng | Mô tả | Ưu tiên |
+|---|---|---|---|
+| FR-23 | Đăng ký | Tạo tài khoản bằng tên, email, mật khẩu (BR-11, BR-12); đăng ký xong là vào app luôn | Must |
+| FR-24 | Đăng nhập, đăng xuất | Đăng nhập bằng email và mật khẩu, giữ đăng nhập 30 ngày; nút "Dùng thử" vào tài khoản có dữ liệu mẫu; đăng xuất ở menu | Must |
+| FR-25 | Dữ liệu riêng | Mỗi người chỉ thấy và sửa được xe, lần bảo dưỡng, nhắc lịch, thống kê, lịch sử hỏi AI của chính mình. Loại việc mặc định dùng chung và chỉ đọc; mỗi người tự thêm loại việc riêng | Must |
+
 ## 5. Yêu cầu phi chức năng
 
 ### 5.1. Yêu cầu nền tảng (bắt buộc theo Final Project Brief)
@@ -159,7 +168,7 @@ Ghi chú cho use case (02): GitHub Actions, Render, Supabase là **nền tảng 
 
 | Mã | Quy tắc |
 |---|---|
-| BR-01 | Biển số xe là duy nhất (bỏ trống được với xe chưa có biển) |
+| BR-01 | Biển số xe là duy nhất trong xe của một người (bỏ trống được với xe chưa có biển) |
 | BR-02 | ODO của xe không được giảm. Ghi nhận bảo dưỡng có ODO lớn hơn ODO xe thì ODO xe được cập nhật theo |
 | BR-03 | Ngày bảo dưỡng không được ở tương lai |
 | BR-04 | Một lần bảo dưỡng có ít nhất một hạng mục; không có hai lần bảo dưỡng trùng xe + ngày + ODO |
@@ -169,6 +178,8 @@ Ghi chú cho use case (02): GitHub Actions, Render, Supabase là **nền tảng 
 | BR-08 | **Quá hạn** nếu đã qua mốc ngày hoặc mốc km. **Sắp đến hạn** nếu còn ≤ ngưỡng báo trước (mặc định 7 ngày hoặc 300 km). Còn lại là **Còn hạn** |
 | BR-09 | Xe đã có lịch sử không xóa hẳn được, chỉ lưu trữ. Loại dịch vụ đã được dùng không xóa được, chỉ ngừng dùng |
 | BR-10 | Khi AI lỗi, server trả mã và thông báo theo bảng dưới. Không lộ chi tiết kỹ thuật hay key cho trình duyệt; chi tiết chỉ ghi vào log server |
+| BR-11 | Mỗi email chỉ có một tài khoản, so sánh không phân biệt hoa thường. Sai email hay sai mật khẩu đều báo chung "Email hoặc mật khẩu không đúng" |
+| BR-12 | Mật khẩu 8–128 ký tự, chỉ lưu dạng băm (scrypt). Sai 5 lần trong 15 phút thì email đó phải chờ hết 15 phút |
 
 Bảng xử lý lỗi AI (BR-10, FR-20):
 
@@ -197,6 +208,8 @@ Dùng làm đầu vào cho Wireframe (05) và UI Design (06).
 | S09 | Loại dịch vụ | FR-11, FR-12 |
 | S10 | Chẩn đoán AI (form + kết quả + các trạng thái lỗi) | FR-18 → FR-20, FR-22 |
 | S11 | Lịch sử chẩn đoán | FR-21 |
+| S12 | Đăng nhập | FR-24 |
+| S13 | Đăng ký | FR-23 |
 
 **Lưu ý cho Khoa:** màn hình S10 phải có thiết kế cho cả trạng thái *đang chờ*, *thành công* và *từng loại lỗi* ở bảng BR-10. Brief chấm điểm phần "người dùng thấy gì khi AI lỗi".
 

@@ -11,6 +11,7 @@ from fastapi import APIRouter
 from psycopg.rows import dict_row
 
 from app import ai, db
+from app.auth import CurrentUser
 from app.errors import ApiError
 from app.schemas import DiagnoseIn, DiagnoseOut, DiagnosisOut, ErrorOut
 
@@ -22,13 +23,14 @@ FRIENDLY = "Tính năng chẩn đoán AI tạm thời không khả dụng, vui l
 URGENCY = re.compile(r"(?:mức khẩn cấp|urgency)\s*:\s*\**\s*(LOW|MEDIUM|HIGH)", re.IGNORECASE)
 
 INSERT_SQL = """
-INSERT INTO diagnoses (symptom_text, status, ai_suggestion, urgency_level, error_code, model)
-VALUES (%(symptom_text)s, %(status)s, %(ai_suggestion)s, %(urgency_level)s, %(error_code)s, %(model)s)
+INSERT INTO diagnoses (user_id, symptom_text, status, ai_suggestion, urgency_level, error_code, model)
+VALUES (%(user_id)s, %(symptom_text)s, %(status)s, %(ai_suggestion)s, %(urgency_level)s, %(error_code)s, %(model)s)
 """
 
 LIST_SQL = """
 SELECT id, created_at, symptom_text, status, ai_suggestion, urgency_level, error_code, model
 FROM diagnoses
+WHERE user_id = %(uid)s
 ORDER BY created_at DESC, id DESC
 LIMIT 50
 """
@@ -55,8 +57,8 @@ def save(row: dict) -> None:
 
 
 @router.post("/diagnose", response_model=DiagnoseOut, responses={503: {"model": ErrorOut}})
-def diagnose(req: DiagnoseIn):
-    row = {"symptom_text": req.symptom_text, "model": ai.AI_MODEL, "ai_suggestion": None, "urgency_level": None}
+def diagnose(req: DiagnoseIn, user: CurrentUser):
+    row = {"user_id": user["id"], "symptom_text": req.symptom_text, "model": ai.AI_MODEL, "ai_suggestion": None, "urgency_level": None}
     try:
         suggestion = ai.summarize_safe(req.symptom_text)
     except ai.AIUnavailable as err:
@@ -70,6 +72,6 @@ def diagnose(req: DiagnoseIn):
 
 
 @router.get("/api/diagnoses", response_model=list[DiagnosisOut])
-def list_diagnoses():
+def list_diagnoses(user: CurrentUser):
     with db.pool.connection(timeout=5) as conn:
-        return conn.cursor(row_factory=dict_row).execute(LIST_SQL).fetchall()
+        return conn.cursor(row_factory=dict_row).execute(LIST_SQL, {"uid": user["id"]}).fetchall()
