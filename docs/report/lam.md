@@ -7,7 +7,7 @@ Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viế
 - Sơ đồ mục 2 viết bằng Mermaid: mở file này trên GitHub (GitHub vẽ sẵn sơ đồ) rồi chụp ảnh dán vào Word.
 - Điền các chỗ `[…]`. Phần cần tài khoản Render thì nhờ Giang: xác nhận Auto-Deploy đang **tắt**, thời gian build ở Render Events (mục 4.2), ảnh 4.2b.
 - Rule bảo vệ `main` (mục 4.1) chỉ admin repo xem được trong Settings. Nhờ Giang xác nhận có bật "Require status checks: check"; phần "1 review" đã thấy trên form tạo PR.
-- Mục 4 cần bằng chứng một PR bị check đỏ chặn (xem 4.3). Đến 4/11 cả 18 lần chạy trên pull request đều xanh, nên cần làm PR minh họa rồi chụp ảnh.
+- Mục 4.3: ảnh PR #31 khi đỏ (4.3c) phải chụp trước khi push commit sửa; ảnh xanh (4.3d) chụp sau. Đóng PR #31, không merge.
 - Phụ lục B: dán nguyên file `.github/workflows/ci-cd.yml`.
 
 ---
@@ -202,7 +202,18 @@ The secret had not been created yet. The job stopped with a clear message instea
 (chèn ảnh 4.3a: run `41320852255` attempt 1, job deploy đỏ với dòng lỗi trên)
 (chèn ảnh 4.3b: attempt 2 của cùng run, hai job xanh)
 
-**A red check on a pull request.** [Làm PR minh họa: một commit cố ý làm hỏng một test hoặc để một import thừa, push, chụp check đỏ và nút Merge bị khóa; rồi một commit sửa, chụp check xanh; đóng PR, không merge. Viết lại đoạn này theo đúng lỗi đã dùng, ví dụ:] On pull request #[…] the `check` job failed at the `[Lint / Test]` step: `[dòng lỗi]`. GitHub showed "Required statuses must pass before merging" and the merge button stayed disabled. The next commit `[…]` fixed it, `check` turned green, and only then could the pull request be merged.
+**A red check on a pull request.** No real pull request had failed by 4 November, so we staged one to show the gate working. Pull request #31 (branch `demo/ci-red-check`) contains a plausible "simplification": it removes `AND current_odometer < %(odometer)s` from the query that updates the vehicle's odometer. That breaks BR-02: saving an older visit would move the odometer back down.
+
+- The `check` job (run `41853983479`) failed at the `Test` step after 21 s:
+  ```
+  FAILED tests/test_records.py::test_create_record_saves_record_items_and_raises_the_odometer
+  1 failed, 148 passed
+  ```
+  Lint and compile had passed: the code was valid Python, only the business rule was wrong. This is the kind of bug a reviewer can miss and a test does not.
+- `deploy` was skipped, because it never runs for a pull request.
+- The merge box showed "Some checks were not successful" and "Merging is blocked", with the Merge button disabled. Because `check` is a required status check, an approving review would not have unlocked it either.
+- Commit `c9fd586` restored the condition. `check` turned green, 149 tests passed.
+- The pull request was then closed without merging, because it existed only as a demonstration.
 
 (chèn ảnh 4.3c: PR với check đỏ và nút Merge bị khóa)
 (chèn ảnh 4.3d: cùng PR sau khi sửa, check xanh)
