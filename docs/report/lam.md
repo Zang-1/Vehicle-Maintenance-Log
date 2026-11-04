@@ -6,7 +6,7 @@ Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viế
 - Thay mọi chỗ `(chèn ảnh …)` bằng ảnh chụp thật. Che mọi key, connection string, URL Deploy Hook trước khi chèn.
 - Sơ đồ mục 2 viết bằng Mermaid: mở file này trên GitHub (GitHub vẽ sẵn sơ đồ) rồi chụp ảnh dán vào Word.
 - Điền các chỗ `[…]`. Phần cần tài khoản Render thì nhờ Giang: xác nhận Auto-Deploy đang **tắt**, thời gian build ở Render Events (mục 4.2), ảnh 4.2b.
-- Rule bảo vệ `main` (mục 4.1) chỉ admin repo xem được trong Settings. Nhờ Giang xác nhận có bật "Require status checks: check"; phần "1 review" đã thấy trên form tạo PR.
+- Rule bảo vệ `main` (mục 4.1, 4.3): trên PR #31, check `CI/CD / check` **không có nhãn "Required"**, merge chỉ bị khóa vì thiếu review. Nhờ Giang vào Settings → Branches → rule của `main` → bật "Require status checks to pass" và chọn `check`, rồi sửa hai chỗ `[…]` ở 4.1 và 4.3.
 - Mục 4.3: ảnh PR #31 khi đỏ (4.3c) phải chụp trước khi push commit sửa; ảnh xanh (4.3d) chụp sau. Đóng PR #31, không merge.
 - Phụ lục B: dán nguyên file `.github/workflows/ci-cd.yml`.
 
@@ -168,7 +168,7 @@ The template lists four jobs. We run lint, test and build as steps of one job, `
 
 **Why the tests need no secret.** `tests/conftest.py` sets a dummy `DATABASE_URL`; `tests/fakedb.py` replaces the connection pool, and the AI call is mocked. The pipeline therefore never holds the database password or the Gemini key. A fork or a pull request from a stranger cannot read them either, because they do not exist in GitHub.
 
-**Branch protection.** `main` requires a pull request with one approving review and a green `check` before the merge button is enabled. Nobody pushes to `main` directly.
+**Branch protection.** `main` accepts changes only through a pull request with one approving review from someone other than the last pusher. Nobody pushes to `main` directly. [Sau khi Giang bật "Require status checks: check", thêm: "and a green `check`".]
 
 (chèn ảnh 4.1: ô merge của PR demo ở 4.3, có dòng "Merging is blocked" và "at least 1 approving review is required". Trang Settings → Branches chỉ admin repo mới xem được)
 
@@ -211,7 +211,7 @@ The secret had not been created yet. The job stopped with a clear message instea
   ```
   Lint and compile had passed: the code was valid Python, only the business rule was wrong. This is the kind of bug a reviewer can miss and a test does not.
 - `deploy` was skipped, because it never runs for a pull request.
-- The merge box showed "Some checks were not successful" and "Merging is blocked", with the Merge button disabled. Because `check` is a required status check, an approving review would not have unlocked it either.
+- The merge box showed "Some checks were not successful" next to the red check, and "Merging is blocked", with the Merge button disabled. [Nếu Giang đã bật "Require status checks: check" thì thêm câu: "Because `check` is a required status check, even an approving review could not have unlocked the merge." Nếu chưa bật thì giữ nguyên.]
 - Commit `c9fd586` restored the condition. `check` turned green, 149 tests passed.
 - The pull request was then closed without merging, because it existed only as a demonstration.
 
