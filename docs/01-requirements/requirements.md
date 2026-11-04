@@ -112,8 +112,8 @@ Ghi chú cho use case (02): GitHub Actions, Render, Supabase là **nền tảng 
 
 | Mã | Chức năng | Mô tả | Ưu tiên |
 |---|---|---|---|
-| FR-16 | Dashboard | Trang chủ: số xe, các nhắc lịch quá hạn/sắp đến hạn, chi phí tháng này, 5 lần bảo dưỡng gần nhất | Must |
-| FR-17 | Thống kê chi phí | Chi phí theo tháng, theo xe, theo loại dịch vụ trong khoảng thời gian chọn | Should |
+| FR-16 | Dashboard | Trang chủ chỉ hiện điều quan trọng, bấm vào mới xem chi tiết: tình trạng chung, việc nên làm trước, số việc cần làm (bấm ra danh sách quá hạn/sắp đến hạn), chi phí năm nay, lần bảo dưỡng gần nhất, từng xe kèm nhắc lịch gấp nhất | Must |
+| FR-17 | Thống kê chi phí | Chi phí theo tháng, theo xe, theo loại dịch vụ; lọc theo năm hoặc toàn bộ, theo một xe hoặc tất cả | Should |
 
 ### 4.6. Chẩn đoán bằng AI
 

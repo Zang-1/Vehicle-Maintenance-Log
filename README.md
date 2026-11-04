@@ -13,9 +13,9 @@
 
 | Thành viên | GitHub | Tài liệu | Code |
 |---|---|---|---|
-| **Kiều Bảo Giang** (nhóm trưởng) | @Zang-1 | 01 · 04 · 08 | Database (Supabase) · Nhắc lịch · Chẩn đoán AI |
-| **Tăng Thoại Lâm** | @noway165 | 02 · 03 · 07 | Xe · Lần bảo dưỡng · CI/CD + Render |
-| **Nguyễn Nam Khoa** | @namkhoa306 | 05 · 06 | Loại dịch vụ · Giao diện, Dashboard · Dockerfile + Compose |
+| **Kiều Bảo Giang** (nhóm trưởng) | @Zang-1 | 01 · 04 · 08 | Database (Supabase) · Chẩn đoán AI · Tài khoản · Khung giao diện, Trang chủ |
+| **Tăng Thoại Lâm** | @noway165 | 02 · 03 · 07 | Xe · Lần bảo dưỡng · Nhắc lịch (API, tab) · CI/CD + Render |
+| **Nguyễn Nam Khoa** | @namkhoa306 | 05 · 06 | Loại dịch vụ · Chi phí · Nhắc lịch (màn hình) · Dockerfile + Compose |
 
 Chi tiết (report, thuyết trình, lịch theo tuần): [docs/PHAN-CONG.md](docs/PHAN-CONG.md).
 
@@ -30,7 +30,7 @@ Chi tiết (report, thuyết trình, lịch theo tuần): [docs/PHAN-CONG.md](do
 | 05 | [Wireframe](docs/05-wireframe/) | Khoa | ✅ Xong |
 | 06 | [UI Design trên Figma](docs/06-ui-design/) | Khoa | ✅ Xong |
 | 07 | [Architecture & Class Diagram](docs/07-architecture/) | Lâm | ✅ Xong |
-| 08 | [Implementation Plan](docs/08-implementation-plan/implementation-plan.md) | Giang | ✅ Xong (đã cập nhật theo 07) |
+| 08 | [Implementation Plan](docs/08-implementation-plan/implementation-plan.md) | Giang | ✅ Xong (đã cập nhật theo 07 và phần tài khoản) |
 
 ## Lộ trình
 

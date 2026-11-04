@@ -1,0 +1,202 @@
+# Report — phần của Kiều Bảo Giang (mục 5, 6, cuối mục 7, mục 8)
+
+Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viết bằng tiếng Anh như file mẫu. Mỗi mục khoảng 1,5 trang.
+
+**Trước khi dán:**
+- Thay mọi chỗ `(chèn ảnh …)` bằng ảnh chụp thật. Che mọi key, connection string, URL Deploy Hook trước khi chèn.
+- Điền các chỗ `[…]` (mã số sinh viên, số liệu cần chạy SQL).
+- Mục 7: Khoa viết phần đầu (giá trị nào nằm ở đâu, audit secret); phần dưới đây là phần cuối (khi key bị lộ).
+- Mục 8: cả 3 người đọc lại bảng rồi ký.
+
+---
+
+## 5. Database schema and integration approach
+
+### 5.1 Tables
+
+The database is PostgreSQL: version 16 in the local Compose stack, version 17 on Supabase. One script, `db/schema.sql`, creates both. It holds eight tables and two views.
+
+| Table | Purpose |
+|---|---|
+| `users`, `sessions` | Accounts. Passwords are stored only as scrypt hashes. A session stores only the sha256 of the token that sits in the browser cookie |
+| `vehicles` | A user's vehicles (`user_id`) |
+| `maintenance_records`, `maintenance_items` | One service visit and its line items |
+| `service_types` | The catalogue. `user_id` NULL means a default type: shared and read-only. Otherwise it is a user's own type |
+| `reminders` | A service interval (km and/or months) for one vehicle and one service type |
+| `diagnoses` | Every AI call, the failed ones included (Section 6) |
+
+The database enforces the business rules that must never break, so a bug in a router cannot store bad data:
+- `CHECK` constraints on every enumerated or positive value.
+- `UNIQUE (vehicle_id, service_date, odometer)` stops the same service visit being saved twice.
+- `line_total` is a generated column (`quantity × unit_price`).
+- `ON DELETE RESTRICT` stops a vehicle or service type that has history from being deleted.
+- Plates and service type names are unique per user: `UNIQUE (user_id, license_plate)` and `UNIQUE (user_id, name) NULLS NOT DISTINCT`.
+
+Two views compute values at read time, never in a background job:
+- `v_record_totals`: the total cost of each visit.
+- `v_reminder_status`: the next due date and odometer, days and km left, and OK / DUE_SOON / OVERDUE.
+
+We chose this because Render's free instance sleeps, so a scheduled job would not run reliably. A view is always correct when it is read.
+
+(chèn ảnh 5.1: sơ đồ ERD trong `docs/04-database/erd.md`)
+
+### 5.2 How the application connects
+
+`app/db.py` creates one psycopg 3 `ConnectionPool` from a single environment variable, `DATABASE_URL`:
+- **Locally:** `compose.yml` builds the URL (host `db`).
+- **On Render:** it is the Supabase transaction pooler on port 6543.
+
+The pool settings are chosen for the free tiers:
+
+| Setting | Value | Why |
+|---|---|---|
+| `max_size` | 5 | The Supabase free tier has few connections, and more than one copy of the app may run |
+| `prepare_threshold` | `None` | The transaction pooler on port 6543 cannot keep prepared statements between transactions |
+| `check` | `check_connection` | A connection is tested before it is lent, so a connection that dropped while the database was paused is replaced instead of failing a request |
+| `max_lifetime` | 300 s | Connections are recycled every 5 minutes |
+| `connect_timeout` | 5 s | Fail fast instead of hanging |
+| `open=False` | the pool opens at start-up without waiting | The app starts even when the database is paused |
+
+Every query is parameterised (psycopg), and every query filters on the signed-in user's `user_id`. Another user's vehicle answers 404, exactly like a vehicle that does not exist.
+
+Row Level Security is switched on for every table with no policies. This closes Supabase's automatic REST API, which we do not use. The views are created `WITH (security_invoker = true)`, so they cannot be used to bypass RLS either.
+
+### 5.3 Surviving a restart or a pause
+
+| Event | What happens |
+|---|---|
+| Render restarts or redeploys the container | Nothing is lost. The container holds no state, and sessions are in the `sessions` table, so users stay signed in |
+| Supabase pauses (free tier, after a week idle) | `/health` does not touch the database, so Render's health check still passes and Render does not restart the app in a loop. `/health/db` answers 503 `{"db":"error"}` within 5 s. Any API call answers 503 `DB_UNAVAILABLE` with "Không kết nối được cơ sở dữ liệu, vui lòng thử lại sau ít phút.", and the details go to the log only |
+| Supabase is restored | The pool reconnects by itself. No redeploy is needed |
+
+(chèn ảnh 5.3: `/health/db` trả 503 khi Supabase đang pause, rồi trả `{"db":"ok"}` sau khi restore)
+
+### 5.4 Changing the schema on a live database
+
+`schema.sql` is safe to run more than once: it uses `IF NOT EXISTS` and `ADD COLUMN IF NOT EXISTS`. When we added accounts, the same script upgraded the live database:
+- It added `user_id` to the existing tables.
+- It gave every old row to a demo account.
+- It swapped the global unique constraints for per-user ones.
+
+We tested it on a fresh database and on a copy of the old schema; both gave the same row counts.
+
+**What went wrong:** we merged the code before running the script on Supabase. The live site answered 500 on sign-up, because the `users` table did not exist yet. We ran `schema.sql` in the Supabase SQL Editor and the site worked again, with no data lost. The lesson: the schema change has to reach the database **before** the merge that needs it.
+
+---
+
+## 6. AI API integration
+
+### 6.1 Where the call happens
+
+The browser never talks to the AI provider:
+- The browser sends `POST /diagnose {"symptom_text": "..."}` to our own server.
+- `app/routers/diagnose.py` validates the input (10–1,000 characters; anything else gets 422 before any AI call).
+- It then calls `app/ai.py`, the only file that knows the provider.
+
+`app/ai.py` calls Google Gemini (`gemini-3.5-flash-lite`) through its OpenAI-compatible chat-completions endpoint. Changing provider means changing three environment values (`AI_BASE_URL`, `AI_MODEL`, the key); no code changes.
+
+The prompt asks for at most three short sentences and a last line `Mức khẩn cấp: LOW|MEDIUM|HIGH`, which we parse to store the urgency.
+
+(chèn ảnh 6.1: trang "Hỏi AI về xe" với một câu trả lời thành công)
+
+### 6.2 Key security
+
+- The key exists in one place only: the `GEMINI_API_KEY` environment variable (Render Environment in production, `.env` locally; both are outside Git).
+- It travels only in the `Authorization` header of the server's request. It is never in a URL, the page, the logs or an error message.
+- The test suite mocks the AI call, so CI needs no key at all.
+
+### 6.3 Rate limits and cost
+
+The free tier has per-minute and per-day quotas. We keep well inside them:
+- One click is one request: the button is disabled while waiting.
+- The input is capped (1,000 characters from the form, 8,000 on the server).
+- `max_tokens` is 1024, `temperature` is 0.2 and `reasoning_effort` is low.
+
+`summarize_safe()` applies the failure policy:
+
+| Provider answer | What the server does |
+|---|---|
+| 429, or 5xx | Waits 1 s, then 2 s, and tries again: 3 attempts in total |
+| 400, 401, 403, 404 | Gives up at once: a bad request or a bad key never becomes good |
+| No answer within 15 s | Gives up (`TIMEOUT`) |
+| Network error, empty or malformed answer | Gives up (`UPSTREAM_ERROR`) |
+
+### 6.4 What the user sees when the call fails
+
+Every failure becomes one `AIUnavailable(reason)`:
+- The reason goes to the server log only (`ai failed: HTTP 429 after 3 attempts`).
+- The row is saved in `diagnoses` with `status = FAILED` and an error code: `NO_KEY`, `RATE_LIMITED`, `TIMEOUT` or `UPSTREAM_ERROR`.
+- The browser receives 503 `{"error_code": "AI_UNAVAILABLE", "message": "Tính năng chẩn đoán AI tạm thời không khả dụng, vui lòng thử lại sau ít phút."}`.
+
+**What a 429 does to the page:**
+- The page shows that sentence in a red box.
+- The symptom the user typed stays in the box, and the button is ready again.
+- Nothing else on the page breaks.
+- The browser also stops waiting after 60 s, so the user never sees an endless spinner.
+
+On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó đã hết lượt hỏi AI miễn phí." The table therefore gives us real evidence of how often the free tier failed:
+- Run this on Supabase: `SELECT error_code, count(*) FROM diagnoses GROUP BY 1;`
+- Result: `[điền kết quả]`.
+
+If the AI answers but the database is down, the user still gets the answer. Saving the history row is attempted, and a failure is only logged.
+
+These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: every error code, the missing key, the database down, and too-short and too-long input.
+
+(chèn ảnh 6.4a: trang Hỏi AI khi lỗi, ô triệu chứng vẫn giữ chữ)
+(chèn ảnh 6.4b: trang "Các lần đã hỏi AI" có một lần lỗi)
+
+---
+
+## 7. Secret and configuration management — what we do if a key leaks
+
+*(Phần đầu mục 7 do Khoa viết: bảng giá trị nào nằm ở đâu, `.gitignore`, `.dockerignore`, kết quả audit secret.)*
+
+### 7.x A real leak, and what we did
+
+On 1 November, after the deploy job was added, the Render **Deploy Hook URL leaked**. Render's Events page showed about nine "Triggered via Deploy Hook" deploys in thirteen minutes, but GitHub's API showed our pipeline had called the hook only once. Anyone holding that URL could redeploy our service at will.
+
+We responded in this order:
+1. **Revoked it:** "Regenerate hook" on Render. The old URL stopped working at once.
+2. **Replaced it:** updated the `RENDER_DEPLOY_HOOK` repository secret on GitHub with the new URL. The new URL was not pasted anywhere else.
+3. **Verified:** Render's Events showed no hook deploy after the regeneration, and the next merge produced exactly one deploy from the pipeline.
+
+The same order applies to every secret: **revoke and replace first, then clean up.**
+
+| If this leaks | Revoke and replace | Then |
+|---|---|---|
+| `GEMINI_API_KEY` | Delete the key in Google AI Studio and create a new one; save it in Render Environment and redeploy | Check AI Studio usage for calls we did not make |
+| `DATABASE_URL` (Supabase password) | Reset the database password in Supabase; update `DATABASE_URL` on Render | Check the tables for rows we did not write |
+| `RENDER_DEPLOY_HOOK` | Regenerate the hook on Render; update the GitHub secret | Check Render Events for deploys we did not trigger |
+
+If a secret was ever committed, deleting it in a later commit is not enough, because it stays in the history:
+- Rotate it first. Only rotation protects us.
+- Then rewrite the history with `git filter-repo`, agree a force-push with the team, and tell the lecturer.
+
+---
+
+## 8. Individual contribution table (signed)
+
+How the numbers were produced (anyone can re-run them):
+- `git shortlog -sne --no-merges origin/main`, where `.mailmap` joins the different names each member committed under.
+- `git log --numstat` for lines changed.
+- The merged pull requests and reviews on GitHub.
+
+The numbers are as of 4 November and must be re-run just before submission.
+
+| Member | Student ID | GitHub | Main contributions (as in the commits) | Commits | PRs authored | Reviews given | Lines + / − |
+|---|---|---|---|---|---|---|---|
+| Kiều Bảo Giang (lead) | [MSSV] | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes | 21 | 16 | 12 | +8,556 / −1,908 |
+| Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); [reminder API and tab] | 9 | 5 | 5 | +6,112 / −54 |
+| Nguyễn Nam Khoa | [MSSV] | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; [reminder form, "Thêm" page, vehicle choice for AI] | 9 | 6 | 7 | +1,317 / −90 |
+
+Notes:
+- Only one commit reached `main` without a pull request: `6128dea` on 22 October, before branch protection was switched on. Every later change went through a pull request reviewed by another member, and the `check` job is required.
+- Line counts favour code and generated files over design work, so they are not a measure of effort. The table lists what each member can explain.
+
+**Use of AI coding assistants.** [Ghi trung thực từng người đã dùng công cụ nào, cho việc gì. Ví dụ: "Claude Code was used to draft code and documents in the pull requests listed above; every author reviewed, tested and can explain their own pull requests."]
+
+| Member | Signature | Date |
+|---|---|---|
+| Kiều Bảo Giang | | |
+| Tăng Thoại Lâm | | |
+| Nguyễn Nam Khoa | | |
