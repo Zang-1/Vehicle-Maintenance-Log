@@ -5,8 +5,8 @@ Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viế
 **Trước khi dán:**
 - Thay mọi chỗ `(chèn ảnh …)` bằng ảnh chụp thật. Che mọi key, connection string, URL Deploy Hook trước khi chèn.
 - Sơ đồ mục 2 viết bằng Mermaid: mở file này trên GitHub (GitHub vẽ sẵn sơ đồ) rồi chụp ảnh dán vào Word.
-- Điền các chỗ `[…]`. Kiểm tra lại trên Render: Auto-Deploy đang **tắt**, và thời gian build lấy từ Render Events.
-- Kiểm tra lại rule bảo vệ `main` trên GitHub (Settings → Branches) có đúng như 4.1 ghi không: cần PR, 1 review, check `check` xanh. Sai chỗ nào thì sửa câu cho khớp.
+- Điền các chỗ `[…]`. Phần cần tài khoản Render thì nhờ Giang: xác nhận Auto-Deploy đang **tắt**, thời gian build ở Render Events (mục 4.2), ảnh 4.2b.
+- Rule bảo vệ `main` (mục 4.1) chỉ admin repo xem được trong Settings. Nhờ Giang xác nhận có bật "Require status checks: check"; phần "1 review" đã thấy trên form tạo PR.
 - Mục 4 cần bằng chứng một PR bị check đỏ chặn (xem 4.3). Đến 4/11 cả 18 lần chạy trên pull request đều xanh, nên cần làm PR minh họa rồi chụp ảnh.
 - Phụ lục B: dán nguyên file `.github/workflows/ci-cd.yml`.
 
@@ -170,7 +170,7 @@ The template lists four jobs. We run lint, test and build as steps of one job, `
 
 **Branch protection.** `main` requires a pull request with one approving review and a green `check` before the merge button is enabled. Nobody pushes to `main` directly.
 
-(chèn ảnh 4.1: Settings → Branches → rule của `main`, có "Require status checks to pass: check")
+(chèn ảnh 4.1: ô merge của PR demo ở 4.3, có dòng "Merging is blocked" và "at least 1 approving review is required". Trang Settings → Branches chỉ admin repo mới xem được)
 
 ### 4.2 What happens on a merge to main
 
@@ -186,7 +186,7 @@ Measured on the merge of PR #30 on 4 November (run `41841050464`):
 A change is live about [… phút] after the merge. Render keeps the old container serving until the new one passes its health check, so users see no downtime. To confirm which commit is live, we compare the commit hash on Render's Events page with `main`, and `/api/info` returns the app version.
 
 (chèn ảnh 4.2a: Actions, run của merge PR #30, hai job xanh)
-(chèn ảnh 4.2b: Render Events, deploy "Triggered via Deploy Hook" cùng commit `d464a4a`)
+(chèn ảnh 4.2b, Giang chụp vì cần tài khoản Render: Render Events, deploy "Triggered via Deploy Hook" cùng commit `d464a4a`)
 
 ### 4.3 Evidence that the pipeline blocks
 
