@@ -830,3 +830,27 @@ select.control { cursor: pointer; }
 @media (max-width: 767px) {
   .auth-card { padding: 20px; }
 }
+
+/* =====================================================================
+   Nhắc bảo dưỡng, tab of S04 (Lâm, M5, FR-13, FR-14): vehicle_reminders.js
+   ===================================================================== */
+.rem-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: var(--space-2); }
+.rem-tools .btn { margin-left: auto; }
+.rem-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rem-card { display: flex; flex-direction: column; gap: 8px; padding: 20px; }
+.rem-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.rem-name { font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.rem-left { font-size: 15px; font-weight: 650; }
+.rem-left.rem-bad { color: var(--bad); }
+.rem-left.rem-warn { color: var(--warn); }
+.rem-left.rem-ok { color: var(--ok); }
+.rem-card .progress { margin: 2px 0 4px; }
+.rem-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 8px; }
+.rem-actions .btn-ghost { margin-left: auto; }
+.rem-card.paused .rem-name, .rem-card.paused .progress, .rem-card.paused .row-sub { opacity: 0.55; }
+
+@media (max-width: 767px) {
+  .rem-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .rem-card { padding: 16px; }
+  .rem-tools .btn { width: 100%; margin-left: 0; }
+}

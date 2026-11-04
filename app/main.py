@@ -13,7 +13,16 @@ from fastapi.staticfiles import StaticFiles
 from app import db
 from app.auth import SignInRequired
 from app.errors import ApiError
-from app.routers import auth, diagnose, pages, records, service_types, stats, vehicles
+from app.routers import (
+    auth,
+    diagnose,
+    pages,
+    records,
+    reminders,
+    service_types,
+    stats,
+    vehicles,
+)
 from app.schemas import ErrorOut, HealthDbOut, HealthOut, RootOut
 
 APP_NAME = os.getenv("APP_NAME", "vehicle-maintenance-log")
@@ -86,6 +95,7 @@ def health_db():
 app.include_router(stats.router)
 app.include_router(vehicles.router)
 app.include_router(records.router)
+app.include_router(reminders.router)
 app.include_router(service_types.router)
 app.include_router(diagnose.router)
 app.include_router(auth.router)

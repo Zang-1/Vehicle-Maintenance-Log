@@ -81,7 +81,9 @@ def costs_page(request: Request):
 # builds it, so links from the home screen never end on a 404.
 # path -> (menu key, title, screen in ui-design.html, owner)
 UPCOMING = {
-
+    # reminder forms (M5): the "Nhắc bảo dưỡng" tab of S04 links here; Khoa removes them when the forms exist
+    "/xe/{vehicle_id:int}/nhac-lich/moi": ("xe", "Thêm nhắc lịch", "Thêm/Sửa nhắc lịch", "Khoa"),
+    "/nhac-lich/{reminder_id:int}/sua": ("xe", "Sửa nhắc lịch", "Thêm/Sửa nhắc lịch", "Khoa"),
     "/them": ("them", "Thêm", "Thêm", "Khoa"),
 }
 

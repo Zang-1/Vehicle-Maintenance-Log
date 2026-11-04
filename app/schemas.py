@@ -385,3 +385,42 @@ class CostsOut(BaseModel):
     months: list[CostMonth]  # always 12 entries; for all time, the same month of every year is added up
     by_service_type: list[CostByType]
     by_vehicle: list[CostByVehicle]
+
+# ---------- M5 Nhắc lịch (Lâm) ----------
+
+
+class ReminderIn(BaseModel):
+    """FR-13. BR-06: at least one interval. start_date and start_odometer are the first base mark (BR-07):
+    left out, the latest record of the same service type is used, else today and the vehicle's odometer."""
+
+    service_type_id: Annotated[int, Field(gt=0)]
+    interval_km: Annotated[int, Field(gt=0, le=1_000_000)] | None = None
+    interval_months: Annotated[int, Field(gt=0, le=240)] | None = None
+    notify_before_days: Annotated[int, Field(ge=0, le=365)] = 7
+    notify_before_km: Annotated[int, Field(ge=0, le=100_000)] = 300
+    start_date: date | None = None
+    start_odometer: Annotated[int, Field(ge=0, le=10_000_000)] | None = None
+
+    @model_validator(mode="after")
+    def has_an_interval(self):
+        if self.interval_km is None and self.interval_months is None:
+            raise ValueError("Cần nhập chu kỳ theo km hoặc theo tháng.")
+        return self
+
+    @field_validator("start_date")
+    @classmethod
+    def start_not_in_future(cls, value):
+        if value and value > today_vn():
+            raise ValueError("Ngày bắt đầu không được ở tương lai.")
+        return value
+
+
+class ReminderDetailOut(ReminderOut):
+    """A reminder as its card and its edit form need it."""
+
+    current_odometer: int
+    notify_before_days: int
+    notify_before_km: int
+    start_date: date
+    start_odometer: int
+    progress: float  # 0..1 share of the interval already used, the larger of time and distance

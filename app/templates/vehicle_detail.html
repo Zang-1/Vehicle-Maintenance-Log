@@ -6,8 +6,8 @@
 
 {% block content %}
 {# vehicle_detail.js fills everything from GET /api/vehicles/{{ vehicle_id }}.
-   The tab "Nhắc bảo dưỡng" is written by Khoa: it defines window.renderVehicleReminders(container, vehicle)
-   (vehicle = the JSON of /api/vehicles/{id}); this page calls it once, the first time the tab opens. #}
+   The tab "Nhắc bảo dưỡng" is vehicle_reminders.js: it defines window.renderVehicleReminders(container, vehicle)
+   (vehicle = the JSON of /api/vehicles/{id}); this page calls it the first time the tab opens. #}
 <section class="card vd-head" id="vd-head" data-vehicle-id="{{ vehicle_id }}" aria-live="polite">
   <div class="skel skel-block"></div>
 </section>
@@ -59,11 +59,22 @@
     <button class="btn btn-danger" type="button" id="delete-confirm">Xóa xe</button>
   </div>
 </div></dialog>
+
+<dialog class="dialog" id="reminder-delete-dialog" aria-labelledby="reminder-delete-title"><div class="dialog-body">
+  <span class="dialog-icon tone-bad"><svg class="ic"><use href="#i-alert"></use></svg></span>
+  <h2 id="reminder-delete-title">Xóa nhắc <span id="reminder-delete-name"></span>?</h2>
+  <p class="muted">Chỉ xóa nhắc lịch, lịch sử bảo dưỡng vẫn giữ nguyên. Nếu chỉ muốn tạm ngưng nhắc, hãy chọn Tạm dừng.</p>
+  <div class="dialog-actions">
+    <button class="btn btn-secondary" type="button" data-close>Hủy</button>
+    <button class="btn btn-danger" type="button" id="reminder-delete-confirm">Xóa nhắc lịch</button>
+  </div>
+</div></dialog>
 {% endblock %}
 
 {% block screen %}S04 · Chi tiết xe · FR-03, FR-05, FR-07{% endblock %}
 
 {% block scripts %}
 <script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/vehicle_reminders.js?v={{ request.app.version }}"></script>
 <script src="/static/vehicle_detail.js?v={{ request.app.version }}"></script>
 {% endblock %}

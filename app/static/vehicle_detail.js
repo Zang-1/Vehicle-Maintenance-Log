@@ -146,7 +146,7 @@
     }
   }
 
-  // ---------- tab: nhắc bảo dưỡng (Khoa) ----------
+  // ---------- tab: nhắc bảo dưỡng (vehicle_reminders.js) ----------
   function mountReminders() {
     if (remindersMounted) return;
     remindersMounted = true;
@@ -187,6 +187,9 @@
       document.getElementById("archive-dialog").close();
       renderHead(vehicle);
       renderInfo(vehicle);
+      if (remindersMounted && typeof window.renderVehicleReminders === "function") {
+        window.renderVehicleReminders(document.getElementById("reminders-mount"), vehicle); // "Thêm nhắc lịch" follows the archive state
+      }
       showToast(archived ? "Đã lưu trữ xe" : "Đã khôi phục xe");
     } catch (error) {
       document.getElementById("archive-dialog").close();
@@ -202,6 +205,16 @@
       location.href = "/xe";
     } catch (error) {
       document.getElementById("delete-dialog").close();
+      showError(error.message);
+    }
+  });
+
+  // a reminder paused, resumed or deleted in the tab: the header badge counts active reminders only
+  document.addEventListener("vml:reminders-changed", async () => {
+    try {
+      vehicle = await fetchJson(`/api/vehicles/${vehicleId}`);
+      renderHead(vehicle);
+    } catch (error) {
       showError(error.message);
     }
   });
