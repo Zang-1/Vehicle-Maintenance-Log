@@ -45,25 +45,25 @@ def saved(monkeypatch):
 
 
 def test_diagnose_returns_the_suggestion_and_saves_it(monkeypatch, saved):
-    monkeypatch.setattr(ai, "summarize_safe", lambda text: "Má phanh mòn.\nMức khẩn cấp: MEDIUM")
+    monkeypatch.setattr(ai, "summarize_safe", lambda text, **kw: "Má phanh mòn.\nMức khẩn cấp: MEDIUM")
     r = client.post("/diagnose", json={"symptom_text": SYMPTOM})
     assert r.status_code == 200
     assert r.json() == {"suggestion": "Má phanh mòn.\nMức khẩn cấp: MEDIUM"}
     assert saved == [{
-        "user_id": 1, "symptom_text": SYMPTOM, "model": ai.AI_MODEL, "status": "OK", "error_code": None,
+        "user_id": 1, "vehicle_id": None, "symptom_text": SYMPTOM, "model": ai.AI_MODEL, "status": "OK", "error_code": None,
         "ai_suggestion": "Má phanh mòn.\nMức khẩn cấp: MEDIUM", "urgency_level": "MEDIUM",
     }]
 
 
 def test_answer_without_urgency_line_is_saved_without_urgency(monkeypatch, saved):
-    monkeypatch.setattr(ai, "summarize_safe", lambda text: "Nên mang xe tới gara kiểm tra.")
+    monkeypatch.setattr(ai, "summarize_safe", lambda text, **kw: "Nên mang xe tới gara kiểm tra.")
     client.post("/diagnose", json={"symptom_text": SYMPTOM})
     assert saved[0]["urgency_level"] is None
 
 
 def test_symptom_is_trimmed_before_the_ai_call(monkeypatch, saved):
     seen = []
-    monkeypatch.setattr(ai, "summarize_safe", lambda text: seen.append(text) or "ok")
+    monkeypatch.setattr(ai, "summarize_safe", lambda text, **kw: seen.append(text) or "ok")
     client.post("/diagnose", json={"symptom_text": f"   {SYMPTOM}   "})
     assert seen == [SYMPTOM]
 
@@ -90,7 +90,7 @@ def test_too_short_or_too_long_is_422_without_calling_ai_or_saving(monkeypatch, 
     ],
 )
 def test_ai_failure_is_a_friendly_503_and_saved_with_its_code(monkeypatch, saved, capsys, reason, code):
-    def broken(text):
+    def broken(text, **kw):
         raise ai.AIUnavailable(reason)
 
     monkeypatch.setattr(ai, "summarize_safe", broken)
@@ -119,7 +119,7 @@ def test_answer_still_reaches_the_user_when_the_database_is_down(monkeypatch, ca
         raise psycopg.OperationalError("connection refused")
 
     monkeypatch.setattr(db.pool, "connection", broken_connection)
-    monkeypatch.setattr(ai, "summarize_safe", lambda text: "Má phanh mòn.")
+    monkeypatch.setattr(ai, "summarize_safe", lambda text, **kw: "Má phanh mòn.")
     r = client.post("/diagnose", json={"symptom_text": SYMPTOM})
     assert r.status_code == 200
     assert "diagnosis not saved" in capsys.readouterr().out

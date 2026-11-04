@@ -153,6 +153,7 @@ class DiagnoseIn(BaseModel):
     """FR-18. Too short or too long gets FastAPI's 422 before any AI call."""
 
     symptom_text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=1000)]
+    vehicle_id: Annotated[int, Field(gt=0)] | None = None  # FR-18: xe được chọn; None = hỏi chung
 
 
 class DiagnoseOut(BaseModel):

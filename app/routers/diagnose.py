@@ -23,9 +23,9 @@ FRIENDLY = "Tính năng chẩn đoán AI tạm thời không khả dụng, vui l
 URGENCY = re.compile(r"(?:mức khẩn cấp|urgency)\s*:\s*\**\s*(LOW|MEDIUM|HIGH)", re.IGNORECASE)
 
 INSERT_SQL = """
-INSERT INTO diagnoses (user_id, symptom_text, status, ai_suggestion, urgency_level, error_code, model)
-VALUES (%(user_id)s, %(symptom_text)s, %(status)s, %(ai_suggestion)s, %(urgency_level)s, %(error_code)s, %(model)s)
-"""
+INSERT INTO diagnoses (user_id, vehicle_id, symptom_text, status, ai_suggestion, urgency_level, error_code, model)
+VALUES (%(user_id)s, %(vehicle_id)s, %(symptom_text)s, %(status)s, %(ai_suggestion)s, %(urgency_level)s, %(error_code)s, %(model)s)
+"""  # FR-18: thêm vehicle_id
 
 LIST_SQL = """
 SELECT id, created_at, symptom_text, status, ai_suggestion, urgency_level, error_code, model
@@ -33,6 +33,13 @@ FROM diagnoses
 WHERE user_id = %(uid)s
 ORDER BY created_at DESC, id DESC
 LIMIT 50
+"""
+
+# FR-18: chỉ lấy xe của người đang đăng nhập (FR-25)
+VEHICLE_SQL = """
+SELECT id, vehicle_type, brand, model, manufacture_year, current_odometer
+FROM vehicles
+WHERE id = %(vid)s AND user_id = %(uid)s
 """
 
 
@@ -47,6 +54,16 @@ def error_code(reason: str) -> str:
     return "UPSTREAM_ERROR"
 
 
+def load_vehicle(vehicle_id: int, user_id: int) -> dict:  # FR-18
+    with db.pool.connection(timeout=5) as conn:
+        row = conn.cursor(row_factory=dict_row).execute(
+            VEHICLE_SQL, {"vid": vehicle_id, "uid": user_id}
+        ).fetchone()
+    if row is None:  # không tồn tại HOẶC của người khác: cùng một câu trả lời
+        raise ApiError(404, "VEHICLE_NOT_FOUND", "Không tìm thấy xe.")
+    return row
+
+
 def save(row: dict) -> None:
     # A history row is nice to have; it must never cost the user the answer they waited for.
     try:
@@ -56,11 +73,24 @@ def save(row: dict) -> None:
         print("diagnosis not saved:", type(err).__name__, err, flush=True)
 
 
-@router.post("/diagnose", response_model=DiagnoseOut, responses={503: {"model": ErrorOut}})
+@router.post(
+    "/diagnose",
+    response_model=DiagnoseOut,
+    responses={404: {"model": ErrorOut}, 503: {"model": ErrorOut}},  # FR-18: thêm 404
+)
 def diagnose(req: DiagnoseIn, user: CurrentUser):
-    row = {"user_id": user["id"], "symptom_text": req.symptom_text, "model": ai.AI_MODEL, "ai_suggestion": None, "urgency_level": None}
+    # FR-18: kiểm tra xe TRƯỚC khi gọi AI, xe sai thì 404 và không tốn lượt gọi
+    vehicle = load_vehicle(req.vehicle_id, user["id"]) if req.vehicle_id is not None else None
+    row = {
+        "user_id": user["id"],
+        "vehicle_id": vehicle["id"] if vehicle else None,  # FR-18
+        "symptom_text": req.symptom_text,
+        "model": ai.AI_MODEL,
+        "ai_suggestion": None,
+        "urgency_level": None,
+    }
     try:
-        suggestion = ai.summarize_safe(req.symptom_text)
+        suggestion = ai.summarize_safe(req.symptom_text, vehicle_ctx=ai.describe_vehicle(vehicle))  # FR-18
     except ai.AIUnavailable as err:
         print("ai failed:", err.reason, flush=True)  # the reason goes to the logs, never the key
         save({**row, "status": "FAILED", "error_code": error_code(err.reason)})
