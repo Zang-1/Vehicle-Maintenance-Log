@@ -26,18 +26,20 @@ Sơ đồ này phải **khớp với những gì thật sự được deploy** (
 
 ```mermaid
 flowchart LR
-    U["Trình duyệt<br/>(máy tính / điện thoại)"] -- HTTPS --> R
+    U["Trình duyệt<br/>(máy tính / điện thoại)"] -- "HTTPS<br/>cookie vml_session" --> R
     subgraph Render["Render (Free, Docker)"]
         R["Container web<br/>FastAPI + Jinja2<br/>uvicorn :$PORT"]
     end
-    R -- "DATABASE_URL<br/>pooler :6543" --> S[("Supabase<br/>PostgreSQL 16")]
+    R -- "DATABASE_URL<br/>pooler :6543" --> S[("Supabase<br/>PostgreSQL 17")]
     R -- "GEMINI_API_KEY<br/>HTTPS" --> G["Google Gemini API"]
     Dev["Lập trình viên"] -- "git push nhánh → PR" --> GH["GitHub<br/>Zang-1/Vehicle-Maintenance-Log"]
     GH -- "pull_request / push main" --> GA["GitHub Actions<br/>check: ruff · pytest · build image"]
     GA -- "deploy: curl RENDER_DEPLOY_HOOK<br/>(chỉ khi push vào main)" --> Render
 ```
 
-Local (Compose) khác cloud ở chỗ: database là container `db` trong cùng mạng Compose (host `db`, không có pooler), web publish ở `127.0.0.1:3000`, biến môi trường đọc từ `.env`.
+Local (Compose) khác cloud ở chỗ: database là container `db` (PostgreSQL 16) trong cùng mạng Compose (host `db`, không có pooler), web publish ở `127.0.0.1:3000`, biến môi trường đọc từ `.env`.
+
+Mọi trang và mọi `/api/*` (trừ đăng nhập, đăng ký, `/health`, `/api/info`) cần phiên đăng nhập: cookie `vml_session` (HttpOnly) chứa token, database chỉ lưu sha256 của token trong bảng `sessions`. Mỗi truy vấn lọc theo `user_id` của người đang đăng nhập (FR-25).
 
 ## 3. Cấu trúc repo
 
@@ -84,9 +86,10 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 | **M2. Xe** | FR-01 → FR-05 | S02, S03, S04 (tab Thông tin) | **Lâm** | |
 | **M3. Lần bảo dưỡng** | FR-06 → FR-10 | S04 (tab Lịch sử), S05, S06 | **Lâm** | Ghi nhận trong 1 transaction (record + items + nâng ODO) |
 | **M4. Loại dịch vụ** | FR-11, FR-12 | S09 | **Khoa** | |
-| **M5. Nhắc lịch** | FR-13 → FR-15 | S04 (tab Nhắc lịch), S07 | **Giang** | Đọc trạng thái từ `v_reminder_status` |
-| **M6. Giao diện chung, Dashboard, Thống kê** | FR-16, FR-17 | S01, S08 + `base.html` | **Khoa** | Layout, CSS theo Figma, điều hướng, biểu đồ |
-| **M7. Chẩn đoán AI** | FR-18 → FR-22 | S10, S11 | **Giang** | `services/ai.py`, xử lý lỗi theo BR-10, lưu `diagnoses`, mock trong test |
+| **M5. Nhắc lịch** | FR-13 → FR-15 | S04 (tab Nhắc lịch), S07 | **Lâm** (API, tab) + **Khoa** (S07) | Đọc trạng thái từ `v_reminder_status`; chỉ cho đụng nhắc lịch của xe thuộc người đang đăng nhập |
+| **M6. Giao diện chung, Dashboard, Thống kê** | FR-16, FR-17 | S01, S08 + `base.html` | **Giang** (khung kính mờ, Trang chủ) + **Khoa** (Thống kê, trang Thêm) | Layout theo `ui-design.html`, điều hướng, biểu đồ |
+| **M7. Chẩn đoán AI** | FR-18 → FR-22 | S10, S11 | **Giang** (chọn xe ở FR-18: **Khoa**) | `app/ai.py`, xử lý lỗi theo BR-10, lưu `diagnoses`, mock trong test |
+| **M8. Tài khoản** | FR-23 → FR-25 | S12, S13 | **Giang** | `app/auth.py` (scrypt, phiên trong cookie), `users`, `sessions`, `user_id` trên dữ liệu; dependency `CurrentUser` cho mọi router |
 | **P1. CI/CD + Render** | PR-01, PR-04 | – | **Lâm** | Workflow `check` + `deploy`; branch protection; tạo Render service (health check path `/health`), tắt Auto-Deploy, lưu deploy hook vào GitHub Secrets |
 | **P2. Dockerfile + Compose** | PR-02, PR-03 | – | **Khoa** | `python:3.12-slim` (cùng phiên bản với CI), copy `requirements.txt` và cài trước rồi mới copy code, `exec uvicorn ... --port ${PORT:-8000}`; Compose `web` + `db`; thử clean clone trên máy khác |
 
@@ -105,13 +108,14 @@ Mỗi người làm trọn module của mình từ API, template đến test, đ
 | Phương thức & URL | Mô tả | Module |
 |---|---|---|
 | `GET /` · `GET /api/info` · `GET /health` · `GET /health/db` | Dashboard (HTML) · tên + phiên bản · sống (không chạm DB) · DB ok/503 | M0, M1 |
+| `POST /api/auth/register` · `/login` · `/demo` · `/logout` · `GET /api/auth/me` | Đăng ký, đăng nhập (nút Dùng thử), đăng xuất, người đang đăng nhập | M8 |
 | `GET/POST /api/vehicles` · `GET/PUT/DELETE /api/vehicles/{id}` | CRUD xe (DELETE trả 409 nếu xe đã có lịch sử) | M2 |
 | `PATCH /api/vehicles/{id}/archive` | Lưu trữ xe | M2 |
 | `GET/POST /api/vehicles/{id}/records` · `GET/PUT/DELETE /api/records/{id}` | Lịch sử, ghi nhận, chi tiết, sửa, xóa | M3 |
 | `GET /api/vehicles/{id}/records.csv` | Xuất CSV | M3 |
-| `GET/POST /api/service-types` · `PUT /api/service-types/{id}` | Danh mục | M4 |
-| `GET /api/reminders?vehicle_id=&status=` · `POST /api/reminders` · `PUT/DELETE /api/reminders/{id}` | Nhắc lịch kèm trạng thái | M5 |
-| `GET /api/stats/dashboard` · `GET /api/stats/costs?group_by=month\|vehicle\|service_type&from=&to=` | Dashboard, thống kê | M6 |
+| `GET/POST /api/service-types` · `GET/PUT/DELETE /api/service-types/{id}` · `PATCH /api/service-types/{id}/active` | Danh mục; loại mặc định chỉ đọc (403) | M4 |
+| `GET/POST /api/vehicles/{id}/reminders` · `GET/PUT/DELETE /api/reminders/{id}` · `PATCH /api/reminders/{id}/active` | Nhắc lịch kèm trạng thái, tạm dừng | M5 |
+| `GET /api/stats/dashboard` · `GET /api/stats/costs?year=&vehicle_id=` | Dashboard, thống kê | M6 |
 | `POST /diagnose` · `GET /api/diagnoses` | Chẩn đoán AI, lịch sử | M7 |
 
 ## 5. Tính năng AI – thiết kế chi tiết
@@ -190,7 +194,7 @@ Vì chỉ có 4 ngày, Phase 2 chỉ làm phần **đọc dữ liệu + thêm xe
 | Thời gian | Giang | Lâm | Khoa |
 |---|---|---|---|
 | **30/10 – 1/11** | **M7** chẩn đoán AI: chạy local, đặt `GEMINI_API_KEY` trên Render, chạy trên URL live (mốc W8 của Brief) | **M3** ghi nhận/sửa/xóa lần bảo dưỡng (S05, S06); **M2** sửa xe, cập nhật ODO | **M6** thống kê chi phí S08; chỉnh giao diện theo Figma |
-| **2 – 5/11** | **M5** tạo/sửa nhắc lịch (S07); FR-21 lịch sử chẩn đoán | FR-05 lưu trữ/xóa xe; FR-10 xuất CSV | FR-12 thêm/sửa loại dịch vụ; trang S10, S11 cho AI (cùng Giang) |
+| **2 – 5/11** | **M8** tài khoản (FR-23 → FR-25); FR-21 lịch sử chẩn đoán | **M5** API nhắc lịch + tab Nhắc bảo dưỡng | **M5** màn hình S07; trang Thêm; FR-18 chọn xe khi hỏi AI |
 | **6/11** | Kiểm thử chéo M2, M3 | Kiểm thử chéo M4, M6 | Kiểm thử chéo M5, M7 |
 | **7 – 8/11** | **Audit secret** (cả lịch sử Git); report mục 5, 6, 7; tổng hợp bảng đóng góp từ `git shortlog -sne` | Report mục 1, 2, 4 | Report mục 3, 7 |
 

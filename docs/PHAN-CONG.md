@@ -27,9 +27,9 @@ Mỗi người có 3 loại việc: **tài liệu thiết kế** (8 bước), **
 
 | Module | Người làm |
 |---|---|
-| M1 Database (Supabase, schema, pool) · M5 Nhắc lịch · M7 Chẩn đoán AI | **Giang** |
-| M2 Xe · M3 Lần bảo dưỡng · P1 CI/CD + Render | **Lâm** |
-| M0 Khung dự án FastAPI (cùng Giang) · M4 Loại dịch vụ · M6 Giao diện chung, Dashboard, Thống kê · P2 Dockerfile + Compose | **Khoa** |
+| M1 Database (Supabase, schema, pool) · M7 Chẩn đoán AI · M8 Tài khoản · khung giao diện, Trang chủ | **Giang** |
+| M2 Xe · M3 Lần bảo dưỡng · M5 Nhắc lịch (API, tab Nhắc bảo dưỡng) · P1 CI/CD + Render | **Lâm** |
+| M0 Khung dự án FastAPI (cùng Giang) · M4 Loại dịch vụ · M5 Nhắc lịch (màn hình S07) · M6 Thống kê, trang Thêm · FR-18 chọn xe khi hỏi AI · P2 Dockerfile + Compose | **Khoa** |
 
 Chi tiết từng module, API và hợp đồng giữa các module: mục 4 của [Implementation Plan](08-implementation-plan/implementation-plan.md).
 
@@ -37,7 +37,7 @@ Chi tiết từng module, API và hợp đồng giữa các module: mục 4 củ
 
 Giảng viên góp ý Dashboard hiện quá nhiều thứ, khó dùng với người dùng phổ thông. Bản thiết kế mới là [`ui-design.html`](../ui-design.html): mở bằng trình duyệt là chạy, có trang Design System (màu, chữ, icon, component) và bản demo bấm được đủ màn hình. Phong cách kính mờ, Trang chủ chỉ giữ thông tin quan trọng và bấm vào mới xem chi tiết, biểu mẫu chỉ hiện ô bắt buộc.
 
-Giang làm **khung giao diện, Trang chủ và trang Chẩn đoán AI**; Lâm và Khoa chia nhau các trang còn lại. Việc backend của Giang (M1 database, API nhắc lịch M5, M7 AI) giữ nguyên.
+Giang làm **khung giao diện, Trang chủ và trang Chẩn đoán AI**; Lâm và Khoa chia nhau các trang còn lại. Nhắc lịch (M5) chuyển cho Lâm và Khoa, xem mục 2.2.
 
 | Người | Phần việc | Màn hình trong `ui-design.html` | Xong trước |
 |---|---|---|---|
@@ -48,7 +48,7 @@ Giang làm **khung giao diện, Trang chủ và trang Chẩn đoán AI**; Lâm v
 | **Lâm** | Ghi lần bảo dưỡng (chọn nhanh việc đã làm, nhập giá gõ kiểu `135.000`), Chi tiết lần bảo dưỡng và hộp thoại xoá (M3) | Ghi lần bảo dưỡng · Chi tiết lần bảo dưỡng | T6 06/11 |
 | **Khoa** | Chi phí: lọc theo năm và xe, biểu đồ theo tháng, theo loại việc, theo xe (M6) | Chi phí | T6 06/11 |
 | **Khoa** | Loại việc bảo dưỡng: danh sách, thêm/sửa, ngừng dùng/xoá (M4) · trang "Thêm" trên điện thoại | Loại việc bảo dưỡng · Thêm | T6 06/11 |
-| **Khoa** | Nhắc bảo dưỡng: form tạo/sửa nhắc nhở với xem trước, và nội dung tab Nhắc bảo dưỡng (thẻ nhắc kèm thanh tiến độ) để Lâm gắn vào trang Chi tiết xe | Nhắc bảo dưỡng · Tạo nhắc nhở | T6 06/11 |
+| **Khoa** | Nhắc bảo dưỡng: form tạo/sửa nhắc nhở (S07). Tab Nhắc bảo dưỡng do Lâm làm, xem mục 2.2 | Tạo nhắc nhở | T6 06/11 |
 | Cả nhóm | Kiểm tra chéo trên điện thoại và ở cả 2 chế độ sáng/tối, sửa chỗ lệch với bản thiết kế | Tất cả | CN 08/11 |
 
 Quy ước cho phần giao diện:
@@ -57,6 +57,19 @@ Quy ước cho phần giao diện:
 - **Lâm và Khoa bắt đầu code sau khi PR khung giao diện của Giang được merge** (T3 03/11), để dùng chung class thay vì tự viết lại. Trước đó đọc kỹ `ui-design.html` và dựng sẵn `.html` của trang mình.
 - **Mỗi trang một file JS** trong `app/static/` (như `dashboard.js`, `diagnose.js`), chỉ gọi API của chính app qua `fetchJson`, dựng DOM bằng `el()`, không dùng `innerHTML` với dữ liệu người dùng.
 - **Tab Nhắc bảo dưỡng** nằm trong trang Chi tiết xe của Lâm; Khoa viết phần nội dung, Lâm gắn vào. Hai người thống nhất tên hàm ngay khi bắt đầu.
+### 2.2. Chức năng còn lại (từ 04/11)
+
+| Người | Việc | Xong trước |
+|---|---|---|
+| **Lâm** | **API nhắc lịch (FR-13, FR-14):** `GET/POST /api/vehicles/{id}/reminders` (đọc trạng thái từ `v_reminder_status`), `GET/PUT/DELETE /api/reminders/{id}`, `PATCH /api/reminders/{id}/active`. Mỗi route nhận `user: CurrentUser` và chỉ cho đụng nhắc lịch của xe thuộc người đó (làm giống `app/routers/records.py`) | **T4 05/11** |
+| **Lâm** | **Tab "Nhắc bảo dưỡng" ở Chi tiết xe:** `window.renderVehicleReminders` (chỗ gắn có sẵn trong `vehicle_detail.js`): tên việc, trạng thái, số ngày và số km còn lại, thanh tiến độ; nút Sửa, Tạm dừng, Xóa (hỏi lại), Thêm nhắc lịch | T6 06/11 |
+| **Khoa** | **Màn hình S07:** `/nhac-lich/moi?xe=…&loai=…` và `/nhac-lich/{id}/sua`; chu kỳ điền sẵn từ loại việc, có ngưỡng báo trước; lưu xong quay về tab Nhắc bảo dưỡng của xe | T6 06/11 |
+| **Khoa** | **Trang "Thêm" (`/them`):** menu cho điện thoại: Loại việc bảo dưỡng, Các lần đã hỏi AI, Hướng dẫn, Đăng xuất | T6 06/11 |
+| **Khoa** | **FR-18 chọn xe khi hỏi AI:** ô chọn xe, `vehicle_id` trong `DiagnoseIn`, đưa loại xe, hãng, số km vào prompt (`app/ai.py`); chỉ xe của người đang đăng nhập | T6 06/11 |
+| **Khoa** | Nếu kịp: lọc "Từ ngày – Đến ngày" ở trang Chi phí (FR-17) | – |
+
+Bảng `reminders` đã có sẵn, không cần sửa `schema.sql`.
+
 - **Tài khoản (Giang, FR-23 → FR-25):** đã thêm đăng ký, đăng nhập và dữ liệu riêng cho từng người. Router mới phải nhận `user: CurrentUser` (app/auth.py) và lọc theo `user["id"]`; xem cách làm ở app/routers/vehicles.py.
 - **Ngoài phạm vi:** nút chuyển Anh–Việt chỉ có trong bản thiết kế để minh hoạ; giao diện chỉ tiếng Việt.
 
@@ -73,9 +86,9 @@ Quy ước cho phần giao diện:
 | Phase | Thời gian | Giang | Lâm | Khoa |
 |---|---|---|---|---|
 | **1. Thiết kế** ✅ | đến 25/10 | 01 · 04 · 08 ✅ | 02 · 03 · 07 ✅ | 05 trước 24/10 · 06 trước 29/10 |
-| **2. Chạy local** | T6 23/10 → **T2 26/10** | Khung FastAPI + DB (M0, M1) · API + tab Nhắc lịch (M5) | Workflow CI + branch protection (P1) · Xe: xem, thêm (M2) · Lịch sử: xem (M3) | Dockerfile + Compose (P2) · `base.html`, Dashboard (M6) · API loại dịch vụ (M4) |
+| **2. Chạy local** | T6 23/10 → **T2 26/10** | Khung FastAPI + DB (M0, M1) | Workflow CI + branch protection (P1) · Xe: xem, thêm (M2) · Lịch sử: xem (M3) | Dockerfile + Compose (P2) · `base.html`, Dashboard (M6) · API loại dịch vụ (M4) |
 | **3. Lên Render + Supabase** | T3 27/10 → **T5 29/10** | Tạo Supabase + Render service, chạy schema + seed, đặt biến môi trường, deploy hook, thử pause/restore | Job `deploy` trong workflow, bật required check `check`, thử commit đến production | 06 Figma · trang S09 · giao diện trên điện thoại · URL vào README |
-| **4. Hoàn thiện** | T6 30/10 → CN 8/11 | AI trên URL live (M7) · tạo/sửa nhắc lịch · audit secret · report mục 5, 6, 7 | Ghi nhận/sửa/xóa bảo dưỡng · sửa xe, lưu trữ, CSV · report mục 1, 2, 4 | Thống kê chi phí · chỉnh theo Figma · report mục 3, 7 |
+| **4. Hoàn thiện** | T6 30/10 → CN 8/11 | AI trên URL live (M7) · tài khoản (M8) · audit secret · report mục 5, 6, 7, 8 | Ghi nhận/sửa/xóa bảo dưỡng · sửa xe, lưu trữ, CSV · nhắc lịch (API, tab) · report mục 1, 2, 4 | Thống kê chi phí · S07 nhắc lịch · trang Thêm · FR-18 · report mục 3, 7 |
 | **5. Tập demo và nộp** | T2 9/11 → Session 20 | Report PDF, tập demo có bấm giờ | Nhánh "cố tình đỏ" cho demo | Clean clone trên máy khác · slide |
 
 Mốc kiểm tra: **tối T2 26/10** (clean clone chạy được local trên 2 máy), **tối T5 29/10** (URL Render chạy với Supabase, merge là tự deploy). Việc theo từng ngày và điều kiện xong mỗi phase: mục 6 của [Implementation Plan](08-implementation-plan/implementation-plan.md).
