@@ -134,9 +134,19 @@ def test_dashboard_page_needs_no_database(monkeypatch):
 
 
 def test_upcoming_pages_exist():
-    r = client.get("/them")
+    r = client.get("/nhac-lich/1/sua")
     assert r.status_code == 200
     assert "đang được xây dựng" in r.text
+
+
+def test_more_page_is_the_phone_menu():
+    r = client.get("/them")
+    assert r.status_code == 200
+    assert "đang được xây dựng" not in r.text
+    for link in ["/loai-dich-vu", "/chan-doan/lich-su"]:
+        assert f'href="{link}"' in r.text
+    assert "data-open-help" in r.text
+    assert "data-logout" in r.text
 
 
 def test_static_files_are_served():

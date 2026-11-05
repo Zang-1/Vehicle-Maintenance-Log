@@ -854,3 +854,18 @@ select.control { cursor: pointer; }
   .rem-card { padding: 16px; }
   .rem-tools .btn { width: 100%; margin-left: 0; }
 }
+
+/* Thêm (phone menu) */
+.more-list { display: flex; flex-direction: column; gap: 8px; }
+.more-list a,
+.more-list button {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 52px; padding: 0 16px; width: 100%;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 12px; background: transparent;
+  color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer;
+}
+.more-list a:hover,
+.more-list button:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
+.more-list span { flex: 1; }
+.more-chev { opacity: .5; }

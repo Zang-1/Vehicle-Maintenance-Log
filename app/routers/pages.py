@@ -78,13 +78,20 @@ def service_types_page(request: Request):
 @router.get("/thong-ke")
 def costs_page(request: Request):
     return templates.TemplateResponse(request, "costs.html", {"active": "thong-ke"})
+
+
+# More: the phone menu behind the "Thêm" tab (Khoa)
+@router.get("/them")
+def more_page(request: Request):
+    return templates.TemplateResponse(request, "them.html", {"active": "them"})
+
+
 # builds it, so links from the home screen never end on a 404.
 # path -> (menu key, title, screen in ui-design.html, owner)
 UPCOMING = {
     # reminder forms (M5): the "Nhắc bảo dưỡng" tab of S04 links here; Khoa removes them when the forms exist
     "/xe/{vehicle_id:int}/nhac-lich/moi": ("xe", "Thêm nhắc lịch", "Thêm/Sửa nhắc lịch", "Khoa"),
     "/nhac-lich/{reminder_id:int}/sua": ("xe", "Sửa nhắc lịch", "Thêm/Sửa nhắc lịch", "Khoa"),
-    "/them": ("them", "Thêm", "Thêm", "Khoa"),
 }
 
 
