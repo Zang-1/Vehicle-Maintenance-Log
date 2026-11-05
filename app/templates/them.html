@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm{% endblock %}
+{% block heading %}Thêm{% endblock %}
+
+{% block content %}
+<nav class="more-list" aria-label="Menu thêm">
+  <a href="/loai-dich-vu">
+    <svg class="ic"><use href="#i-wrench"></use></svg>
+    <span>Loại việc bảo dưỡng</span>
+    <svg class="ic more-chev"><use href="#i-chevron-right"></use></svg>
+  </a>
+  <a href="/chan-doan/lich-su">
+    <svg class="ic"><use href="#i-history"></use></svg>
+    <span>Các lần đã hỏi AI</span>
+    <svg class="ic more-chev"><use href="#i-chevron-right"></use></svg>
+  </a>
+  <button type="button" data-open-help>
+    <svg class="ic"><use href="#i-info"></use></svg>
+    <span>Hướng dẫn</span>
+    <svg class="ic more-chev"><use href="#i-chevron-right"></use></svg>
+  </button>
+  <button type="button" data-logout>
+    <svg class="ic"><use href="#i-logout"></use></svg>
+    <span>Đăng xuất</span>
+  </button>
+</nav>
+{% endblock %}
+
+{% block screen %}Thêm{% endblock %}
