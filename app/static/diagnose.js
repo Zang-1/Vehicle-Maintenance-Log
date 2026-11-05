@@ -3,6 +3,7 @@
 const symptom = document.getElementById("symptom");
 const button = document.getElementById("diagnose-btn");
 const help = document.getElementById("symptom-help");
+const vehicleSelect = document.getElementById("vehicle-select");
 const STATES = ["state-empty", "state-wait", "state-ok", "state-bad"];
 
 // The prompt (app/ai.py) asks for a last line "Mức khẩn cấp: LOW|MEDIUM|HIGH".
@@ -12,6 +13,20 @@ const URGENCY = {
   HIGH: ["Cao — cần kiểm tra ngay", "urgency-high", 3],
 };
 const URGENCY_LINE = /^\s*(?:mức khẩn cấp|urgency)\s*:\s*\**\s*(LOW|MEDIUM|HIGH)\b.*$/im;
+
+// FR-18: danh sách xe của người dùng; chọn xe không bắt buộc.
+async function loadVehicles() {
+  try {
+    const vehicles = await fetchJson("/api/vehicles?archived=active");
+    for (const v of vehicles) {
+      const label = [v.name, [v.brand, v.model].filter(Boolean).join(" "), v.license_plate]
+        .filter(Boolean).join(" · ");
+      vehicleSelect.append(new Option(label, String(v.id)));
+    }
+  } catch (error) {
+    console.warn("Không tải được danh sách xe:", error);
+  }
+}
 
 function show(id) {
   for (const state of STATES) document.getElementById(state).hidden = state !== id;
@@ -71,7 +86,10 @@ button.addEventListener("click", async () => {
     const data = await fetchJson("/diagnose", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ symptom_text: text }),
+      body: JSON.stringify({
+        symptom_text: text,
+        vehicle_id: vehicleSelect.value ? Number(vehicleSelect.value) : null,
+      }),
       signal: AbortSignal.timeout(60000), // never a spinner forever (3 tries × 15 s + waits)
     });
     showSuggestion(data.suggestion);
@@ -87,3 +105,5 @@ button.addEventListener("click", async () => {
     button.textContent = "Chẩn đoán";
   }
 });
+
+loadVehicles();

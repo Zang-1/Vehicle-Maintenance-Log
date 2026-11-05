@@ -14,19 +14,24 @@ AI_BASE_URL = os.environ.get(
     "AI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai"
 )
 AI_MODEL = os.environ.get("AI_MODEL", "gemini-3.5-flash-lite")
-PROMPT_VERSION = "v1"  # change it when you change the prompt (only matters if you cache)
+PROMPT_VERSION = "v2"  # FR-18: prompt có thêm thông tin xe
 # Lab 5, Step 2: THIS is the only part you change — describe YOUR feature.
 # Keep {text}: it is replaced by the record from your database.
+# FR-18: {vehicle} là một dòng "THÔNG TIN XE: ..." hoặc chuỗi rỗng khi không chọn xe.
 PROMPT = (
     "Bạn là thợ sửa xe máy và ô tô giàu kinh nghiệm. Dựa vào triệu chứng người dùng mô tả dưới đây, "
     "trả lời tối đa 3 câu ngắn: nguyên nhân có thể và nên làm gì. "
+    "Nếu có THÔNG TIN XE thì dùng loại xe, hãng, đời và số km để chẩn đoán sát hơn. "
     "Dòng cuối cùng ghi đúng một trong ba: 'Mức khẩn cấp: LOW', 'Mức khẩn cấp: MEDIUM', "
     "'Mức khẩn cấp: HIGH'. Trả lời bằng ngôn ngữ của người dùng. "
     "Nếu triệu chứng liên quan phanh, lái hoặc cháy nổ thì khuyên dừng xe và kiểm tra ngay.\n\n"
+    "{vehicle}"
     "TRIỆU CHỨNG:\n{text}"
 )
 MAX_INPUT_CHARS = 8000  # cap the input: long text costs tokens and can exceed the limit
 TIMEOUT_S = 15.0  # never wait forever on the network
+
+_KIND = {"MOTORBIKE": "xe máy", "CAR": "ô tô", "OTHER": "phương tiện khác"}  # FR-18
 
 
 class AIUnavailable(Exception):
@@ -37,20 +42,36 @@ class AIUnavailable(Exception):
         self.reason = reason
 
 
-def cache_key(text: str) -> str:
-    # Same model + same prompt + same text = same summary, so it can be stored and reused.
-    raw = f"{AI_MODEL}\n{PROMPT_VERSION}\n{text}"
+def describe_vehicle(v: dict | None) -> str:  # FR-18
+    """Chỉ lấy các trường có cấu trúc; tên đặt tự do không đưa vào prompt."""
+    if not v:
+        return ""
+    parts = [_KIND.get(v["vehicle_type"], "xe")]
+    if v.get("brand"):
+        parts.append(f"hãng {v['brand'][:40]}")
+    if v.get("model"):
+        parts.append(f"dòng {v['model'][:40]}")
+    if v.get("manufacture_year"):
+        parts.append(f"đời {v['manufacture_year']}")
+    parts.append(f"đã chạy {v['current_odometer']} km")
+    return "THÔNG TIN XE: " + ", ".join(parts) + "\n\n"
+
+
+def cache_key(text: str, vehicle_ctx: str = "") -> str:  # FR-18
+    # Same model + same prompt + same vehicle + same text = same summary, so it can be reused.
+    raw = f"{AI_MODEL}\n{PROMPT_VERSION}\n{vehicle_ctx}\n{text}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def summarize(text: str, client: httpx2.Client | None = None) -> str:
+def summarize(text: str, client: httpx2.Client | None = None, *, vehicle_ctx: str = "") -> str:  # FR-18
     """One call to the provider. Raises httpx2 errors or AIUnavailable."""
     key = os.environ.get("GEMINI_API_KEY", "")
     if not key:
         raise AIUnavailable("GEMINI_API_KEY is not set")
     body = {
         "model": AI_MODEL,
-        "messages": [{"role": "user", "content": PROMPT.format(text=text[:MAX_INPUT_CHARS])}],
+        "messages": [{"role": "user", "content": PROMPT.format(
+            vehicle=vehicle_ctx, text=text[:MAX_INPUT_CHARS])}],  # FR-18
         "temperature": 0.2,  # low randomness: this is a summary
         "max_tokens": 1024,  # caps cost; Gemini 3 "thinking" tokens count here too
         "reasoning_effort": "low",  # little thinking needed to summarise
@@ -79,12 +100,13 @@ def summarize(text: str, client: httpx2.Client | None = None) -> str:
     return answer
 
 
-def summarize_safe(text: str, client: httpx2.Client | None = None, sleep=time.sleep) -> str:
+def summarize_safe(text: str, client: httpx2.Client | None = None, sleep=time.sleep,
+                   *, vehicle_ctx: str = "") -> str:  # FR-18
     """summarize() plus the failure policy. Returns a summary or raises AIUnavailable."""
     attempts = 3
     for attempt in range(attempts):
         try:
-            return summarize(text, client)
+            return summarize(text, client, vehicle_ctx=vehicle_ctx)  # FR-18
         except httpx2.HTTPStatusError as err:
             status = err.response.status_code
             if status == 429 or status >= 500:  # temporary: wait, then try again
