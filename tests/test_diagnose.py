@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app import ai, db
 from app.main import app
+from app.routers import diagnose as diagnose_router
 
 client = TestClient(app)
 
@@ -53,6 +54,88 @@ def test_diagnose_returns_the_suggestion_and_saves_it(monkeypatch, saved):
         "user_id": 1, "vehicle_id": None, "symptom_text": SYMPTOM, "model": ai.AI_MODEL, "status": "OK", "error_code": None,
         "ai_suggestion": "Má phanh mòn.\nMức khẩn cấp: MEDIUM", "urgency_level": "MEDIUM",
     }]
+
+
+def test_diagnose_with_vehicle_passes_vehicle_context_and_saves_id(monkeypatch, saved):
+    vehicle = {
+        "id": 7,
+        "vehicle_type": "MOTORBIKE",
+        "brand": "Honda",
+        "model": "Vision",
+        "manufacture_year": 2022,
+        "current_odometer": 15000,
+    }
+
+    loaded = []
+    ai_calls = []
+
+    def fake_load_vehicle(vehicle_id, user_id):
+        loaded.append((vehicle_id, user_id))
+        return vehicle
+
+    def fake_summarize(text, **kwargs):
+        ai_calls.append((text, kwargs))
+        return "Má phanh mòn.\nMức khẩn cấp: MEDIUM"
+
+    monkeypatch.setattr(diagnose_router, "load_vehicle", fake_load_vehicle)
+    monkeypatch.setattr(ai, "summarize_safe", fake_summarize)
+
+    r = client.post(
+        "/diagnose",
+        json={"symptom_text": SYMPTOM, "vehicle_id": 7},
+    )
+
+    assert r.status_code == 200
+    assert loaded == [(7, 1)]
+    assert ai_calls[0][0] == SYMPTOM
+    assert ai_calls[0][1]["vehicle_ctx"] == ai.describe_vehicle(vehicle)
+    assert "Honda" in ai_calls[0][1]["vehicle_ctx"]
+    assert "Vision" in ai_calls[0][1]["vehicle_ctx"]
+    assert saved[0]["vehicle_id"] == 7
+    assert saved[0]["status"] == "OK"
+
+
+def test_diagnose_rejects_vehicle_not_owned_by_user(monkeypatch, saved):
+    class FakeVehicleLookup:
+        def __init__(self):
+            self.query = ""
+            self.params = None
+
+        def execute(self, query, params=None):
+            self.query = query
+            self.params = params
+            return self
+
+        def fetchone(self):
+            return None
+
+    lookup = FakeVehicleLookup()
+
+    class FakeVehicleConnection:
+        def cursor(self, row_factory=None):
+            return lookup
+
+    @contextmanager
+    def connection(timeout=None):
+        yield FakeVehicleConnection()
+
+    monkeypatch.setattr(db.pool, "connection", connection)
+
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("AI must not be called for an invalid vehicle")
+
+    monkeypatch.setattr(ai, "summarize_safe", must_not_run)
+
+    r = client.post(
+        "/diagnose",
+        json={"symptom_text": SYMPTOM, "vehicle_id": 999},
+    )
+
+    assert r.status_code == 404
+    assert r.json()["error_code"] == "VEHICLE_NOT_FOUND"
+    assert lookup.params == {"vid": 999, "uid": 1}
+    assert "user_id" in lookup.query
+    assert saved == []
 
 
 def test_answer_without_urgency_line_is_saved_without_urgency(monkeypatch, saved):
