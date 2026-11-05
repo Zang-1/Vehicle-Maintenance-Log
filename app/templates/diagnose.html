@@ -25,6 +25,12 @@
     </header>
 
     <div class="dx-body">
+      <label class="field-label" for="vehicle-select">Chọn xe (không bắt buộc)</label>
+      <select id="vehicle-select">
+        <option value="">Không chọn xe</option>
+      </select>
+      <p class="muted">Chọn xe để AI tham khảo hãng, dòng xe, đời xe và số km hiện tại.</p>
+
       <label class="field-label" for="symptom">Triệu chứng <span class="text-bad">*</span></label>
       <textarea id="symptom" maxlength="1000" rows="6" aria-describedby="symptom-help"
                 placeholder="Ví dụ: Phanh trước kêu rít khi bóp mạnh, tay phanh hơi sâu"></textarea>
@@ -43,7 +49,7 @@
       <div class="dx-actions">
         <span class="dx-privacy">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9 12l2 2 4-4"/></svg>
-          Chỉ gửi mô tả lên AI, không gửi thông tin cá nhân
+          Chỉ gửi mô tả triệu chứng và, nếu bạn chọn xe, hãng, dòng, đời và số km của xe. Không gửi tên hay biển số.
         </span>
         <button class="btn btn-primary" id="diagnose-btn" type="button">Chẩn đoán</button>
       </div>
