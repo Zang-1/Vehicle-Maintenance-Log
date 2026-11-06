@@ -1,6 +1,8 @@
 """Dashboard numbers (FR-16). Everything is read from the two views of doc 04."""
 
-from fastapi import APIRouter, Query
+from datetime import date
+
+from fastapi import APIRouter, HTTPException, Query
 from psycopg.rows import dict_row
 
 from app import db
@@ -140,11 +142,18 @@ def dashboard(user: CurrentUser):
 # ---- Chi phí (FR-17, Khoa): a year or all time, all vehicles or one ----
 
 COSTS_FILTER = """
-(%(year)s::int IS NULL OR extract(year FROM service_date) = %(year)s::int)
+(
+    (%(from_date)s::date IS NOT NULL
+     AND service_date >= %(from_date)s::date
+     AND service_date < (%(to_date)s::date + INTERVAL '1 day'))
+    OR
+    (%(from_date)s::date IS NULL
+     AND (%(year)s::int IS NULL
+          OR extract(year FROM service_date) = %(year)s::int))
+)
 AND (%(vehicle_id)s::bigint IS NULL OR vehicle_id = %(vehicle_id)s::bigint)
 AND vehicle_id IN (SELECT id FROM vehicles WHERE user_id = %(uid)s)
 """
-
 COSTS_TOTAL_SQL = f"""
 SELECT coalesce(sum(total_cost), 0) AS grand_total, count(*) AS record_count,
        coalesce(sum(item_count), 0)::int AS item_count
@@ -182,17 +191,46 @@ ORDER BY total DESC, v.id
 
 
 @router.get("/costs", response_model=CostsOut)
-def costs(user: CurrentUser, vehicle_id: int | None = None, year: int | None = Query(default=None, ge=2000, le=2100)):
-    params = {"year": year, "vehicle_id": vehicle_id, "uid": user["id"]}
+def costs(
+    user: CurrentUser,
+    vehicle_id: int | None = None,
+    year: int | None = Query(default=None, ge=2000, le=2100),
+    from_date: date | None = None,
+    to_date: date | None = None,
+):
+    # Phải cung cấp cả hai ngày hoặc không cung cấp ngày nào
+    if (from_date is None) != (to_date is None):
+        raise HTTPException(
+            status_code=422,
+            detail="Phải cung cấp cả ngày bắt đầu và ngày kết thúc.",
+        )
+
+    # Ngày bắt đầu không được sau ngày kết thúc
+    if from_date is not None and from_date > to_date:
+        raise HTTPException(
+            status_code=422,
+            detail="Ngày bắt đầu không được lớn hơn ngày kết thúc.",
+        )
+
+    params = {
+        "year": None if from_date is not None else year,
+        "from_date": from_date,
+        "to_date": to_date,
+        "vehicle_id": vehicle_id,
+        "uid": user["id"],
+    }
+
     with db.pool.connection(timeout=5) as conn:
         cur = conn.cursor(row_factory=dict_row)
         totals = cur.execute(COSTS_TOTAL_SQL, params).fetchone()
         monthly = cur.execute(COSTS_MONTHLY_SQL, params).fetchall()
         by_type = cur.execute(COSTS_BY_TYPE_SQL, params).fetchall()
         by_vehicle = cur.execute(COSTS_BY_VEHICLE_SQL, params).fetchall()
+
     found = {row["month"]: row["total"] for row in monthly}
+
     return CostsOut(
-        year=year,
+        year=params["year"],
         vehicle_id=vehicle_id,
         total=totals["grand_total"],
         record_count=totals["record_count"],
