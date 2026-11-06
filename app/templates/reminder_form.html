@@ -2,7 +2,7 @@
 
 {% set editing = reminder_id is not none %}
 {% block title %}{{ "Sửa nhắc lịch" if editing else "Thêm nhắc lịch" }}{% endblock %}
-{% block subheading %}<p class="page-sub"><a id="back-link" href="{{ '/xe/' ~ vehicle_id if vehicle_id is not none else '/xe' }}">← Chi tiết xe</a></p>{% endblock %}
+{% block subheading %}<p class="page-sub"><a id="back-link" href="{{ '/xe/' ~ vehicle_id ~ '#nhac-bao-duong' if vehicle_id is not none else '/xe' }}">← Chi tiết xe</a></p>{% endblock %}
 {% block heading %}{{ "Sửa nhắc lịch" if editing else "Thêm nhắc lịch" }}{% endblock %}
 
 {% block content %}
@@ -49,7 +49,7 @@
     </div>
 
     <div class="form-actions">
-      <a class="btn btn-secondary" id="cancel-link" href="{{ '/xe/' ~ vehicle_id if vehicle_id is not none else '/xe' }}">Hủy</a>
+      <a class="btn btn-secondary" id="cancel-link" href="{{ '/xe/' ~ vehicle_id ~ '#nhac-bao-duong' if vehicle_id is not none else '/xe' }}">Hủy</a>
       <button class="btn btn-primary" type="submit" id="save"><svg class="ic"><use href="#i-check"></use></svg>{{ "Lưu thay đổi" if editing else "Lưu nhắc lịch" }}</button>
     </div>
   </div>
