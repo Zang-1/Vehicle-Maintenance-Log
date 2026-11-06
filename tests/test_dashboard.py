@@ -133,10 +133,15 @@ def test_dashboard_page_needs_no_database(monkeypatch):
     assert f"v{APP_VERSION}" in r.text
 
 
-def test_upcoming_pages_exist():
-    r = client.get("/nhac-lich/1/sua")
-    assert r.status_code == 200
-    assert "đang được xây dựng" in r.text
+def test_reminder_form_pages_exist():
+    add = client.get("/xe/1/nhac-lich/moi")
+    assert add.status_code == 200
+    assert 'id="reminder-form"' in add.text
+    assert 'data-vehicle-id="1"' in add.text
+    edit = client.get("/nhac-lich/5/sua")
+    assert edit.status_code == 200
+    assert 'data-reminder-id="5"' in edit.text
+    assert "đang được xây dựng" not in edit.text
 
 
 def test_more_page_is_the_phone_menu():

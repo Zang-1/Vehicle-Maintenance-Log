@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% set editing = reminder_id is not none %}
+{% block title %}{{ "Sửa nhắc lịch" if editing else "Thêm nhắc lịch" }}{% endblock %}
+{% block subheading %}<p class="page-sub"><a id="back-link" href="{{ '/xe/' ~ vehicle_id if vehicle_id is not none else '/xe' }}">← Chi tiết xe</a></p>{% endblock %}
+{% block heading %}{{ "Sửa nhắc lịch" if editing else "Thêm nhắc lịch" }}{% endblock %}
+
+{% block content %}
+{# reminder_form.js loads the vehicle (add) or the reminder (edit) and sends
+   POST /api/vehicles/{id}/reminders or PUT /api/reminders/{id}. #}
+<form id="reminder-form" novalidate
+      data-vehicle-id="{{ vehicle_id if vehicle_id is not none else '' }}"
+      data-reminder-id="{{ reminder_id if editing else '' }}">
+  <div class="card form-card">
+    <div>
+      <h2 class="card-heading">Nhắc bảo dưỡng</h2>
+      <p class="muted" id="vehicle-line">Đang tải…</p>
+    </div>
+
+    <div class="field" data-field="service_type_id">
+      {% if editing %}
+      <span class="field-label">Việc bảo dưỡng</span>
+      <p><b id="type-name">…</b></p>
+      <span class="field-help">Không đổi được việc của nhắc lịch. Muốn đổi, hãy xóa và tạo nhắc lịch mới.</span>
+      {% else %}
+      <label class="field-label" for="f-type">Việc bảo dưỡng <span class="req">*</span></label>
+      <select class="control" id="f-type" name="service_type_id"></select>
+      {% endif %}
+    </div>
+
+    <div class="grid-2">
+      <div class="field" data-field="interval_km">
+        <label class="field-label" for="f-km">Chu kỳ theo km</label>
+        <div class="input-wrap"><input class="control" id="f-km" name="interval_km" inputmode="numeric" autocomplete="off" placeholder="Ví dụ: 2.000"><span class="suffix">km</span></div>
+      </div>
+      <div class="field" data-field="interval_months">
+        <label class="field-label" for="f-months">Chu kỳ theo tháng</label>
+        <div class="input-wrap"><input class="control" id="f-months" name="interval_months" inputmode="numeric" autocomplete="off" placeholder="Ví dụ: 6"><span class="suffix">tháng</span></div>
+        <span class="field-help">Điền ít nhất một trong hai. Đến hạn theo mốc nào trước thì báo trước.</span>
+      </div>
+      <div class="field" data-field="notify_before_km">
+        <label class="field-label" for="f-nkm">Báo trước</label>
+        <div class="input-wrap"><input class="control" id="f-nkm" name="notify_before_km" inputmode="numeric" autocomplete="off" value="300"><span class="suffix">km</span></div>
+      </div>
+      <div class="field" data-field="notify_before_days">
+        <label class="field-label" for="f-ndays">Báo trước</label>
+        <div class="input-wrap"><input class="control" id="f-ndays" name="notify_before_days" inputmode="numeric" autocomplete="off" value="7"><span class="suffix">ngày</span></div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a class="btn btn-secondary" id="cancel-link" href="{{ '/xe/' ~ vehicle_id if vehicle_id is not none else '/xe' }}">Hủy</a>
+      <button class="btn btn-primary" type="submit" id="save"><svg class="ic"><use href="#i-check"></use></svg>{{ "Lưu thay đổi" if editing else "Lưu nhắc lịch" }}</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block screen %}S07 · {{ "Sửa nhắc lịch · FR-14" if editing else "Thêm nhắc lịch · FR-13" }}{% endblock %}
+
+{% block scripts %}
+<script src="/static/form_utils.js?v={{ request.app.version }}"></script>
+<script src="/static/reminder_form.js?v={{ request.app.version }}"></script>
+{% endblock %}
