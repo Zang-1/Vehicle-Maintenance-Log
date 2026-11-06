@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+
 from fastapi.testclient import TestClient
 
 from app.main import app
