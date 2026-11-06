@@ -15,7 +15,7 @@
   let lockedTypeId = null; // edit: the reminder's own service type
 
   function backUrl() {
-    return vehicleId ? `/xe/${vehicleId}` : "/xe";
+    return vehicleId ? `/xe/${vehicleId}#nhac-bao-duong` : "/xe";
   }
 
   function setVehicleLine(name, odometer) {
