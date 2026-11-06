@@ -86,24 +86,16 @@ def more_page(request: Request):
     return templates.TemplateResponse(request, "them.html", {"active": "them"})
 
 
-# builds it, so links from the home screen never end on a 404.
-# path -> (menu key, title, screen in ui-design.html, owner)
-UPCOMING = {
-    # reminder forms (M5): the "Nhắc bảo dưỡng" tab of S04 links here; Khoa removes them when the forms exist
-    "/xe/{vehicle_id:int}/nhac-lich/moi": ("xe", "Thêm nhắc lịch", "Thêm/Sửa nhắc lịch", "Khoa"),
-    "/nhac-lich/{reminder_id:int}/sua": ("xe", "Sửa nhắc lịch", "Thêm/Sửa nhắc lịch", "Khoa"),
-}
+# Reminders (M5: Lâm's API, forms by Khoa). "/xe/<id>/nhac-lich/moi?loai=<service type id>" preselects the type.
+@router.get("/xe/{vehicle_id:int}/nhac-lich/moi")
+def reminder_add_page(request: Request, vehicle_id: int):
+    return templates.TemplateResponse(
+        request, "reminder_form.html", {"active": "xe", "vehicle_id": vehicle_id, "reminder_id": None}
+    )
 
 
-def upcoming_page(path: str):
-    active, title, screen, owner = UPCOMING[path]
-
-    def page(request: Request):
-        context = {"active": active, "title": title, "screen": screen, "owner": owner}
-        return templates.TemplateResponse(request, "upcoming.html", context)
-
-    return page
-
-
-for _path in UPCOMING:
-    router.add_api_route(_path, upcoming_page(_path), methods=["GET"])
+@router.get("/nhac-lich/{reminder_id:int}/sua")
+def reminder_edit_page(request: Request, reminder_id: int):
+    return templates.TemplateResponse(
+        request, "reminder_form.html", {"active": "xe", "vehicle_id": None, "reminder_id": reminder_id}
+    )
