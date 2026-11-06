@@ -751,6 +751,43 @@ select.control { cursor: pointer; }
 .data-table .strong { font-weight: 650; }
 
 .cost-filters { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cost-filter-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cost-date-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cost-date-filters .field {
+  min-width: 155px;
+}
+
+.cost-date-filters .control {
+  width: 100%;
+}
+
+#clear-date {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .cost-filter-group,
+  .cost-date-filters {
+    width: 100%;
+  }
+
+  .cost-date-filters .field {
+    flex: 1;
+    min-width: 130px;
+  }
+}
 .cost-vehicle-filter { flex: 0 1 260px; }
 
 .cost-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }

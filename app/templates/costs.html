@@ -7,16 +7,36 @@
 {% block content %}
 {# costs.js loads GET /api/stats/costs?year=&vehicle_id= and fills #cost-body. #}
 <div class="cost-filters">
-  <div class="chips" role="group" aria-label="Khoảng thời gian" id="range">
-    <button class="chip active" type="button" data-range="year" aria-pressed="true">Năm nay</button>
-    <button class="chip" type="button" data-range="all" aria-pressed="false">Toàn bộ</button>
+  <div class="cost-filter-group">
+    <div class="chips" role="group" aria-label="Khoảng thời gian" id="range">
+      <button class="chip active" type="button" data-range="year" aria-pressed="true">Năm nay</button>
+      <button class="chip" type="button" data-range="all" aria-pressed="false">Toàn bộ</button>
+    </div>
+
+    <div class="cost-date-filters">
+      <div class="field">
+        <label class="field-label" for="f-from-date">Từ ngày</label>
+        <input class="control" type="date" id="f-from-date">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="f-to-date">Đến ngày</label>
+        <input class="control" type="date" id="f-to-date">
+      </div>
+
+      <button class="btn btn-secondary" type="button" id="clear-date">
+        Xóa ngày
+      </button>
+    </div>
   </div>
+
   <div class="field cost-vehicle-filter">
     <label class="field-label" for="f-vehicle">Xe</label>
-    <select class="control" id="f-vehicle"><option value="">Tất cả các xe</option></select>
+    <select class="control" id="f-vehicle">
+      <option value="">Tất cả các xe</option>
+    </select>
   </div>
 </div>
-
 <div id="cost-body" aria-live="polite">
   <div class="card">
     <div class="skel skel-block"></div> </div>
