@@ -142,9 +142,14 @@ Every failure becomes one `AIUnavailable(reason)`:
 - Nothing else on the page breaks.
 - The browser also stops waiting after 60 s, so the user never sees an endless spinner.
 
-On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó đã hết lượt hỏi AI miễn phí." The table therefore gives us real evidence of how often the free tier failed:
-- Run this on Supabase: `SELECT error_code, count(*) FROM diagnoses GROUP BY 1;`
-- Result: `[điền kết quả]`.
+On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó đã hết lượt hỏi AI miễn phí." The table counts every call, so it shows how often the free tier failed. On 9 November, `SELECT error_code, count(*) FROM diagnoses GROUP BY 1;` on Supabase returned:
+
+| `error_code` | Calls |
+|---|---|
+| `NULL` (answered) | 9 |
+| `RATE_LIMITED` | 1 |
+
+The one `RATE_LIMITED` row is sample data from `seed.sql`, kept so the history page shows a failure. The live site itself has not hit the free-tier limit yet: all 9 real calls were answered.
 
 If the AI answers but the database is down, the user still gets the answer. Saving the history row is attempted, and a failure is only logged.
 
@@ -156,7 +161,7 @@ These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: e
 
 ![Figure 6.4b: The history keeps failed attempts](img/fig-6-4b-ai-history.png)
 
-*Figure 6.4b: "Các lần đã hỏi AI" on the live site: successful answers with their urgency, and a failed attempt that reads "Lúc đó đã hết lượt hỏi AI miễn phí" (RATE_LIMITED).*
+*Figure 6.4b: "Các lần đã hỏi AI" on the live site: successful answers with their urgency, and a failed attempt that reads "Lúc đó đã hết lượt hỏi AI miễn phí" (`RATE_LIMITED`, the sample row from `seed.sql`).*
 
 ---
 
@@ -219,7 +224,7 @@ The use of AI tools is declared in **Appendix E**, which every member confirms.
 > - Lâm và Khoa tự khai phần của mình. Phần D (tỉ lệ %) cả nhóm ước tính chung.
 > - Giới hạn của thầy: **AI-generated ≤ 30%**, **AI-assisted ≤ 50%** trên toàn bài.
 > - Theo template, **phải do nhóm tự làm**: kiến trúc triển khai, lựa chọn nền tảng và lý do, phân tích và thiết kế. Phần nào AI viết gần như nguyên văn thì hoặc viết lại bằng lời của mình (thành "assisted"), hoặc khai đúng là "generated".
-> - Mục F có câu xác nhận "No AI tool was given an API key, token, connection string or .env content". Trong phiên làm việc: Claude Code đã **chép file `.env`** sang thư mục worktree (không mở, không in nội dung), và được **kết nối vào project Supabase** qua connector (chỉ chạy liệt kê bảng). Bạn cân nhắc khai rõ hai việc này trước khi tick.
+> - Mục F có câu xác nhận "No AI tool was given an API key, token, connection string or .env content". Trong phiên làm việc: **connection string Supabase kèm mật khẩu đã xuất hiện trong cuộc trò chuyện**; Claude Code đã **chép file `.env`** sang thư mục worktree (không mở, không in nội dung), và được **kết nối vào project Supabase** qua connector (chỉ chạy liệt kê bảng). Không tick được ý này nếu không khai rõ. **Đã đổi mật khẩu database ngày 09/11/2026** (Supabase, `DATABASE_URL` trên Render và `.env.cloud`). Khi ghép report, ghi vào mục F: "The Supabase connection string was once pasted into the AI conversation; the database password was rotated on 9 November 2026."
 
 **B. Các công cụ AI đã sử dụng**
 
@@ -235,7 +240,7 @@ The use of AI tools is declared in **Appendix E**, which every member confirms.
 | 2 | Giao diện Glass UI, trang chủ, trang lịch sử AI (PR #18); sửa lỗi giao diện (PR #28) | Giang | Claude Code | Viết các template, CSS và JavaScript dựa trên file `ui-design.html` | Được hỗ trợ | Phát triển ý tưởng, sau đó đưa cho Claude định hình và thực tế hoá ý tưởng | E-1; E-2 (PR #18, #28) |
 | 3 | `ui-design.html` (file thiết kế và demo) | Giang | Claude Code | Xây dựng trang hệ thống thiết kế và bản demo có thể tương tác | Được tạo bởi AI | Thay đổi bố cục sau khi nhận được phản hồi từ giảng viên | E-1; E-2 (`ui-design.html` trong repo) |
 | 4 | Đồng bộ tài liệu (01, 04, 08, PHAN-CONG, README), file `.mailmap` (PR #30) | Giang | Claude Code | Chỉnh sửa tài liệu để nội dung thống nhất với mã nguồn | Được hỗ trợ | Bám sát cấu trúc và template tài liệu có sẵn, sử dụng AI hỗ trợ cập nhật nội dung, sau đó đối chiếu từng phần với mã nguồn thực tế để đảm bảo tính chính xác và thống nhất | E-1; E-2 (PR #30) |
-| 5 | Báo cáo mục §5, §6, phần cuối §7, §8 (`docs/report/giang.md`) | Giang | Claude Code | Soạn thảo nội dung dựa trên mã nguồn và lịch sử phát triển dự án | Được hỗ trợ | Dựa trên template báo cáo được cung cấp, sử dụng AI hỗ trợ soạn thảo nội dung dựa trên mã nguồn và lịch sử dự án. Sau đó, rà soát từng phần, đối chiếu với kết quả triển khai thực tế và điều chỉnh [điền nốt] | E-1; E-2 (PR #30, #42) |
+| 5 | Báo cáo mục §5, §6, phần cuối §7, §8 (`docs/report/giang.md`) | Giang | Claude Code | Soạn thảo nội dung dựa trên mã nguồn và lịch sử phát triển dự án | Được hỗ trợ | Dựa trên template báo cáo được cung cấp, sử dụng AI hỗ trợ soạn thảo nội dung dựa trên mã nguồn và lịch sử dự án. Sau đó, rà soát từng phần, đối chiếu với kết quả triển khai thực tế và viết lại một số đoạn bằng lời của mình cho dễ hiểu, rút gọn để vừa giới hạn số trang | E-1; E-2 (PR #30, #42) |
 | 6 | Hình minh họa báo cáo 5.1, 5.3, 6.1, 6.4a, 6.4b; các cột thông tin người dùng trong ERD | Giang | Claude Code | Chụp ảnh màn hình bằng trình duyệt chạy ở chế độ headless; bổ sung các cột còn thiếu vào sơ đồ ERD | Được hỗ trợ | Kiểm tra từng hình minh họa dựa trên ứng dụng đang chạy; đảm bảo không có khóa (key) nào bị hiển thị | E-1; E-2 (PR #42); E-3 |
 | 7 | Chức năng chẩn đoán AI (PR #16): `app/routers/diagnose.py`, `diagnose.html`, `diagnose.js`, `tests/test_diagnose.py`. `app/ai.py` và `tests/test_ai.py` lấy từ app mẫu Lab 5, chỉ sửa `PROMPT` | Giang | Claude Code | Viết endpoint, phần ánh xạ mã lỗi, trang giao diện và bài kiểm thử quanh module của Lab 5; viết câu prompt tiếng Việt | Được tạo bởi AI | Chạy kiểm thử cho từng trường hợp lỗi; thử endpoint khi không có key và với key thật trên URL live | E-1; E-2 (PR #16) |
 | 8 | Thiết kế lại trang chẩn đoán AI và chống cache file tĩnh (PR #17) | Giang | Claude Code | Thiết kế lại `diagnose.html`, `diagnose.js` và CSS; thêm `?v=<version>` cho file tĩnh | Được tạo bởi AI | Kiểm tra các trạng thái của trang (đang chờ, có kết quả, từng loại lỗi) trên máy tính và điện thoại | E-1; E-2 (PR #17) |
@@ -244,6 +249,6 @@ The use of AI tools is declared in **Appendix E**, which every member confirms.
 
 | Mục | Link, tên file hoặc ảnh chụp | Nội dung thể hiện |
 |---|---|---|
-| E-1 | [Transcript phiên Claude Code đã xuất, hoặc link chia sẻ] | Các câu lệnh (prompt) và phản hồi của Claude Code cho các dòng 1–8 ở phần C |
+| E-1 | File `E-1_Claude-Code-transcript-Giang_redacted.md`, nộp kèm report: toàn bộ tin nhắn giữa Giang và Claude Code, đã che mật khẩu và connection string; bản xuất gốc gửi khi giảng viên yêu cầu | Các câu lệnh (prompt) và phản hồi của Claude Code cho các dòng 1–8 ở phần C |
 | E-2 | Các pull request trên GitHub: https://github.com/Zang-1/Vehicle-Maintenance-Log/pulls?q=is%3Apr+author%3AZang-1 (PR #16, #17, #18, #27, #28, #30, #42) và file `ui-design.html` | Mã nguồn và tài liệu đã được giữ lại trong bài nộp, kèm lịch sử commit và review của từng dòng |
 | E-3 | Thư mục `docs/report/img/` (`fig-5-1-erd.png`, `fig-5-3-db-pause.png`, `fig-6-1-ai-ok.png`, `fig-6-4a-ai-error.png`, `fig-6-4b-ai-history.png`) | Các hình minh họa ở dòng 6 |
