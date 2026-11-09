@@ -26,7 +26,7 @@ from app.routers import (
 from app.schemas import ErrorOut, HealthDbOut, HealthOut, RootOut
 
 APP_NAME = os.getenv("APP_NAME", "vehicle-maintenance-log")
-APP_VERSION = "0.5.0"  # bump in a pull request to trace a commit to production
+APP_VERSION = "0.6.0"  # bump in a pull request to trace a commit to production
 APP_ENV = os.getenv("APP_ENV", "development")
 
 
