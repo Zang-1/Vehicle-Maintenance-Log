@@ -187,7 +187,7 @@ If a secret was ever committed, deleting it in a later commit is not enough, bec
 
 ---
 
-## 8. Individual contribution table (signed)
+## 8. Individual contribution table and AI-use declaration
 
 How the numbers were produced (anyone can re-run them):
 - `git shortlog -sne --no-merges origin/main`, where `.mailmap` joins the different names each member committed under.
@@ -196,20 +196,52 @@ How the numbers were produced (anyone can re-run them):
 
 The numbers are as of 8 November and must be re-run just before submission.
 
-| Member | Student ID | GitHub | Main contributions (as in the commits) | Commits | PRs authored | Reviews given | Lines + / − |
-|---|---|---|---|---|---|---|---|
-| Kiều Bảo Giang (lead) | [MSSV] | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes; report sections 5–8 | 22 | 17 | 17 | +8,802 / −1,931 |
-| Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); reminder API and the vehicle's reminder tab (M5); report sections 1, 2, 4; the demo pull request with a red check | 14 | 7 | 7 | +7,089 / −69 |
-| Nguyễn Nam Khoa | [MSSV] | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; reminder form S07 (M5); the "Thêm" page for phones; choosing a vehicle when asking the AI (FR-18) | 16 | 10 | 8 | +1,821 / −160 |
+| Member | Student ID | GitHub | Main contributions (as in the commits) | Commits | PRs authored | Reviews given | Lines + / − | Agreed |
+|---|---|---|---|---|---|---|---|---|
+| Kiều Bảo Giang (lead) | [MSSV] | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes; report sections 5–8 | 22 | 17 | 17 | +8,802 / −1,931 | ☐ |
+| Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); reminder API and the vehicle's reminder tab (M5); report sections 1, 2, 4; the demo pull request with a red check | 14 | 7 | 7 | +7,089 / −69 | ☐ |
+| Nguyễn Nam Khoa | [MSSV] | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; reminder form S07 (M5); the "Thêm" page for phones; choosing a vehicle when asking the AI (FR-18) | 16 | 10 | 8 | +1,821 / −160 | ☐ |
 
 Notes:
 - Only one commit reached `main` without a pull request: `6128dea` on 22 October, before branch protection was switched on. Every later change went through a pull request reviewed by another member, and the `check` job is required.
 - Line counts favour code and generated files over design work, so they are not a measure of effort. The table lists what each member can explain.
 
-**Use of AI coding assistants.** [Ghi trung thực từng người đã dùng công cụ nào, cho việc gì. Ví dụ: "Claude Code was used to draft code and documents in the pull requests listed above; every author reviewed, tested and can explain their own pull requests."]
+Each member ticks **Agreed** on their own row to confirm it. No handwritten or scanned signature is needed.
 
-| Member | Signature | Date |
+The use of AI tools is declared in **Appendix E**, which every member confirms.
+
+---
+
+## Appendix E — AI-use declaration (Giang's rows, draft)
+
+> **Ghi chú cho Giang (xóa khi ghép report):**
+> - Bản nháp này chỉ liệt kê những việc làm cùng Claude Code mà mình thấy được trong phiên làm việc. Các PR trước đó (#1–#12, #16, #17) bạn tự xem lại có dùng AI không, rồi thêm dòng.
+> - Lâm và Khoa tự khai phần của mình. Phần D (tỉ lệ %) cả nhóm ước tính chung.
+> - Giới hạn của thầy: **AI-generated ≤ 30%**, **AI-assisted ≤ 50%** trên toàn bài.
+> - Theo template, **phải do nhóm tự làm**: kiến trúc triển khai, lựa chọn nền tảng và lý do, phân tích và thiết kế. Phần nào AI viết gần như nguyên văn thì hoặc viết lại bằng lời của mình (thành "assisted"), hoặc khai đúng là "generated".
+> - Mục F có câu xác nhận "No AI tool was given an API key, token, connection string or .env content". Trong phiên làm việc: Claude Code đã **chép file `.env`** sang thư mục worktree (không mở, không in nội dung), và được **kết nối vào project Supabase** qua connector (chỉ chạy liệt kê bảng). Bạn cân nhắc khai rõ hai việc này trước khi tick.
+
+**B. AI tools used**
+
+| # | Tool and model / version | Plan | Used by | Period of use |
+|---|---|---|---|---|
+| 1 | Claude Code (Anthropic), model Claude Opus [điền đúng phiên bản hiển thị] | [free / paid] | Kiều Bảo Giang | October – November 2026 |
+
+**C. Use log (Giang)**
+
+| # | Artefact | Member | Tool | What the AI produced or explained | Gen. / Assist. | How you checked and changed it | Evidence |
+|---|---|---|---|---|---|---|---|
+| 1 | Accounts: `app/auth.py`, `app/routers/auth.py`, sign-in pages, per-user filters in every router, `tests/test_auth.py` (PR #27) | Giang | Claude Code | Proposed the design (scrypt, session cookie, `user_id` filtering) and wrote the code and tests | [Generated] | Ran 130 tests; tested two accounts end to end locally; ran the schema upgrade on a copy of the old database; reviewed the SQL of every router | E-1 |
+| 2 | Glass UI shell, home page, AI history page (PR #18); UI fixes (PR #28) | Giang | Claude Code | Wrote the templates, CSS and JavaScript from `ui-design.html` | [Generated] | Checked every page on desktop, 900 px and phone, light and dark | E-1 |
+| 3 | `ui-design.html` (design and demo file) | Giang | Claude Code | Built the design system page and the clickable demo | [Generated] | Changed the layout after the lecturer's feedback | E-1 |
+| 4 | Docs sync (01, 04, 08, PHAN-CONG, README), `.mailmap` (PR #30) | Giang | Claude Code | Edited the documents to match the code | [Assisted / Generated] | [điền] | E-1 |
+| 5 | Report §5, §6, end of §7, §8 (`docs/report/giang.md`) | Giang | Claude Code | Drafted the text from the code and the project history | [Generated] | [Viết lại bằng lời của mình thì đổi thành Assisted và ghi rõ đã sửa gì] | E-1 |
+| 6 | Report figures 5.1, 5.3, 6.1, 6.4a, 6.4b; user columns in the ERD | Giang | Claude Code | Took the screenshots with a headless browser; added the missing columns to the ERD | [Assisted] | Checked each figure against the running app; no key appears | E-1 |
+| 7 | [AI diagnosis, PR #16, #17 — Giang kiểm tra] | Giang | [ ] | [ ] | [ ] | [ ] | [ ] |
+
+**E. Evidence**
+
+| Item | Link, file name or screenshot | What it shows |
 |---|---|---|
-| Kiều Bảo Giang | | |
-| Tăng Thoại Lâm | | |
-| Nguyễn Nam Khoa | | |
+| E-1 | [Xuất transcript phiên Claude Code, hoặc link chia sẻ] | The prompts and responses for rows 1–6 |
+
