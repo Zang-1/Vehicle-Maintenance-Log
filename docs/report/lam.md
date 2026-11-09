@@ -1,4 +1,4 @@
-# Report — phần của Tăng Thoại Lâm (mục 1, 2, 4)
+# Report - phần của Tăng Thoại Lâm (mục 1, 2, 4)
 
 Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viết bằng tiếng Anh như file mẫu.
 
@@ -138,7 +138,7 @@ The hook URL is a secret because anyone holding it can trigger a deploy. Section
 
 <!-- appendices: not counted in the 12 pages -->
 
-## Appendix B — CI/CD evidence (sau file workflow)
+## Appendix B - CI/CD evidence (sau file workflow)
 
 ![Figure 4.1: Merge box of pull request #31, merging blocked](img/fig-4-1-merge-blocked.png)
 
@@ -154,7 +154,7 @@ The hook URL is a secret because anyone holding it can trigger a deploy. Section
 
 ---
 
-## Appendix E — AI-use declaration (phần của Lâm, bản nháp)
+## Appendix E - AI-use declaration (phần của Lâm, bản nháp)
 
 **B. Các công cụ AI đã sử dụng**
 
