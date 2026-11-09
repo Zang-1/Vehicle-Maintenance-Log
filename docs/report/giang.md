@@ -160,7 +160,7 @@ These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: e
 
 ---
 
-## 7. Secret and configuration management - what we do if a key leaks
+## 7. Secret and configuration management — what we do if a key leaks
 
 *(Phần đầu mục 7 do Khoa viết: bảng giá trị nào nằm ở đâu, `.gitignore`, `.dockerignore`, kết quả audit secret.)*
 
@@ -215,33 +215,35 @@ The use of AI tools is declared in **Appendix E**, which every member confirms.
 ## Appendix E — AI-use declaration (Giang's rows, draft)
 
 > **Ghi chú cho Giang (xóa khi ghép report):**
-> - Bản nháp này chỉ liệt kê những việc làm cùng Claude Code mà mình thấy được trong phiên làm việc. Các PR trước đó (#1–#12, #16, #17) bạn tự xem lại có dùng AI không, rồi thêm dòng.
+> - Bản nháp này chỉ liệt kê những việc làm cùng Claude Code mà mình thấy được trong phiên làm việc. Các PR trước đó (#1–#12) bạn tự xem lại có dùng AI không, rồi thêm dòng.
 > - Lâm và Khoa tự khai phần của mình. Phần D (tỉ lệ %) cả nhóm ước tính chung.
 > - Giới hạn của thầy: **AI-generated ≤ 30%**, **AI-assisted ≤ 50%** trên toàn bài.
 > - Theo template, **phải do nhóm tự làm**: kiến trúc triển khai, lựa chọn nền tảng và lý do, phân tích và thiết kế. Phần nào AI viết gần như nguyên văn thì hoặc viết lại bằng lời của mình (thành "assisted"), hoặc khai đúng là "generated".
 > - Mục F có câu xác nhận "No AI tool was given an API key, token, connection string or .env content". Trong phiên làm việc: Claude Code đã **chép file `.env`** sang thư mục worktree (không mở, không in nội dung), và được **kết nối vào project Supabase** qua connector (chỉ chạy liệt kê bảng). Bạn cân nhắc khai rõ hai việc này trước khi tick.
 
-**B. AI tools used**
+**B. Các công cụ AI đã sử dụng**
 
-| # | Tool and model / version | Plan | Used by | Period of use |
+| # | Công cụ và mô hình / phiên bản | Gói sử dụng | Người sử dụng | Thời gian sử dụng |
 |---|---|---|---|---|
-| 1 | Claude Code (Anthropic), model Claude Opus [điền đúng phiên bản hiển thị] | [free / paid] | Kiều Bảo Giang | October – November 2026 |
+| 1 | Claude Code (Anthropic), mô hình Claude Opus 5.5 | Trả phí | Kiều Bảo Giang | Tháng 10 – Tháng 11 năm 2026 |
 
-**C. Use log (Giang)**
+**C. Nhật ký sử dụng AI (Giang)**
 
-| # | Artefact | Member | Tool | What the AI produced or explained | Gen. / Assist. | How you checked and changed it | Evidence |
+| # | Sản phẩm / Thành phần thực hiện | Thành viên | Công cụ | AI đã tạo ra hoặc giải thích những gì | Tạo mới / Hỗ trợ | Cách bạn kiểm tra và chỉnh sửa | Minh chứng |
 |---|---|---|---|---|---|---|---|
-| 1 | Accounts: `app/auth.py`, `app/routers/auth.py`, sign-in pages, per-user filters in every router, `tests/test_auth.py` (PR #27) | Giang | Claude Code | Proposed the design (scrypt, session cookie, `user_id` filtering) and wrote the code and tests | [Generated] | Ran 130 tests; tested two accounts end to end locally; ran the schema upgrade on a copy of the old database; reviewed the SQL of every router | E-1 |
-| 2 | Glass UI shell, home page, AI history page (PR #18); UI fixes (PR #28) | Giang | Claude Code | Wrote the templates, CSS and JavaScript from `ui-design.html` | [Generated] | Checked every page on desktop, 900 px and phone, light and dark | E-1 |
-| 3 | `ui-design.html` (design and demo file) | Giang | Claude Code | Built the design system page and the clickable demo | [Generated] | Changed the layout after the lecturer's feedback | E-1 |
-| 4 | Docs sync (01, 04, 08, PHAN-CONG, README), `.mailmap` (PR #30) | Giang | Claude Code | Edited the documents to match the code | [Assisted / Generated] | [điền] | E-1 |
-| 5 | Report §5, §6, end of §7, §8 (`docs/report/giang.md`) | Giang | Claude Code | Drafted the text from the code and the project history | [Generated] | [Viết lại bằng lời của mình thì đổi thành Assisted và ghi rõ đã sửa gì] | E-1 |
-| 6 | Report figures 5.1, 5.3, 6.1, 6.4a, 6.4b; user columns in the ERD | Giang | Claude Code | Took the screenshots with a headless browser; added the missing columns to the ERD | [Assisted] | Checked each figure against the running app; no key appears | E-1 |
-| 7 | [AI diagnosis, PR #16, #17 — Giang kiểm tra] | Giang | [ ] | [ ] | [ ] | [ ] | [ ] |
+| 1 | Chức năng tài khoản: `app/auth.py`, `app/routers/auth.py`, các trang đăng nhập, bộ lọc theo người dùng ở mọi router, `tests/test_auth.py` (PR #27) | Giang | Claude Code | Đề xuất thiết kế (scrypt, session cookie, lọc theo `user_id`) và viết mã nguồn cùng các bài kiểm thử | Được tạo bởi AI | Chạy 130 bài kiểm thử; kiểm tra toàn bộ quy trình với hai tài khoản trên máy cục bộ; chạy nâng cấp cấu trúc cơ sở dữ liệu trên bản sao của cơ sở dữ liệu cũ; xem xét câu lệnh SQL của từng router | E-1; E-2 (PR #27) |
+| 2 | Giao diện Glass UI, trang chủ, trang lịch sử AI (PR #18); sửa lỗi giao diện (PR #28) | Giang | Claude Code | Viết các template, CSS và JavaScript dựa trên file `ui-design.html` | Được hỗ trợ | Phát triển ý tưởng, sau đó đưa cho Claude định hình và thực tế hoá ý tưởng | E-1; E-2 (PR #18, #28) |
+| 3 | `ui-design.html` (file thiết kế và demo) | Giang | Claude Code | Xây dựng trang hệ thống thiết kế và bản demo có thể tương tác | Được tạo bởi AI | Thay đổi bố cục sau khi nhận được phản hồi từ giảng viên | E-1; E-2 (`ui-design.html` trong repo) |
+| 4 | Đồng bộ tài liệu (01, 04, 08, PHAN-CONG, README), file `.mailmap` (PR #30) | Giang | Claude Code | Chỉnh sửa tài liệu để nội dung thống nhất với mã nguồn | Được hỗ trợ | Bám sát cấu trúc và template tài liệu có sẵn, sử dụng AI hỗ trợ cập nhật nội dung, sau đó đối chiếu từng phần với mã nguồn thực tế để đảm bảo tính chính xác và thống nhất | E-1; E-2 (PR #30) |
+| 5 | Báo cáo mục §5, §6, phần cuối §7, §8 (`docs/report/giang.md`) | Giang | Claude Code | Soạn thảo nội dung dựa trên mã nguồn và lịch sử phát triển dự án | Được hỗ trợ | Dựa trên template báo cáo được cung cấp, sử dụng AI hỗ trợ soạn thảo nội dung dựa trên mã nguồn và lịch sử dự án. Sau đó, rà soát từng phần, đối chiếu với kết quả triển khai thực tế và điều chỉnh [điền nốt] | E-1; E-2 (PR #30, #42) |
+| 6 | Hình minh họa báo cáo 5.1, 5.3, 6.1, 6.4a, 6.4b; các cột thông tin người dùng trong ERD | Giang | Claude Code | Chụp ảnh màn hình bằng trình duyệt chạy ở chế độ headless; bổ sung các cột còn thiếu vào sơ đồ ERD | Được hỗ trợ | Kiểm tra từng hình minh họa dựa trên ứng dụng đang chạy; đảm bảo không có khóa (key) nào bị hiển thị | E-1; E-2 (PR #42); E-3 |
+| 7 | Chức năng chẩn đoán AI (PR #16): `app/routers/diagnose.py`, `diagnose.html`, `diagnose.js`, `tests/test_diagnose.py`. `app/ai.py` và `tests/test_ai.py` lấy từ app mẫu Lab 5, chỉ sửa `PROMPT` | Giang | Claude Code | Viết endpoint, phần ánh xạ mã lỗi, trang giao diện và bài kiểm thử quanh module của Lab 5; viết câu prompt tiếng Việt | Được tạo bởi AI | Chạy kiểm thử cho từng trường hợp lỗi; thử endpoint khi không có key và với key thật trên URL live | E-1; E-2 (PR #16) |
+| 8 | Thiết kế lại trang chẩn đoán AI và chống cache file tĩnh (PR #17) | Giang | Claude Code | Thiết kế lại `diagnose.html`, `diagnose.js` và CSS; thêm `?v=<version>` cho file tĩnh | Được tạo bởi AI | Kiểm tra các trạng thái của trang (đang chờ, có kết quả, từng loại lỗi) trên máy tính và điện thoại | E-1; E-2 (PR #17) |
 
-**E. Evidence**
+**E. Minh chứng**
 
-| Item | Link, file name or screenshot | What it shows |
+| Mục | Link, tên file hoặc ảnh chụp | Nội dung thể hiện |
 |---|---|---|
-| E-1 | [Xuất transcript phiên Claude Code, hoặc link chia sẻ] | The prompts and responses for rows 1–6 |
-
+| E-1 | [Transcript phiên Claude Code đã xuất, hoặc link chia sẻ] | Các câu lệnh (prompt) và phản hồi của Claude Code cho các dòng 1–8 ở phần C |
+| E-2 | Các pull request trên GitHub: https://github.com/Zang-1/Vehicle-Maintenance-Log/pulls?q=is%3Apr+author%3AZang-1 (PR #16, #17, #18, #27, #28, #30, #42) và file `ui-design.html` | Mã nguồn và tài liệu đã được giữ lại trong bài nộp, kèm lịch sử commit và review của từng dòng |
+| E-3 | Thư mục `docs/report/img/` (`fig-5-1-erd.png`, `fig-5-3-db-pause.png`, `fig-6-1-ai-ok.png`, `fig-6-4a-ai-error.png`, `fig-6-4b-ai-history.png`) | Các hình minh họa ở dòng 6 |
