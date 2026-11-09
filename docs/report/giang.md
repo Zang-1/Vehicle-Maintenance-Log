@@ -38,7 +38,9 @@ Two views compute values at read time, never in a background job:
 
 We chose this because Render's free instance sleeps, so a scheduled job would not run reliably. A view is always correct when it is read.
 
-(chèn ảnh 5.1: sơ đồ ERD trong `docs/04-database/erd.md`)
+![Figure 5.1: ERD](img/fig-5-1-erd.png)
+
+*Figure 5.1: The ERD of `docs/04-database/erd.md`, matching `db/schema.sql`: eight tables, with `user_id` on the user-owned data.*
 
 ### 5.2 How the application connects
 
@@ -69,7 +71,9 @@ Row Level Security is switched on for every table with no policies. This closes 
 | Supabase pauses (free tier, after a week idle) | `/health` does not touch the database, so Render's health check still passes and Render does not restart the app in a loop. `/health/db` answers 503 `{"db":"error"}` within 5 s. Any API call answers 503 `DB_UNAVAILABLE` with "Không kết nối được cơ sở dữ liệu, vui lòng thử lại sau ít phút.", and the details go to the log only |
 | Supabase is restored | The pool reconnects by itself. No redeploy is needed |
 
-(chèn ảnh 5.3: `/health/db` trả 503 khi Supabase đang pause, rồi trả `{"db":"ok"}` sau khi restore)
+![Figure 5.3: The database goes away and comes back](img/fig-5-3-db-pause.png)
+
+*Figure 5.3: Local stack, with the database container stopped to stand in for a paused Supabase. `/health` stays 200, `/health/db` and the API answer 503 within 5 s, and `/health/db` is ok again as soon as the database is back, with no restart of the app.*
 
 ### 5.4 Changing the schema on a live database
 
@@ -95,9 +99,13 @@ The browser never talks to the AI provider:
 
 `app/ai.py` calls Google Gemini (`gemini-3.5-flash-lite`) through its OpenAI-compatible chat-completions endpoint. Changing provider means changing three environment values (`AI_BASE_URL`, `AI_MODEL`, the key); no code changes.
 
+The user may pick one of their vehicles. The server first loads that vehicle with the signed-in user's id. Another user's vehicle answers 404, exactly like a vehicle that does not exist, before any AI call is spent. The server then adds one line to the prompt: type, brand, model, year and odometer. Only these fields reach the provider, never the plate or the owner.
+
 The prompt asks for at most three short sentences and a last line `Mức khẩn cấp: LOW|MEDIUM|HIGH`, which we parse to store the urgency.
 
-(chèn ảnh 6.1: trang "Hỏi AI về xe" với một câu trả lời thành công)
+![Figure 6.1: A successful diagnosis](img/fig-6-1-ai-ok.png)
+
+*Figure 6.1: The live site. The user picked a vehicle; the answer uses its odometer, and the page shows the urgency and the "for reference only" note.*
 
 ### 6.2 Key security
 
@@ -140,10 +148,15 @@ On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó �
 
 If the AI answers but the database is down, the user still gets the answer. Saving the history row is attempted, and a failure is only logged.
 
-These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: every error code, the missing key, the database down, and too-short and too-long input.
+These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: every error code, the missing key, the database down, too-short and too-long input, and a vehicle that belongs to someone else. The whole suite (152 tests) runs on every pull request without a key or a database.
 
-(chèn ảnh 6.4a: trang Hỏi AI khi lỗi, ô triệu chứng vẫn giữ chữ)
-(chèn ảnh 6.4b: trang "Các lần đã hỏi AI" có một lần lỗi)
+![Figure 6.4a: The AI call fails](img/fig-6-4a-ai-error.png)
+
+*Figure 6.4a: The page when the AI call fails (taken locally without a key; a 429 shows exactly the same box). The message is friendly, the symptom stays in the box, and the button works again.*
+
+![Figure 6.4b: The history keeps failed attempts](img/fig-6-4b-ai-history.png)
+
+*Figure 6.4b: "Các lần đã hỏi AI" on the live site: successful answers with their urgency, and a failed attempt that reads "Lúc đó đã hết lượt hỏi AI miễn phí" (RATE_LIMITED).*
 
 ---
 
@@ -181,13 +194,13 @@ How the numbers were produced (anyone can re-run them):
 - `git log --numstat` for lines changed.
 - The merged pull requests and reviews on GitHub.
 
-The numbers are as of 4 November and must be re-run just before submission.
+The numbers are as of 8 November and must be re-run just before submission.
 
 | Member | Student ID | GitHub | Main contributions (as in the commits) | Commits | PRs authored | Reviews given | Lines + / − |
 |---|---|---|---|---|---|---|---|
-| Kiều Bảo Giang (lead) | [MSSV] | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes | 21 | 16 | 12 | +8,556 / −1,908 |
-| Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); [reminder API and tab] | 9 | 5 | 5 | +6,112 / −54 |
-| Nguyễn Nam Khoa | [MSSV] | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; [reminder form, "Thêm" page, vehicle choice for AI] | 9 | 6 | 7 | +1,317 / −90 |
+| Kiều Bảo Giang (lead) | [MSSV] | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes; report sections 5–8 | 22 | 17 | 17 | +8,802 / −1,931 |
+| Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); reminder API and the vehicle's reminder tab (M5); report sections 1, 2, 4; the demo pull request with a red check | 14 | 7 | 7 | +7,089 / −69 |
+| Nguyễn Nam Khoa | [MSSV] | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; reminder form S07 (M5); the "Thêm" page for phones; choosing a vehicle when asking the AI (FR-18) | 16 | 10 | 8 | +1,821 / −160 |
 
 Notes:
 - Only one commit reached `main` without a pull request: `6128dea` on 22 October, before branch protection was switched on. Every later change went through a pull request reviewed by another member, and the `check` job is required.
