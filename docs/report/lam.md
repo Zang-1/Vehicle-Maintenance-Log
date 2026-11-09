@@ -1,11 +1,11 @@
-# Report - phần của Tăng Thoại Lâm (mục 1, 2, 4)
+# Report - Tăng Thoại Lâm's part (sections 1, 2, 4)
 
-Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viết bằng tiếng Anh như file mẫu.
+Draft to paste into `72ITDS30103_SDPs_Final_Report_Template.docx`.
 
-**Trước khi dán:**
-- Che mọi key, connection string, URL Deploy Hook.
-- Nhờ Giang xác nhận Auto-Deploy đang **tắt** (Render Events chỉ có deploy qua hook, khớp với tắt).
-- Phụ lục B: dán nguyên file `.github/workflows/ci-cd.yml`.
+**Before pasting:**
+- Hide every key, connection string and Deploy Hook URL.
+- Ask Giang to confirm that Auto-Deploy is **off** (Render Events shows only deploys through the hook, which is consistent with off).
+- Appendix B: paste the whole `.github/workflows/ci-cd.yml` file.
 
 ---
 
@@ -50,7 +50,7 @@ Inside the container: Jinja2 templates and `fetch` scripts (presentation), one F
 
 ### 2.2 One request, end to end: saving a maintenance visit
 
-1. The user fills in the form and presses Lưu. `record_form.js` sends the data to our server with `POST /api/vehicles/1/records`, over HTTPS, with the sign-in cookie.
+1. The user fills in the form and presses Save ("Lưu"). `record_form.js` sends the data to our server with `POST /api/vehicles/1/records`, over HTTPS, with the sign-in cookie.
 2. The server checks that the user is signed in (401 if not) and that the input is valid (422 if not).
 3. The server checks that the vehicle exists and belongs to this user (404 if not), and that it is not archived (409 `VEHICLE_ARCHIVED` if it is).
 4. It checks for other errors: every service type must exist and be active (422 if not).
@@ -138,7 +138,7 @@ The hook URL is a secret because anyone holding it can trigger a deploy. Section
 
 <!-- appendices: not counted in the 12 pages -->
 
-## Appendix B - CI/CD evidence (sau file workflow)
+## Appendix B - CI/CD evidence (after the workflow file)
 
 ![Figure 4.1: Merge box of pull request #31, merging blocked](img/fig-4-1-merge-blocked.png)
 
@@ -154,31 +154,31 @@ The hook URL is a secret because anyone holding it can trigger a deploy. Section
 
 ---
 
-## Appendix E - AI-use declaration (phần của Lâm, bản nháp)
+## Appendix E - AI-use declaration (Lâm's part, draft)
 
-**B. Các công cụ AI đã sử dụng**
+**B. AI tools used**
 
-| # | Công cụ và mô hình / phiên bản | Gói sử dụng | Người sử dụng | Thời gian sử dụng |
+| # | Tool and model / version | Plan | Used by | Period of use |
 |---|---|---|---|---|
-| 1 | Claude Code (Anthropic), mô hình Claude Opus 5.5 | Trả phí | Tăng Thoại Lâm | Tháng 10 – Tháng 11 năm 2026 |
+| 1 | Claude Code (Anthropic), model Claude Opus 5.5 | Paid | Tăng Thoại Lâm | October - November 2026 |
 
-**C. Nhật ký sử dụng AI (Lâm)**
+**C. Use log (Lâm)**
 
-| # | Sản phẩm / Thành phần thực hiện | Thành viên | Công cụ | AI đã tạo ra hoặc giải thích những gì | Tạo mới / Hỗ trợ | Cách bạn kiểm tra và chỉnh sửa | Minh chứng |
+| # | Artefact | Member | Tool | What the AI produced or explained | Gen. / Assist. | How you checked and changed it | Evidence |
 |---|---|---|---|---|---|---|---|
-| 1 | API và tab nhắc lịch: `app/routers/reminders.py`, `ReminderIn`, `ReminderDetailOut`, `app/static/vehicle_reminders.js`, `tests/test_reminders.py` (PR #29) | Lâm | Claude Code | Viết mã nguồn và 19 bài kiểm thử theo yêu cầu phân công của nhóm | Được tạo bởi AI | Chạy 48 kiểm tra trên PostgreSQL thật (gồm tách dữ liệu hai người dùng), 149 bài kiểm thử, thử tab trên trình duyệt; thành viên khác review PR. Lâm tự thử thêm, sửa, tạm dừng, xóa nhắc lịch và lỗi đã có loại bảo dưỡng này, đều đạt | E-4; E-5 (PR #29) |
-| 2 | Workflow `.github/workflows/ci-cd.yml` (PR #20) | Lâm | Claude Code | Viết job `check` và `deploy` | Được tạo bởi AI | Lần chạy đầu `deploy` đỏ vì thiếu secret, thêm secret rồi chạy lại xanh. Lâm xem và thử CI trên GitHub, cả trường hợp đỏ và xanh | E-5 (PR #20) |
-| 3 | Module xe và bảo dưỡng: `app/routers/vehicles.py`, `app/routers/records.py`, các trang và test (PR #21, #22) | Lâm | Claude Code | Viết mã nguồn và kiểm thử | Được tạo bởi AI | Lâm tự thử các chức năng và lỗi xe đã lưu trữ, đều đạt | E-5 (PR #21, #22) |
-| 4 | Tài liệu 02, 03, 07 (PR #4) | Lâm | Claude Code | Viết nội dung tài liệu | Được tạo bởi AI | Lâm tự kiểm tra lại nội dung. | E-5 (PR #4) |
-| 5 | PR minh họa check đỏ (#31) | Lâm | Claude Code | Đề xuất cách minh họa, viết commit gây lỗi BR-02 và commit sửa | Được tạo bởi AI | Xem check đỏ và merge bị khóa trên GitHub, sau đó đóng PR không merge | E-4; E-5 (PR #31) |
-| 6a | Báo cáo §1, §2.2, đoạn Trust boundary của §2.1 và đoạn mô tả hai job ở §4.1 (`docs/report/lam.md`) | Lâm | Claude Code | Đặt câu hỏi gợi ý; chuyển câu trả lời của Lâm sang tiếng Anh, định dạng, chỉ ra và sửa chỗ sai kỹ thuật, bổ sung bước đăng nhập và kiểm tra dữ liệu; bổ sung danh sách license | Được hỗ trợ | Lâm tự trả lời lý do chọn nền tảng, hướng chuyển đổi và tự kể lại các bước của `create_record` và của hai job CI; đối chiếu với tài liệu 08 và mã nguồn | E-4; E-5 |
-| 6b | Báo cáo §2.1 (sơ đồ, bảng thành phần), phần còn lại của §4 (`docs/report/lam.md`, PR #32, #41, #43, #44) | Lâm | Claude Code | Soạn nội dung từ mã nguồn, lịch sử CI; đo thời gian deploy | Được tạo bởi AI | Claude đối chiếu với `ci-cd.yml`, GitHub API và `/api/info`; thành viên khác rà soát và yêu cầu rút gọn. Lâm tự kiểm tra lại nội dung. | E-4; E-5 |
-| 7 | Hình 2.1, 4.1, 4.2a, 4.2b, 4.3a–d | Lâm | Claude Code | Tạo trang xuất sơ đồ 2.1 từ Mermaid; cắt ảnh chụp màn hình | Được hỗ trợ | Ảnh do thành viên chụp từ GitHub và Render; kiểm tra không lộ key hay URL hook | E-6 |
+| 1 | Reminders API and tab: `app/routers/reminders.py`, `ReminderIn`, `ReminderDetailOut`, `app/static/vehicle_reminders.js`, `tests/test_reminders.py` (PR #29) | Lâm | Claude Code | Wrote the code and 19 tests from the team's task assignment | Generated | Ran 48 checks on a real PostgreSQL database (including isolation between two users) and 149 tests, and tried the tab in a browser; another member reviewed the PR. Lâm tried adding, editing, pausing and deleting reminders and the error for an already existing service type, and all passed | E-4; E-5 (PR #29) |
+| 2 | Workflow `.github/workflows/ci-cd.yml` (PR #20) | Lâm | Claude Code | Wrote the `check` and `deploy` jobs | Generated | The first `deploy` run was red because the secret was missing; after adding it the re-run was green. Lâm looked at and tried CI on GitHub, in both the red and the green case | E-5 (PR #20) |
+| 3 | Vehicles and maintenance modules: `app/routers/vehicles.py`, `app/routers/records.py`, the pages and tests (PR #21, #22) | Lâm | Claude Code | Wrote the code and tests | Generated | Lâm tried the features and the archived-vehicle error, and all passed | E-5 (PR #21, #22) |
+| 4 | Documents 02, 03, 07 (PR #4) | Lâm | Claude Code | Wrote the document content | Generated | Lâm checked the content again | E-5 (PR #4) |
+| 5 | Pull request demonstrating a red check (#31) | Lâm | Claude Code | Proposed the demonstration, wrote the commit that breaks BR-02 and the commit that fixes it | Generated | Looked at the red check and the blocked merge on GitHub, then closed the PR without merging | E-4; E-5 (PR #31) |
+| 6a | Report §1, §2.2, the trust boundary paragraph of §2.1 and the paragraph describing the two jobs in §4.1 (`docs/report/lam.md`) | Lâm | Claude Code | Asked guiding questions; translated Lâm's answers into English, formatted them, pointed out and fixed technical errors, added the sign-in and input-validation steps; added the list of licences | Assisted | Lâm answered in their own words why each platform was chosen and how to move away from it, and described the steps of `create_record` and of the two CI jobs; checked against document 08 and the code | E-4; E-5 |
+| 6b | Report §2.1 (diagram, component table) and the rest of §4 (`docs/report/lam.md`, PR #32, #41, #43, #44) | Lâm | Claude Code | Wrote the content from the code and the CI history; measured the deploy time | Generated | Claude checked it against `ci-cd.yml`, the GitHub API and `/api/info`; another member reviewed it and asked for it to be shortened. Lâm checked the content again | E-4; E-5 |
+| 7 | Figures 2.1, 4.1, 4.2a, 4.2b, 4.3a-d | Lâm | Claude Code | Built the page that exports diagram 2.1 from Mermaid; cropped the screenshots | Assisted | The screenshots were taken by team members on GitHub and Render; checked that no key or hook URL is visible | E-6 |
 
-**E. Minh chứng** (đánh số tiếp sau E-1 đến E-3 của Giang)
+**E. Evidence** (numbered after Giang's E-1 to E-3)
 
-| Mục | Link, tên file hoặc ảnh chụp | Nội dung thể hiện |
+| Item | Link, file name or screenshot | What it shows |
 |---|---|---|
-| E-4 | Transcript phiên Claude Code của đồ án [tên file sau khi xuất] | Câu lệnh và phản hồi cho các dòng 1, 5, 6, 7 |
-| E-5 | Các pull request trên GitHub: https://github.com/Zang-1/Vehicle-Maintenance-Log/pulls?q=is%3Apr+author%3Anoway165 | Mã nguồn, lịch sử commit và review |
-| E-6 | Thư mục `docs/report/img/` (`fig-2-1-*`, `fig-4-*`) | Các hình ở dòng 7 |
+| E-4 | Transcript of the project's Claude Code session [file name after export] | Prompts and responses for rows 1, 5, 6, 7 |
+| E-5 | Pull requests on GitHub: https://github.com/Zang-1/Vehicle-Maintenance-Log/pulls?q=is%3Apr+author%3Anoway165 | Code, commit history and reviews |
+| E-6 | Folder `docs/report/img/` (`fig-2-1-*`, `fig-4-*`) | The figures in row 7 |
