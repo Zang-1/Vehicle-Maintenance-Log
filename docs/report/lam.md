@@ -22,7 +22,7 @@ We picked platforms that are easy to deploy and easy for a three-person student 
 
 **Cost.** Free for our team. If a company used this stack, we would move to paid plans instead of the free tiers, so the services do not sleep or pause.
 
-**Portability and lock-in.** If we left Render, we would need another host that can run our Dockerfile. If we left Supabase, we would move to Neon, because it also uses SQL. Firebase uses NoSQL, which would be harder for the team and take much more time to rebuild.
+**Portability and lock-in.** If we left Render, we would need another host that can run our Dockerfile. If we left Supabase, we would move to Neon, because it uses the same SQL. Firebase uses NoSQL, which would be harder for the team and take much more time to rebuild.
 
 **Licensing.** Our main dependencies are open source: Python (PSF), FastAPI (MIT), Uvicorn and Jinja2 (BSD-3-Clause), PostgreSQL (PostgreSQL Licence), psycopg (LGPL-3.0).
 
