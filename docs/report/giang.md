@@ -38,7 +38,9 @@ Two views compute values at read time, never in a background job:
 
 We chose this because Render's free instance sleeps, so a scheduled job would not run reliably. A view is always correct when it is read.
 
-(chèn ảnh 5.1: sơ đồ ERD trong `docs/04-database/erd.md`)
+![Figure 5.1: ERD](img/fig-5-1-erd.png)
+
+*Figure 5.1: The ERD of `docs/04-database/erd.md`, matching `db/schema.sql`: eight tables, with `user_id` on the user-owned data.*
 
 ### 5.2 How the application connects
 
@@ -69,7 +71,9 @@ Row Level Security is switched on for every table with no policies. This closes 
 | Supabase pauses (free tier, after a week idle) | `/health` does not touch the database, so Render's health check still passes and Render does not restart the app in a loop. `/health/db` answers 503 `{"db":"error"}` within 5 s. Any API call answers 503 `DB_UNAVAILABLE` with "Không kết nối được cơ sở dữ liệu, vui lòng thử lại sau ít phút.", and the details go to the log only |
 | Supabase is restored | The pool reconnects by itself. No redeploy is needed |
 
-(chèn ảnh 5.3: `/health/db` trả 503 khi Supabase đang pause, rồi trả `{"db":"ok"}` sau khi restore)
+![Figure 5.3: The database goes away and comes back](img/fig-5-3-db-pause.png)
+
+*Figure 5.3: Local stack, with the database container stopped to stand in for a paused Supabase. `/health` stays 200, `/health/db` and the API answer 503 within 5 s, and `/health/db` is ok again as soon as the database is back, with no restart of the app.*
 
 ### 5.4 Changing the schema on a live database
 
@@ -95,9 +99,13 @@ The browser never talks to the AI provider:
 
 `app/ai.py` calls Google Gemini (`gemini-3.5-flash-lite`) through its OpenAI-compatible chat-completions endpoint. Changing provider means changing three environment values (`AI_BASE_URL`, `AI_MODEL`, the key); no code changes.
 
+The user may pick one of their vehicles. The server first loads that vehicle with the signed-in user's id. Another user's vehicle answers 404, exactly like a vehicle that does not exist, before any AI call is spent. The server then adds one line to the prompt: type, brand, model, year and odometer. Only these fields reach the provider, never the plate or the owner.
+
 The prompt asks for at most three short sentences and a last line `Mức khẩn cấp: LOW|MEDIUM|HIGH`, which we parse to store the urgency.
 
-(chèn ảnh 6.1: trang "Hỏi AI về xe" với một câu trả lời thành công)
+![Figure 6.1: A successful diagnosis](img/fig-6-1-ai-ok.png)
+
+*Figure 6.1: The live site. The user picked a vehicle; the answer uses its odometer, and the page shows the urgency and the "for reference only" note.*
 
 ### 6.2 Key security
 
@@ -134,16 +142,26 @@ Every failure becomes one `AIUnavailable(reason)`:
 - Nothing else on the page breaks.
 - The browser also stops waiting after 60 s, so the user never sees an endless spinner.
 
-On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó đã hết lượt hỏi AI miễn phí." The table therefore gives us real evidence of how often the free tier failed:
-- Run this on Supabase: `SELECT error_code, count(*) FROM diagnoses GROUP BY 1;`
-- Result: `[điền kết quả]`.
+On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó đã hết lượt hỏi AI miễn phí." The table counts every call, so it shows how often the free tier failed. On 9 November, `SELECT error_code, count(*) FROM diagnoses GROUP BY 1;` on Supabase returned:
+
+| `error_code` | Calls |
+|---|---|
+| `NULL` (answered) | 9 |
+| `RATE_LIMITED` | 1 |
+
+The one `RATE_LIMITED` row is sample data from `seed.sql`, kept so the history page shows a failure. The live site itself has not hit the free-tier limit yet: all 9 real calls were answered.
 
 If the AI answers but the database is down, the user still gets the answer. Saving the history row is attempted, and a failure is only logged.
 
-These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: every error code, the missing key, the database down, and too-short and too-long input.
+These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: every error code, the missing key, the database down, too-short and too-long input, and a vehicle that belongs to someone else. The whole suite (152 tests) runs on every pull request without a key or a database.
 
-(chèn ảnh 6.4a: trang Hỏi AI khi lỗi, ô triệu chứng vẫn giữ chữ)
-(chèn ảnh 6.4b: trang "Các lần đã hỏi AI" có một lần lỗi)
+![Figure 6.4a: The AI call fails](img/fig-6-4a-ai-error.png)
+
+*Figure 6.4a: The page when the AI call fails (taken locally without a key; a 429 shows exactly the same box). The message is friendly, the symptom stays in the box, and the button works again.*
+
+![Figure 6.4b: The history keeps failed attempts](img/fig-6-4b-ai-history.png)
+
+*Figure 6.4b: "Các lần đã hỏi AI" on the live site: successful answers with their urgency, and a failed attempt that reads "Lúc đó đã hết lượt hỏi AI miễn phí" (`RATE_LIMITED`, the sample row from `seed.sql`).*
 
 ---
 
@@ -174,29 +192,63 @@ If a secret was ever committed, deleting it in a later commit is not enough, bec
 
 ---
 
-## 8. Individual contribution table (signed)
+## 8. Individual contribution table and AI-use declaration
 
 How the numbers were produced (anyone can re-run them):
 - `git shortlog -sne --no-merges origin/main`, where `.mailmap` joins the different names each member committed under.
 - `git log --numstat` for lines changed.
 - The merged pull requests and reviews on GitHub.
 
-The numbers are as of 4 November and must be re-run just before submission.
+The numbers are as of 8 November and must be re-run just before submission.
 
-| Member | Student ID | GitHub | Main contributions (as in the commits) | Commits | PRs authored | Reviews given | Lines + / − |
-|---|---|---|---|---|---|---|---|
-| Kiều Bảo Giang (lead) | [MSSV] | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes | 21 | 16 | 12 | +8,556 / −1,908 |
-| Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); [reminder API and tab] | 9 | 5 | 5 | +6,112 / −54 |
-| Nguyễn Nam Khoa | [MSSV] | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; [reminder form, "Thêm" page, vehicle choice for AI] | 9 | 6 | 7 | +1,317 / −90 |
+| Member | Student ID | GitHub | Main contributions (as in the commits) | Commits | PRs authored | Reviews given | Lines + / − | Agreed |
+|---|---|---|---|---|---|---|---|---|
+| Kiều Bảo Giang (lead) | 2474802010095 | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes; report sections 5–8 | 22 | 17 | 17 | +8,802 / −1,931 | ☐ |
+| Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); reminder API and the vehicle's reminder tab (M5); report sections 1, 2, 4; the demo pull request with a red check | 14 | 7 | 7 | +7,089 / −69 | ☐ |
+| Nguyễn Nam Khoa | 2474802010194 | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; reminder form S07 (M5); the "Thêm" page for phones; choosing a vehicle when asking the AI (FR-18) | 16 | 10 | 8 | +1,821 / −160 | ☐ |
 
 Notes:
 - Only one commit reached `main` without a pull request: `6128dea` on 22 October, before branch protection was switched on. Every later change went through a pull request reviewed by another member, and the `check` job is required.
 - Line counts favour code and generated files over design work, so they are not a measure of effort. The table lists what each member can explain.
 
-**Use of AI coding assistants.** [Ghi trung thực từng người đã dùng công cụ nào, cho việc gì. Ví dụ: "Claude Code was used to draft code and documents in the pull requests listed above; every author reviewed, tested and can explain their own pull requests."]
+Each member ticks **Agreed** on their own row to confirm it. No handwritten or scanned signature is needed.
 
-| Member | Signature | Date |
+The use of AI tools is declared in **Appendix E**, which every member confirms.
+
+---
+
+## Appendix E — AI-use declaration (Giang's rows, draft)
+
+> **Ghi chú cho Giang (xóa khi ghép report):**
+> - Bản nháp này chỉ liệt kê những việc làm cùng Claude Code mà mình thấy được trong phiên làm việc. Các PR trước đó (#1–#12) bạn tự xem lại có dùng AI không, rồi thêm dòng.
+> - Lâm và Khoa tự khai phần của mình. Phần D (tỉ lệ %) cả nhóm ước tính chung.
+> - Giới hạn của thầy: **AI-generated ≤ 30%**, **AI-assisted ≤ 50%** trên toàn bài.
+> - Theo template, **phải do nhóm tự làm**: kiến trúc triển khai, lựa chọn nền tảng và lý do, phân tích và thiết kế. Phần nào AI viết gần như nguyên văn thì hoặc viết lại bằng lời của mình (thành "assisted"), hoặc khai đúng là "generated".
+> - Mục F có câu xác nhận "No AI tool was given an API key, token, connection string or .env content". Trong phiên làm việc: **connection string Supabase kèm mật khẩu đã xuất hiện trong cuộc trò chuyện**; Claude Code đã **chép file `.env`** sang thư mục worktree (không mở, không in nội dung), và được **kết nối vào project Supabase** qua connector (chỉ chạy liệt kê bảng). Không tick được ý này nếu không khai rõ. **Đã đổi mật khẩu database ngày 09/11/2026** (Supabase, `DATABASE_URL` trên Render và `.env.cloud`). Khi ghép report, ghi vào mục F: "The Supabase connection string was once pasted into the AI conversation; the database password was rotated on 9 November 2026."
+
+**B. Các công cụ AI đã sử dụng**
+
+| # | Công cụ và mô hình / phiên bản | Gói sử dụng | Người sử dụng | Thời gian sử dụng |
+|---|---|---|---|---|
+| 1 | Claude Code (Anthropic), mô hình Claude Opus 5.5 | Trả phí | Kiều Bảo Giang | Tháng 10 – Tháng 11 năm 2026 |
+
+**C. Nhật ký sử dụng AI (Giang)**
+
+| # | Sản phẩm / Thành phần thực hiện | Thành viên | Công cụ | AI đã tạo ra hoặc giải thích những gì | Tạo mới / Hỗ trợ | Cách bạn kiểm tra và chỉnh sửa | Minh chứng |
+|---|---|---|---|---|---|---|---|
+| 1 | Chức năng tài khoản: `app/auth.py`, `app/routers/auth.py`, các trang đăng nhập, bộ lọc theo người dùng ở mọi router, `tests/test_auth.py` (PR #27) | Giang | Claude Code | Đề xuất thiết kế (scrypt, session cookie, lọc theo `user_id`) và viết mã nguồn cùng các bài kiểm thử | Được tạo bởi AI | Chạy 130 bài kiểm thử; kiểm tra toàn bộ quy trình với hai tài khoản trên máy cục bộ; chạy nâng cấp cấu trúc cơ sở dữ liệu trên bản sao của cơ sở dữ liệu cũ; xem xét câu lệnh SQL của từng router | E-1; E-2 (PR #27) |
+| 2 | Giao diện Glass UI, trang chủ, trang lịch sử AI (PR #18); sửa lỗi giao diện (PR #28) | Giang | Claude Code | Viết các template, CSS và JavaScript dựa trên file `ui-design.html` | Được hỗ trợ | Phát triển ý tưởng, sau đó đưa cho Claude định hình và thực tế hoá ý tưởng | E-1; E-2 (PR #18, #28) |
+| 3 | `ui-design.html` (file thiết kế và demo) | Giang | Claude Code | Xây dựng trang hệ thống thiết kế và bản demo có thể tương tác | Được tạo bởi AI | Thay đổi bố cục sau khi nhận được phản hồi từ giảng viên | E-1; E-2 (`ui-design.html` trong repo) |
+| 4 | Đồng bộ tài liệu (01, 04, 08, PHAN-CONG, README), file `.mailmap` (PR #30) | Giang | Claude Code | Chỉnh sửa tài liệu để nội dung thống nhất với mã nguồn | Được hỗ trợ | Bám sát cấu trúc và template tài liệu có sẵn, sử dụng AI hỗ trợ cập nhật nội dung, sau đó đối chiếu từng phần với mã nguồn thực tế để đảm bảo tính chính xác và thống nhất | E-1; E-2 (PR #30) |
+| 5 | Báo cáo mục §5, §6, phần cuối §7, §8 (`docs/report/giang.md`) | Giang | Claude Code | Soạn thảo nội dung dựa trên mã nguồn và lịch sử phát triển dự án | Được hỗ trợ | Dựa trên template báo cáo được cung cấp, sử dụng AI hỗ trợ soạn thảo nội dung dựa trên mã nguồn và lịch sử dự án. Sau đó, rà soát từng phần, đối chiếu với kết quả triển khai thực tế và viết lại một số đoạn bằng lời của mình cho dễ hiểu, rút gọn để vừa giới hạn số trang | E-1; E-2 (PR #30, #42) |
+| 6 | Hình minh họa báo cáo 5.1, 5.3, 6.1, 6.4a, 6.4b; các cột thông tin người dùng trong ERD | Giang | Claude Code | Chụp ảnh màn hình bằng trình duyệt chạy ở chế độ headless; bổ sung các cột còn thiếu vào sơ đồ ERD | Được hỗ trợ | Kiểm tra từng hình minh họa dựa trên ứng dụng đang chạy; đảm bảo không có khóa (key) nào bị hiển thị | E-1; E-2 (PR #42); E-3 |
+| 7 | Chức năng chẩn đoán AI (PR #16): `app/routers/diagnose.py`, `diagnose.html`, `diagnose.js`, `tests/test_diagnose.py`. `app/ai.py` và `tests/test_ai.py` lấy từ app mẫu Lab 5, chỉ sửa `PROMPT` | Giang | Claude Code | Viết endpoint, phần ánh xạ mã lỗi, trang giao diện và bài kiểm thử quanh module của Lab 5; viết câu prompt tiếng Việt | Được tạo bởi AI | Chạy kiểm thử cho từng trường hợp lỗi; thử endpoint khi không có key và với key thật trên URL live | E-1; E-2 (PR #16) |
+| 8 | Thiết kế lại trang chẩn đoán AI và chống cache file tĩnh (PR #17) | Giang | Claude Code | Thiết kế lại `diagnose.html`, `diagnose.js` và CSS; thêm `?v=<version>` cho file tĩnh | Được tạo bởi AI | Kiểm tra các trạng thái của trang (đang chờ, có kết quả, từng loại lỗi) trên máy tính và điện thoại | E-1; E-2 (PR #17) |
+
+**E. Minh chứng**
+
+| Mục | Link, tên file hoặc ảnh chụp | Nội dung thể hiện |
 |---|---|---|
-| Kiều Bảo Giang | | |
-| Tăng Thoại Lâm | | |
-| Nguyễn Nam Khoa | | |
+| E-1 | File `E-1_Claude-Code-transcript-Giang_redacted.md`, nộp kèm report: toàn bộ tin nhắn giữa Giang và Claude Code, đã che mật khẩu và connection string; bản xuất gốc gửi khi giảng viên yêu cầu | Các câu lệnh (prompt) và phản hồi của Claude Code cho các dòng 1–8 ở phần C |
+| E-2 | Các pull request trên GitHub: https://github.com/Zang-1/Vehicle-Maintenance-Log/pulls?q=is%3Apr+author%3AZang-1 (PR #16, #17, #18, #27, #28, #30, #42) và file `ui-design.html` | Mã nguồn và tài liệu đã được giữ lại trong bài nộp, kèm lịch sử commit và review của từng dòng |
+| E-3 | Thư mục `docs/report/img/` (`fig-5-1-erd.png`, `fig-5-3-db-pause.png`, `fig-6-1-ai-ok.png`, `fig-6-4a-ai-error.png`, `fig-6-4b-ai-history.png`) | Các hình minh họa ở dòng 6 |

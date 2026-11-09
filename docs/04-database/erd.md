@@ -42,9 +42,23 @@ erDiagram
     service_types ||--o{ reminders : "áp dụng cho"
     service_types |o--o{ diagnoses : "được gợi ý"
 
+    users {
+        bigint id PK
+        text email UK "lower case"
+        text display_name
+        text password_hash "scrypt"
+        timestamptz created_at
+    }
+    sessions {
+        text token_hash PK "sha256 of the cookie token"
+        bigint user_id FK
+        timestamptz expires_at
+        timestamptz created_at
+    }
     service_types {
         bigint id PK
-        text name UK
+        bigint user_id FK "NULL = default type"
+        text name UK "unique per user"
         text description
         text applies_to "MOTORBIKE | CAR | ALL"
         integer default_interval_km
@@ -53,12 +67,13 @@ erDiagram
     }
     vehicles {
         bigint id PK
+        bigint user_id FK
         text name
         text vehicle_type "MOTORBIKE | CAR | OTHER"
         text brand
         text model
         integer manufacture_year
-        text license_plate UK
+        text license_plate UK "unique per user"
         integer current_odometer
         date purchase_date
         boolean is_archived
@@ -97,6 +112,7 @@ erDiagram
     }
     diagnoses {
         bigint id PK
+        bigint user_id FK
         bigint vehicle_id FK "nullable"
         text symptom_text
         text status "OK | FAILED"
