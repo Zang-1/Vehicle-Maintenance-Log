@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -33,20 +34,86 @@ def test_costs_fills_all_twelve_months(monkeypatch):
     assert Decimal(body["months"][0]["total"]) == 0  # January has no record
     assert body["by_service_type"][0]["service_type_name"] == "Thay nhớt"
     assert body["by_vehicle"][0]["vehicle_name"] == "Vision"
-    assert cursor.calls[0][1] == {"year": 2026, "vehicle_id": None, "uid": 1}
+    assert cursor.calls[0][1] == {
+    "year": 2026,
+    "from_date": None,
+    "to_date": None,
+    "vehicle_id": None,
+    "uid": 1,
+}
 
 
 def test_costs_without_year_means_all_time(monkeypatch):
     cursor = use_fake_db(monkeypatch, script())
     body = client.get("/api/stats/costs").json()
     assert body["year"] is None
-    assert cursor.calls[0][1] == {"year": None, "vehicle_id": None, "uid": 1}
+    assert cursor.calls[0][1] == {
+    "year": None,
+    "from_date": None,
+    "to_date": None,
+    "vehicle_id": None,
+    "uid": 1,
+}
 
 
 def test_costs_filters_by_vehicle(monkeypatch):
     cursor = use_fake_db(monkeypatch, script())
     assert client.get("/api/stats/costs?year=2026&vehicle_id=1").status_code == 200
-    assert cursor.calls[0][1] == {"year": 2026, "vehicle_id": 1, "uid": 1}
+    assert cursor.calls[0][1] == {
+    "year": 2026,
+    "from_date": None,
+    "to_date": None,
+    "vehicle_id": 1,
+    "uid": 1,
+}
+
+
+def test_costs_filters_by_date_range(monkeypatch):
+    cursor = use_fake_db(monkeypatch, script())
+
+    response = client.get(
+        "/api/stats/costs",
+        params={
+            "year": 2026,
+            "from_date": "2026-03-01",
+            "to_date": "2026-08-31",
+            "vehicle_id": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["year"] is None
+    assert cursor.calls[0][1] == {
+        "year": None,
+        "from_date": date(2026, 3, 1),
+        "to_date": date(2026, 8, 31),
+        "vehicle_id": 1,
+        "uid": 1,
+    }
+
+
+def test_costs_rejects_incomplete_date_range(monkeypatch):
+    use_fake_db(monkeypatch, [])
+
+    response = client.get(
+        "/api/stats/costs?from_date=2026-03-01"
+    )
+
+    assert response.status_code == 422
+
+
+def test_costs_rejects_reversed_date_range(monkeypatch):
+    use_fake_db(monkeypatch, [])
+
+    response = client.get(
+        "/api/stats/costs",
+        params={
+            "from_date": "2026-08-31",
+            "to_date": "2026-03-01",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_costs_with_no_records(monkeypatch):

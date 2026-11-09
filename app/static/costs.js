@@ -3,17 +3,21 @@
 (function () {
   "use strict";
 
-  const body = document.getElementById("cost-body");
-  const vehicleSelect = document.getElementById("f-vehicle");
-  const chips = document.querySelectorAll("#range .chip");
-  const now = new Date();
-  const thisYear = now.getFullYear();
-  const PALETTE = ["#0891B2", "#F59E0B", "#10B981", "#0EA5E9", "#F43F5E", "#84CC16", "#94A3B8", "#14B8A6", "#EAB308", "#64748B", "#FB7185", "#22D3EE"];
+const body = document.getElementById("cost-body");
+const vehicleSelect = document.getElementById("f-vehicle");
+const chips = document.querySelectorAll("#range .chip");
+
+const fromDateInput = document.getElementById("f-from-date");
+const toDateInput = document.getElementById("f-to-date");
+const clearDateButton = document.getElementById("clear-date");
+const now = new Date();
+const thisYear = now.getFullYear();
+const PALETTE = ["#0891B2", "#F59E0B", "#10B981", "#0EA5E9", "#F43F5E", "#84CC16", "#94A3B8", "#14B8A6", "#EAB308", "#64748B", "#FB7185", "#22D3EE"];
 
   let range = "year";
   let requestId = 0;
 
-  const percent = (part, whole) => `${(Math.round((part / whole) * 1000) / 10).toString().replace(".", ",")}%`;
+const percent = (part, whole) => `${(Math.round((part / whole) * 1000) / 10).toString().replace(".", ",")}%`;
 
   function stat(label, value, sub, tone, isText) {
     return el(
@@ -174,20 +178,53 @@
   }
 
   async function load() {
-    const current = ++requestId;
-    document.getElementById("error").hidden = true;
-    const query = new URLSearchParams();
-    if (range === "year") query.set("year", String(thisYear));
-    if (vehicleSelect.value) query.set("vehicle_id", vehicleSelect.value);
-    try {
-      const data = await fetchJson(`/api/stats/costs?${query}`);
-      if (current === requestId) render(data);
-    } catch (error) {
-      if (current !== requestId) return;
-      showError(error.message);
-      body.replaceChildren(el("p", "muted", "Không tải được số liệu chi phí."));
-    }
+  const current = ++requestId;
+  document.getElementById("error").hidden = true;
+
+  const fromDate = fromDateInput.value;
+  const toDate = toDateInput.value;
+
+  // Phải chọn đủ cả hai ngày
+  if (Boolean(fromDate) !== Boolean(toDate)) {
+    showError("Vui lòng chọn cả ngày bắt đầu và ngày kết thúc.");
+    return;
   }
+
+  // Ngày bắt đầu không được sau ngày kết thúc
+  if (fromDate && toDate && fromDate > toDate) {
+    showError("Ngày bắt đầu không được lớn hơn ngày kết thúc.");
+    return;
+  }
+
+  const query = new URLSearchParams();
+
+  // Nếu có khoảng ngày tùy chỉnh thì ưu tiên lọc theo ngày
+  if (fromDate && toDate) {
+    query.set("from_date", fromDate);
+    query.set("to_date", toDate);
+  } else if (range === "year") {
+    query.set("year", String(thisYear));
+  }
+
+  if (vehicleSelect.value) {
+    query.set("vehicle_id", vehicleSelect.value);
+  }
+
+  try {
+    const data = await fetchJson(`/api/stats/costs?${query}`);
+
+    if (current === requestId) {
+      render(data);
+    }
+  } catch (error) {
+    if (current !== requestId) return;
+
+    showError(error.message);
+    body.replaceChildren(
+      el("p", "muted", "Không tải được số liệu chi phí."),
+    );
+  }
+}
 
   async function init() {
     chips[0].textContent = `Năm ${thisYear}`;
@@ -215,5 +252,14 @@
   );
   vehicleSelect.addEventListener("change", load);
 
-  init();
+fromDateInput.addEventListener("change", load);
+toDateInput.addEventListener("change", load);
+
+clearDateButton.addEventListener("click", () => {
+  fromDateInput.value = "";
+  toDateInput.value = "";
+  load();
+});
+
+init();
 })();
