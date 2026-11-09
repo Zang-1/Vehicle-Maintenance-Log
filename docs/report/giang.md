@@ -160,7 +160,7 @@ These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: e
 
 ---
 
-## 7. Secret and configuration management — what we do if a key leaks
+## 7. Secret and configuration management - what we do if a key leaks
 
 *(Phần đầu mục 7 do Khoa viết: bảng giá trị nào nằm ở đâu, `.gitignore`, `.dockerignore`, kết quả audit secret.)*
 
@@ -198,9 +198,9 @@ The numbers are as of 8 November and must be re-run just before submission.
 
 | Member | Student ID | GitHub | Main contributions (as in the commits) | Commits | PRs authored | Reviews given | Lines + / − | Agreed |
 |---|---|---|---|---|---|---|---|---|
-| Kiều Bảo Giang (lead) | [MSSV] | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes; report sections 5–8 | 22 | 17 | 17 | +8,802 / −1,931 | ☐ |
+| Kiều Bảo Giang (lead) | 2474802010095 | @Zang-1 | Requirements, database design (01, 04, 08); FastAPI skeleton, health checks, pool; first Dockerfile; Supabase and Render setup; AI diagnosis and history; accounts and per-user data; glass UI shell, home page, UI fixes; report sections 5–8 | 22 | 17 | 17 | +8,802 / −1,931 | ☐ |
 | Tăng Thoại Lâm | 2474802010210 | @noway165 | Use case, activity, architecture (02, 03, 07); CI/CD workflow and deploy job; vehicles (M2); maintenance records (M3); reminder API and the vehicle's reminder tab (M5); report sections 1, 2, 4; the demo pull request with a red check | 14 | 7 | 7 | +7,089 / −69 | ☐ |
-| Nguyễn Nam Khoa | [MSSV] | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; reminder form S07 (M5); the "Thêm" page for phones; choosing a vehicle when asking the AI (FR-18) | 16 | 10 | 8 | +1,821 / −160 | ☐ |
+| Nguyễn Nam Khoa | 2474802010194 | @namkhoa306 | Wireframes and UI design (05, 06); service types (M4); cost statistics; reminder form S07 (M5); the "Thêm" page for phones; choosing a vehicle when asking the AI (FR-18) | 16 | 10 | 8 | +1,821 / −160 | ☐ |
 
 Notes:
 - Only one commit reached `main` without a pull request: `6128dea` on 22 October, before branch protection was switched on. Every later change went through a pull request reviewed by another member, and the `check` job is required.
