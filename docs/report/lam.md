@@ -5,8 +5,7 @@ Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viế
 **Trước khi dán:**
 - Thay mọi chỗ `(chèn ảnh …)` bằng ảnh chụp thật. Che mọi key, connection string, URL Deploy Hook trước khi chèn.
 - Sơ đồ mục 2 viết bằng Mermaid: mở file này trên GitHub (GitHub vẽ sẵn sơ đồ) rồi chụp ảnh dán vào Word.
-- Điền các chỗ `[…]`. Phần cần tài khoản Render thì nhờ Giang: xác nhận Auto-Deploy đang **tắt**, thời gian build ở Render Events (mục 4.2), ảnh 4.2b.
-- Rule bảo vệ `main` (mục 4.1, 4.3): trên PR #31, check `CI/CD / check` **không có nhãn "Required"**, merge chỉ bị khóa vì thiếu review. Nhờ Giang vào Settings → Branches → rule của `main` → bật "Require status checks to pass" và chọn `check`, rồi sửa hai chỗ `[…]` ở 4.1 và 4.3.
+- Điền các chỗ `[…]`. Phần cần tài khoản Render thì nhờ Giang: xác nhận Auto-Deploy đang **tắt**, ảnh 4.2b.
 - Mục 4.3: ảnh PR #31 khi đỏ (4.3c) phải chụp trước khi push commit sửa; ảnh xanh (4.3d) chụp sau. Đóng PR #31, không merge.
 - Phụ lục B: dán nguyên file `.github/workflows/ci-cd.yml`.
 
@@ -162,31 +161,31 @@ The template lists four jobs. We run lint, test and build as steps of one job, `
 | Job (step) | Runs on | What it checks | What it blocks |
 |---|---|---|---|
 | lint (`check`: compileall, `ruff check .`) | Every pull request and every push to `main`, `ubuntu-latest` | Python syntax in `app/` and `tests/`; ruff's default rules: unused imports and variables, undefined names, unsorted imports | A syntax error, or code that hides a bug such as an undefined name |
-| test (`check`: `pytest -q`) | Same | 149 tests (4 November): every API route, input validation, isolation between users (another user's data answers 404), every AI failure path, the database-down path | A change that breaks a business rule or lets one user reach another user's data |
+| test (`check`: `pytest -q`) | Same | 155 tests (9 November): every API route, input validation, isolation between users (another user's data answers 404), every AI failure path, the database-down path | A change that breaks a business rule or lets one user reach another user's data |
 | build (`check`: `docker build`) | Same | The `Dockerfile` builds with the current `requirements.txt` | A broken image reaching Render, where it would fail the deploy |
 | deploy | Only on a push to `main`, and only after `check` is green | That the `RENDER_DEPLOY_HOOK` secret exists, then calls it | Any red commit reaching production. Render's Auto-Deploy is off, so the hook is the only way in |
 
 **Why the tests need no secret.** `tests/conftest.py` sets a dummy `DATABASE_URL`; `tests/fakedb.py` replaces the connection pool, and the AI call is mocked. The pipeline therefore never holds the database password or the Gemini key. A fork or a pull request from a stranger cannot read them either, because they do not exist in GitHub.
 
-**Branch protection.** `main` accepts changes only through a pull request with one approving review from someone other than the last pusher. Nobody pushes to `main` directly. [Sau khi Giang bật "Require status checks: check", thêm: "and a green `check`".]
+**Branch protection.** `main` accepts changes only through a pull request with one approving review from someone other than the last pusher, and a green `check`, which is set as a required status check. Nobody pushes to `main` directly.
 
 (chèn ảnh 4.1: ô merge của PR demo ở 4.3, có dòng "Merging is blocked" và "at least 1 approving review is required". Trang Settings → Branches chỉ admin repo mới xem được)
 
 ### 4.2 What happens on a merge to main
 
-Measured on the merge of PR #30 on 4 November (run `41841050464`):
+Measured on the merge of PR #40 on 9 November (run `42572466362`, commit `48134b4`). That pull request changed `APP_VERSION` from 0.5.0 to 0.6.0, so the version returned by `/api/info` shows the moment the new code is live:
 
 | Step | Time (UTC) | Duration |
 |---|---|---|
-| Merge into `main`; GitHub starts the workflow | 13:45:42 | |
-| `check` (install, compile, lint, 149 tests, image build) | 13:45:44 to 13:46:11 | 27 s |
-| `deploy` calls the Render Deploy Hook | 13:46:13 to 13:46:17 | 4 s |
-| Render builds the image and switches traffic once `/health` answers | [điền từ Render Events] | [… phút] |
+| Merge into `main`; GitHub starts the workflow | 06:20:44 | |
+| `check` (install, compile, lint, 155 tests, image build) | 06:20:49 to 06:21:20 | 31 s |
+| `deploy` calls the Render Deploy Hook | 06:21:22 to 06:21:26 | 4 s |
+| Render builds the image and switches traffic once `/health` answers | `/api/info` still said 0.5.0 at 06:21:42 and said 0.6.0 at 06:21:54 | under 30 s |
 
-A change is live about [… phút] after the merge. Render keeps the old container serving until the new one passes its health check, so users see no downtime. To confirm which commit is live, we compare the commit hash on Render's Events page with `main`, and `/api/info` returns the app version.
+A change is live about one minute after the merge (58 to 70 s in this measurement). This was one deploy that changed only source code, so Docker reused the cached dependency layer; a change to `requirements.txt` takes longer. Render keeps the old container serving until the new one passes its health check, so users see no downtime. To confirm which commit is live, we compare the commit hash on Render's Events page with `main`, and `/api/info` returns the app version.
 
-(chèn ảnh 4.2a: Actions, run của merge PR #30, hai job xanh)
-(chèn ảnh 4.2b, Giang chụp vì cần tài khoản Render: Render Events, deploy "Triggered via Deploy Hook" cùng commit `d464a4a`)
+(chèn ảnh 4.2a: Actions, run `42572466362` của merge PR #40, hai job xanh)
+(chèn ảnh 4.2b, Giang chụp vì cần tài khoản Render: Render Events, deploy "Triggered via Deploy Hook" cùng commit `48134b4`)
 
 ### 4.3 Evidence that the pipeline blocks
 
@@ -211,7 +210,7 @@ The secret had not been created yet. The job stopped with a clear message instea
   ```
   Lint and compile had passed: the code was valid Python, only the business rule was wrong. This is the kind of bug a reviewer can miss and a test does not.
 - `deploy` was skipped, because it never runs for a pull request.
-- The merge box showed "Some checks were not successful" next to the red check, and "Merging is blocked", with the Merge button disabled. [Nếu Giang đã bật "Require status checks: check" thì thêm câu: "Because `check` is a required status check, even an approving review could not have unlocked the merge." Nếu chưa bật thì giữ nguyên.]
+- The merge box showed "Some checks were not successful" next to the red check, and "Merging is blocked", with the Merge button disabled. Because `check` is a required status check, an approving review alone cannot unlock the merge.
 - Commit `c9fd586` restored the condition. `check` turned green, 149 tests passed.
 - The pull request was then closed without merging, because it existed only as a demonstration.
 
