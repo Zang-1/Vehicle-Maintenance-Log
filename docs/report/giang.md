@@ -142,9 +142,14 @@ Every failure becomes one `AIUnavailable(reason)`:
 - Nothing else on the page breaks.
 - The browser also stops waiting after 60 s, so the user never sees an endless spinner.
 
-On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó đã hết lượt hỏi AI miễn phí." The table therefore gives us real evidence of how often the free tier failed:
-- Run this on Supabase: `SELECT error_code, count(*) FROM diagnoses GROUP BY 1;`
-- Result: `[điền kết quả]`.
+On "Các lần đã hỏi AI", a failed attempt reads, for example, "Lúc đó đã hết lượt hỏi AI miễn phí." The table counts every call, so it shows how often the free tier failed. On 9 November, `SELECT error_code, count(*) FROM diagnoses GROUP BY 1;` on Supabase returned:
+
+| `error_code` | Calls |
+|---|---|
+| `NULL` (answered) | 9 |
+| `RATE_LIMITED` | 1 |
+
+The one `RATE_LIMITED` row is sample data from `seed.sql`, kept so the history page shows a failure. The live site itself has not hit the free-tier limit yet: all 9 real calls were answered.
 
 If the AI answers but the database is down, the user still gets the answer. Saving the history row is attempted, and a failure is only logged.
 
@@ -156,7 +161,7 @@ These failures are covered by `tests/test_ai.py` and `tests/test_diagnose.py`: e
 
 ![Figure 6.4b: The history keeps failed attempts](img/fig-6-4b-ai-history.png)
 
-*Figure 6.4b: "Các lần đã hỏi AI" on the live site: successful answers with their urgency, and a failed attempt that reads "Lúc đó đã hết lượt hỏi AI miễn phí" (RATE_LIMITED).*
+*Figure 6.4b: "Các lần đã hỏi AI" on the live site: successful answers with their urgency, and a failed attempt that reads "Lúc đó đã hết lượt hỏi AI miễn phí" (`RATE_LIMITED`, the sample row from `seed.sql`).*
 
 ---
 

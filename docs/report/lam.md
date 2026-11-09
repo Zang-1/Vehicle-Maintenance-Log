@@ -3,7 +3,7 @@
 Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viết bằng tiếng Anh như file mẫu. Mỗi mục khoảng 1,5 trang.
 
 **Trước khi dán:**
-- Còn thiếu ảnh 4.2b (Giang chụp). Các ảnh khác đã nằm trong `img/`. Che mọi key, connection string, URL Deploy Hook trước khi chèn.
+- Đủ ảnh trong `img/` (ảnh 4.2b do Giang chụp). Che mọi key, connection string, URL Deploy Hook trước khi chèn.
 - Điền các chỗ `[…]`. Phần cần tài khoản Render thì nhờ Giang: xác nhận Auto-Deploy đang **tắt**, ảnh 4.2b.
 - Phụ lục B: dán nguyên file `.github/workflows/ci-cd.yml`.
 
@@ -150,7 +150,9 @@ A change is live about one minute after the merge (58 to 70 s in this measuremen
 
 ![Figure 4.2a: Run 42572466362, the merge of PR #40](img/fig-4-2a-actions-run.png)
 
-(chèn ảnh 4.2b, Giang chụp vì cần tài khoản Render: Render Events, deploy "Triggered via Deploy Hook" cùng commit `48134b4`)
+![Figure 4.2b: Render Events for commit 48134b4](img/fig-4-2b-render-events.png)
+
+*Figure 4.2b: Render Events. The merge of PR #40 (commit `48134b4`, version 0.6.0) started a deploy "Triggered via Deploy Hook" at 1:21 PM, and the same commit was live the same minute.*
 
 ### 4.3 Evidence that the pipeline blocks
 
