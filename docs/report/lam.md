@@ -3,10 +3,8 @@
 Bản nháp để dán vào `72ITDS30103_SDPs_Final_Report_Template.docx`. Viết bằng tiếng Anh như file mẫu. Mỗi mục khoảng 1,5 trang.
 
 **Trước khi dán:**
-- Thay mọi chỗ `(chèn ảnh …)` bằng ảnh chụp thật. Che mọi key, connection string, URL Deploy Hook trước khi chèn.
-- Sơ đồ mục 2 viết bằng Mermaid: mở file này trên GitHub (GitHub vẽ sẵn sơ đồ) rồi chụp ảnh dán vào Word.
+- Còn thiếu ảnh 4.2b (Giang chụp). Các ảnh khác đã nằm trong `img/`. Che mọi key, connection string, URL Deploy Hook trước khi chèn.
 - Điền các chỗ `[…]`. Phần cần tài khoản Render thì nhờ Giang: xác nhận Auto-Deploy đang **tắt**, ảnh 4.2b.
-- Mục 4.3: ảnh PR #31 khi đỏ (4.3c) phải chụp trước khi push commit sửa; ảnh xanh (4.3d) chụp sau. Đóng PR #31, không merge.
 - Phụ lục B: dán nguyên file `.github/workflows/ci-cd.yml`.
 
 ---
@@ -43,43 +41,9 @@ The application is a FastAPI service with a PostgreSQL database and one AI featu
 
 ### 2.1 Deployed components
 
-```mermaid
-flowchart LR
-    User["Browser<br/>laptop or phone"]
-    Dev["Developer laptop"]
+![Figure 2.1: Deployed components and the trust boundary](img/fig-2-1-architecture.png)
 
-    subgraph GH["GitHub"]
-        Repo["Repository<br/>Zang-1/Vehicle-Maintenance-Log<br/>main is protected"]
-        GA["GitHub Actions runner<br/>ci-cd.yml: check, deploy<br/>secret: RENDER_DEPLOY_HOOK"]
-    end
-
-    subgraph TB["Trust boundary: our server side"]
-        subgraph RD["Render (Free, Docker runtime)"]
-            Edge["Render edge<br/>HTTPS, TLS certificate"]
-            Web["Web container<br/>python:3.12-slim<br/>uvicorn app.main:app on $PORT"]
-            Env[("Environment<br/>DATABASE_URL<br/>GEMINI_API_KEY<br/>APP_ENV=production")]
-        end
-        subgraph SB["Supabase (Free)"]
-            Pool["Transaction pooler<br/>port 6543"]
-            PG[("PostgreSQL<br/>8 tables, 2 views<br/>RLS on")]
-        end
-    end
-
-    Gemini["Google Gemini API<br/>OpenAI-compatible endpoint"]
-
-    User -- "HTTPS 443<br/>cookie vml_session" --> Edge --> Web
-    Env -. "environment variables" .-> Web
-    Web -- "PostgreSQL over TLS :6543<br/>psycopg pool, max 5" --> Pool --> PG
-    Web -- "HTTPS 443<br/>key in Authorization header" --> Gemini
-    Dev -- "git push branch, open PR" --> Repo
-    Repo -- "pull_request, push to main" --> GA
-    GA -- "HTTPS POST deploy hook<br/>only after check is green" --> Web
-    Repo -. "Render pulls the commit<br/>and runs docker build" .-> Web
-```
-
-(chèn ảnh 2.1: sơ đồ trên, chụp từ GitHub)
-
-**The trust boundary.** Everything inside the dashed box is ours: the container, its environment and the database. The browser is outside it and never receives a secret. The Gemini key exists only in the Render environment and travels only in the `Authorization` header of a request from our server. The browser cannot call Gemini or Supabase directly: it only knows our own URL.
+**The trust boundary.** Everything inside the box labelled "Trust boundary" is ours: the container, its environment and the database. The browser is outside it and never receives a secret. The Gemini key exists only in the Render environment and travels only in the `Authorization` header of a request from our server. The browser cannot call Gemini or Supabase directly: it only knows our own URL.
 
 | Component | Where it runs | Reached by | Notes |
 |---|---|---|---|
@@ -169,7 +133,7 @@ The template lists four jobs. We run lint, test and build as steps of one job, `
 
 **Branch protection.** `main` accepts changes only through a pull request with one approving review from someone other than the last pusher, and a green `check`, which is set as a required status check. Nobody pushes to `main` directly.
 
-(chèn ảnh 4.1: ô merge của PR demo ở 4.3, có dòng "Merging is blocked" và "at least 1 approving review is required". Trang Settings → Branches chỉ admin repo mới xem được)
+![Figure 4.1: Merge box of pull request #31, merging blocked](img/fig-4-1-merge-blocked.png)
 
 ### 4.2 What happens on a merge to main
 
@@ -184,7 +148,8 @@ Measured on the merge of PR #40 on 9 November (run `42572466362`, commit `48134b
 
 A change is live about one minute after the merge (58 to 70 s in this measurement). This was one deploy that changed only source code, so Docker reused the cached dependency layer; a change to `requirements.txt` takes longer. Render keeps the old container serving until the new one passes its health check, so users see no downtime. To confirm which commit is live, we compare the commit hash on Render's Events page with `main`, and `/api/info` returns the app version.
 
-(chèn ảnh 4.2a: Actions, run `42572466362` của merge PR #40, hai job xanh)
+![Figure 4.2a: Run 42572466362, the merge of PR #40](img/fig-4-2a-actions-run.png)
+
 (chèn ảnh 4.2b, Giang chụp vì cần tài khoản Render: Render Events, deploy "Triggered via Deploy Hook" cùng commit `48134b4`)
 
 ### 4.3 Evidence that the pipeline blocks
@@ -198,8 +163,9 @@ Error: Process completed with exit code 1.
 
 The secret had not been created yet. The job stopped with a clear message instead of silently skipping, so a merge could not look deployed when it was not. The fix was to create the Deploy Hook on Render and store it as the repository secret `RENDER_DEPLOY_HOOK`. The re-run (attempt 2, 15:31 UTC) was green, and Render showed one deploy from the hook.
 
-(chèn ảnh 4.3a: run `41320852255` attempt 1, job deploy đỏ với dòng lỗi trên)
-(chèn ảnh 4.3b: attempt 2 của cùng run, hai job xanh)
+![Figure 4.3a: Run 41320852255, attempt 1, deploy failed](img/fig-4-3a-deploy-failed.png)
+
+![Figure 4.3b: The same run, attempt 2, both jobs green](img/fig-4-3b-deploy-rerun.png)
 
 **A red check on a pull request.** No real pull request had failed by 4 November, so we staged one to show the gate working. Pull request #31 (branch `demo/ci-red-check`) contains a plausible "simplification": it removes `AND current_odometer < %(odometer)s` from the query that updates the vehicle's odometer. That breaks BR-02: saving an older visit would move the odometer back down.
 
@@ -214,8 +180,9 @@ The secret had not been created yet. The job stopped with a clear message instea
 - Commit `c9fd586` restored the condition. `check` turned green, 149 tests passed.
 - The pull request was then closed without merging, because it existed only as a demonstration.
 
-(chèn ảnh 4.3c: PR với check đỏ và nút Merge bị khóa)
-(chèn ảnh 4.3d: cùng PR sau khi sửa, check xanh)
+![Figure 4.3c: Pull request #31 with the red check](img/fig-4-3c-pr-red.png)
+
+![Figure 4.3d: Pull request #31 after the fix, check green](img/fig-4-3d-pr-green.png)
 
 ### 4.4 Secrets the pipeline needs
 
