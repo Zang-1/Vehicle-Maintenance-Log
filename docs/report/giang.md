@@ -224,7 +224,7 @@ The use of AI tools is declared in **Appendix E**, which every member confirms.
 > - Lâm và Khoa tự khai phần của mình. Phần D (tỉ lệ %) cả nhóm ước tính chung.
 > - Giới hạn của thầy: **AI-generated ≤ 30%**, **AI-assisted ≤ 50%** trên toàn bài.
 > - Theo template, **phải do nhóm tự làm**: kiến trúc triển khai, lựa chọn nền tảng và lý do, phân tích và thiết kế. Phần nào AI viết gần như nguyên văn thì hoặc viết lại bằng lời của mình (thành "assisted"), hoặc khai đúng là "generated".
-> - Mục F có câu xác nhận "No AI tool was given an API key, token, connection string or .env content". Trong phiên làm việc: Claude Code đã **chép file `.env`** sang thư mục worktree (không mở, không in nội dung), và được **kết nối vào project Supabase** qua connector (chỉ chạy liệt kê bảng). Bạn cân nhắc khai rõ hai việc này trước khi tick.
+> - Mục F có câu xác nhận "No AI tool was given an API key, token, connection string or .env content". Trong phiên làm việc: **connection string Supabase kèm mật khẩu đã xuất hiện trong cuộc trò chuyện**; Claude Code đã **chép file `.env`** sang thư mục worktree (không mở, không in nội dung), và được **kết nối vào project Supabase** qua connector (chỉ chạy liệt kê bảng). Không tick được ý này nếu không khai rõ. **Đã đổi mật khẩu database ngày 09/11/2026** (Supabase, `DATABASE_URL` trên Render và `.env.cloud`). Khi ghép report, ghi vào mục F: "The Supabase connection string was once pasted into the AI conversation; the database password was rotated on 9 November 2026."
 
 **B. Các công cụ AI đã sử dụng**
 
@@ -249,6 +249,6 @@ The use of AI tools is declared in **Appendix E**, which every member confirms.
 
 | Mục | Link, tên file hoặc ảnh chụp | Nội dung thể hiện |
 |---|---|---|
-| E-1 | [Transcript phiên Claude Code đã xuất, hoặc link chia sẻ] | Các câu lệnh (prompt) và phản hồi của Claude Code cho các dòng 1–8 ở phần C |
+| E-1 | File `E-1_Claude-Code-transcript-Giang_redacted.md`, nộp kèm report: toàn bộ tin nhắn giữa Giang và Claude Code, đã che mật khẩu và connection string; bản xuất gốc gửi khi giảng viên yêu cầu | Các câu lệnh (prompt) và phản hồi của Claude Code cho các dòng 1–8 ở phần C |
 | E-2 | Các pull request trên GitHub: https://github.com/Zang-1/Vehicle-Maintenance-Log/pulls?q=is%3Apr+author%3AZang-1 (PR #16, #17, #18, #27, #28, #30, #42) và file `ui-design.html` | Mã nguồn và tài liệu đã được giữ lại trong bài nộp, kèm lịch sử commit và review của từng dòng |
 | E-3 | Thư mục `docs/report/img/` (`fig-5-1-erd.png`, `fig-5-3-db-pause.png`, `fig-6-1-ai-ok.png`, `fig-6-4a-ai-error.png`, `fig-6-4b-ai-history.png`) | Các hình minh họa ở dòng 6 |
