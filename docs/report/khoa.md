@@ -143,7 +143,7 @@ Configuration and secrets never live in the code. The code reads values from env
 ## Appendix E - AI-use declaration (Khoa's part, draft)
 
 > **Ghi chú cho Khoa (xóa khi ghép report):**
-> - Chỗ nào còn trong ngoặc vuông `[...]` là chỗ chỉ Khoa biết, phải tự điền đúng thực tế: tên model, cột **Gen. / Assist.** và file minh chứng.
+> - Chỗ nào còn trong ngoặc vuông `[...]` là chỗ chỉ Khoa biết, phải tự điền đúng thực tế: file minh chứng E-7 và dòng report ở mục D.
 > - **Generated** = giữ nguyên hoặc gần nguyên kết quả AI. **Assisted** = Khoa tự viết hoặc viết lại đáng kể, AI chỉ gợi ý, giải thích, sửa lỗi.
 > - Giới hạn của thầy tính trên **toàn bài của cả nhóm**: AI-generated ≤ 30%, AI-assisted ≤ 50%. Phần D cả nhóm ước tính chung, số của Khoa ở dưới chỉ là phần đóng góp vào con số chung.
 > - Các PR #10, #11 (wireframe, UI design), #23, #25, #26 (loại dịch vụ, trang chi phí): nếu có dùng AI thì thêm dòng vào bảng C; nếu không thì giữ nguyên.
@@ -153,17 +153,17 @@ Configuration and secrets never live in the code. The code reads values from env
 
 | # | Tool and model / version | Plan | Used by | Period of use |
 |---|---|---|---|---|
-| 3 | Claude (Anthropic, claude.ai), model [model name shown in the app] | [free / paid] | Nguyễn Nam Khoa | November 2026 |
+| 3 | Claude (Anthropic, claude.ai), model Claude Sonnet 5.5 | Free | Nguyễn Nam Khoa | November 2026 |
 
 **C. Use log (Khoa)**
 
 | # | Artefact | Member | Tool | What the AI produced or explained | Gen. / Assist. | How you checked and changed it | Evidence |
 |---|---|---|---|---|---|---|---|
-| 1 | Choosing a vehicle when asking the AI (FR-18): `app/ai.py`, `app/routers/diagnose.py`, `app/schemas.py`, `app/static/diagnose.js`, `app/templates/diagnose.html`, `tests/test_diagnose.py` (PR #33) | Khoa | Claude | Explained the existing diagnosis code and guided the change step by step: the `vehicle_id` field in `DiagnoseIn`, putting the vehicle's details into the prompt, the vehicle select box, and the tests for a vehicle that belongs to another user | [Generated / Assisted] | Ran the test suite (`tests/test_diagnose.py`); tried the page with and without a vehicle selected; the `check` job passed and another member reviewed the PR | E-7; E-8 (PR #33) |
-| 2 | The "Thêm" menu page for phones: `app/templates/them.html`, route in `app/routers/pages.py`, CSS (PR #34) | Khoa | Claude | Guided the template, the route and the styles, following the existing pages | [Generated / Assisted] | Opened the page at phone width and followed every link; `tests/test_dashboard.py` passed; reviewed by another member | E-7; E-8 (PR #34) |
-| 3 | Reminder form S07 (create and edit): `app/templates/reminder_form.html`, `app/static/reminder_form.js`, `app/routers/pages.py` (PR #35, #36) | Khoa | Claude | Guided the form and the JavaScript that calls Lâm's reminders API; helped find why the page returned to the wrong tab after saving | [Generated / Assisted] | Created, edited and saved reminders in the browser; fixed the tab name in a follow-up PR (#36); reviewed by another member | E-7; E-8 (PR #35, #36) |
-| 4 | Date range filter on the Costs page (FR-17): `app/routers/stats.py`, `app/static/costs.js`, `app/templates/costs.html`, `tests/test_costs.py` (PR #37) | Khoa | Claude | Guided the `from` / `to` query parameters, the two date inputs and the tests; explained the ruff import error that failed CI | [Generated / Assisted] | Ran `tests/test_costs.py`; fixed the import order after the `check` job went red; tried several date ranges on the page | E-7; E-8 (PR #37) |
-| 5 | Report §3 and the first part of §7, and this declaration (`docs/report/khoa.md`, PR #39) | Khoa | Claude | Helped outline, translate into English and format the text; drafted this declaration from the commit history | [Generated / Assisted] | Checked every statement against `Dockerfile`, `compose.yml`, `.env.example`, `.gitignore` and `.dockerignore`; took the screenshots on my own machine after a clean clone | E-7; E-8 (PR #39); E-9 |
+| 1 | Choosing a vehicle when asking the AI (FR-18): `app/ai.py`, `app/routers/diagnose.py`, `app/schemas.py`, `app/static/diagnose.js`, `app/templates/diagnose.html`, `tests/test_diagnose.py` (PR #33) | Khoa | Claude | Explained the existing diagnosis code and guided the change step by step: the `vehicle_id` field in `DiagnoseIn`, putting the vehicle's details into the prompt, the vehicle select box, and the tests for a vehicle that belongs to another user | Assisted | Ran the test suite (`tests/test_diagnose.py`); tried the page with and without a vehicle selected; the `check` job passed and another member reviewed the PR | E-7; E-8 (PR #33) |
+| 2 | The "Thêm" menu page for phones: `app/templates/them.html`, route in `app/routers/pages.py`, CSS (PR #34) | Khoa | Claude | Guided the template, the route and the styles, following the existing pages | Assisted | Opened the page at phone width and followed every link; `tests/test_dashboard.py` passed; reviewed by another member | E-7; E-8 (PR #34) |
+| 3 | Reminder form S07 (create and edit): `app/templates/reminder_form.html`, `app/static/reminder_form.js`, `app/routers/pages.py` (PR #35, #36) | Khoa | Claude | Guided the form and the JavaScript that calls Lâm's reminders API; helped find why the page returned to the wrong tab after saving | Assisted | Created, edited and saved reminders in the browser; fixed the tab name in a follow-up PR (#36); reviewed by another member | E-7; E-8 (PR #35, #36) |
+| 4 | Date range filter on the Costs page (FR-17): `app/routers/stats.py`, `app/static/costs.js`, `app/templates/costs.html`, `tests/test_costs.py` (PR #37) | Khoa | Claude | Guided the `from` / `to` query parameters, the two date inputs and the tests; explained the ruff import error that failed CI | Assisted | Ran `tests/test_costs.py`; fixed the import order after the `check` job went red; tried several date ranges on the page | E-7; E-8 (PR #37) |
+| 5 | Report §3 and the first part of §7, and this declaration (`docs/report/khoa.md`, PR #39) | Khoa | Claude | Helped outline, translate into English and format the text; drafted this declaration from the commit history | Assisted | Checked every statement against `Dockerfile`, `compose.yml`, `.env.example`, `.gitignore` and `.dockerignore`; took the screenshots on my own machine after a clean clone | E-7; E-8 (PR #39); E-9 |
 
 **D. Estimated share (Khoa's contribution to the team figures)**
 
