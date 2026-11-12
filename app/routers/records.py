@@ -101,7 +101,7 @@ RETURNING id
 # BR-02: only ever raises the odometer. A record for an older date (higher or lower km) leaves it alone.
 RAISE_ODOMETER_SQL = """
 UPDATE vehicles SET current_odometer = %(odometer)s
-WHERE id = %(vehicle_id)s AND current_odometer < %(odometer)s
+WHERE id = %(vehicle_id)s AND current_odometer
 """
 
 VEHICLE_NOT_FOUND = ApiError(404, "VEHICLE_NOT_FOUND", "Không tìm thấy xe này.")
